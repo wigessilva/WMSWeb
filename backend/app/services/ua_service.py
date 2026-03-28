@@ -1,10 +1,12 @@
 import random
 from sqlalchemy.orm import Session
 from ..models.ua import UA
-from ..schemas.ua import UACriar
+from ..schemas.ua import UACriar, UAExpedirTransferencia, UAReceberTransferencia
 
-# Importamos o modelo do histórico para o serviço poder usá-lo
+# Importamos os modelos extras para validações e histórico
 from ..models.historico_ua import HistoricoUA
+from ..models.endereco import Endereco
+from ..models.solicitacao_transferencia import SolicitacaoTransferencia
 
 
 class UAService:
@@ -30,6 +32,7 @@ class UAService:
 
         db_obj = UA(
             codigo=novo_codigo,
+            filial_id=dados.filial_id,
             produto_id=dados.produto_id,
             lote=dados.lote,
             data_validade=dados.data_validade,
@@ -77,6 +80,7 @@ class UAService:
 
             db_obj = UA(
                 codigo=novo_codigo,
+                filial_id=dados.filial_id,
                 produto_id=dados.produto_id,
                 lote=dados.lote,
                 data_validade=dados.data_validade,
@@ -121,3 +125,90 @@ class UAService:
     @staticmethod
     def listar_todas(db: Session):
         return db.query(UA).all()
+
+    @staticmethod
+    def expedir_transferencia(db: Session, codigo: str, dados: UAExpedirTransferencia):
+        ua = db.query(UA).filter(UA.codigo == codigo).first()
+        if not ua:
+            raise ValueError("UA não encontrada.")
+
+        if ua.status == "Em Trânsito":
+            raise ValueError("A UA já está em trânsito.")
+
+        origem_endereco_id = ua.endereco_id
+
+        # 1. Tira a UA da prateleira e coloca no camião
+        ua.endereco_id = None
+        ua.filial_destino_id = dados.filial_destino_id
+        ua.status = "Em Trânsito"
+
+        # NOVO: 1.5. Cérebro de Atendimento da Solicitação
+        if dados.solicitacao_id:
+            solicitacao = db.query(SolicitacaoTransferencia).filter(
+                SolicitacaoTransferencia.id == dados.solicitacao_id).first()
+            if not solicitacao:
+                raise ValueError("A solicitação informada não existe.")
+
+            # Validações de cruzamento de dados para evitar erros operacionais
+            if solicitacao.produto_id != ua.produto_id:
+                raise ValueError(
+                    f"Erro: O produto da UA (ID {ua.produto_id}) é diferente do produto pedido (ID {solicitacao.produto_id}).")
+
+            if solicitacao.filial_requisitante_id != dados.filial_destino_id:
+                raise ValueError("Erro: O destino da UA não bate com a filial que pediu o material.")
+
+            if not ua.quantidade or ua.quantidade <= 0:
+                raise ValueError("Erro: Esta UA não tem quantidade válida para abater no pedido.")
+
+            # Abate o saldo do pedido
+            solicitacao.quantidade_atendida += ua.quantidade
+
+            # Automação de Status do Pedido
+            if solicitacao.quantidade_atendida >= solicitacao.quantidade_solicitada:
+                solicitacao.status = "finalizada"
+            elif solicitacao.status == "pendente":
+                solicitacao.status = "em_atendimento"
+
+        # 2. Grava no Kardex
+        historico = HistoricoUA(
+            ua_id=ua.id,
+            tipo_acao="EXPEDICAO_TRANSFERENCIA",
+            origem_endereco_id=origem_endereco_id,
+            destino_endereco_id=None,
+            observacoes=dados.observacoes or f"Expedida para a filial destino ID: {dados.filial_destino_id}"
+        )
+        db.add(historico)
+        db.commit()
+        db.refresh(ua)
+        return ua
+
+    @staticmethod
+    def receber_transferencia(db: Session, codigo: str, nova_filial_id: int, dados: UAReceberTransferencia):
+        ua = db.query(UA).filter(UA.codigo == codigo).first()
+        if not ua:
+            raise ValueError("UA não encontrada.")
+
+        if ua.status != "Em Trânsito":
+            raise ValueError("A UA não está em trânsito e não pode ser recebida.")
+
+        if ua.filial_destino_id != nova_filial_id:
+            raise ValueError("Alerta de Segurança: Esta UA não foi destinada a esta filial.")
+
+            # 1. Descarrega a UA do camião, troca a posse e deixa na doca (fica sem endereço)
+        ua.filial_id = nova_filial_id
+        ua.filial_destino_id = None
+        ua.endereco_id = None
+        ua.status = "Recebida"
+
+        # 2. Grava no Kardex
+        historico = HistoricoUA(
+            ua_id=ua.id,
+            tipo_acao="RECEBIMENTO_TRANSFERENCIA",
+            origem_endereco_id=None,
+            destino_endereco_id=None,
+            observacoes=dados.observacoes or f"Recebida na doca pela filial ID: {nova_filial_id}"
+        )
+        db.add(historico)
+        db.commit()
+        db.refresh(ua)
+        return ua

@@ -4,20 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="adiciona a variavel de consumo nos produtos e famílias">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/filial_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/filial.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/filial.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/filial_service.py" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="adiciona a estrutura multifilial">
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/solicitacao_transferencia_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/solicitacao_transferencia.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/solicitacao_transferencia.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/solicitacao_transferencia_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/produto_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/produto_router.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/ua_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/ua_router.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/area.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/area.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/area.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/area.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/area_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/area_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/produto_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/produto_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/ua.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/ua.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/ua_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/ua_service.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -128,7 +125,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774726097983</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="adiciona a estrutura multifilial">
+      <option name="closed" value="true" />
+      <created>1774734650178</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1774734650178</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -138,7 +143,8 @@
     <MESSAGE value="novo wms" />
     <MESSAGE value="adiciona as unidades de armazenamento" />
     <MESSAGE value="adiciona a variavel de consumo nos produtos e famílias" />
-    <option name="LAST_COMMIT_MESSAGE" value="adiciona a variavel de consumo nos produtos e famílias" />
+    <MESSAGE value="adiciona a estrutura multifilial" />
+    <option name="LAST_COMMIT_MESSAGE" value="adiciona a estrutura multifilial" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

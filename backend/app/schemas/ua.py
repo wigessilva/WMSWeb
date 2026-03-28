@@ -4,6 +4,8 @@ from datetime import datetime
 
 
 class UABase(BaseModel):
+    filial_id: int
+    filial_destino_id: Optional[int] = None
     produto_id: Optional[int] = None
     lote: Optional[str] = None
     data_validade: Optional[datetime] = None
@@ -56,3 +58,15 @@ class UASchema(UABase):
 
     class Config:
         from_attributes = True
+
+
+# Schema para quando a UA sai da filial de origem
+class UAExpedirTransferencia(BaseModel):
+    filial_destino_id: int
+    observacoes: Optional[str] = None
+    solicitacao_id: Optional[int] = None  # Opcional: só preenchido se a expedição for para atender um pedido
+
+
+# Schema para quando a UA chega na filial de destino
+class UAReceberTransferencia(BaseModel):
+    observacoes: Optional[str] = None

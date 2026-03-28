@@ -12,6 +12,12 @@ class UA(Base):
     # Ex: UA0124589 (2 letras + 7 números = 9 caracteres)
     codigo = Column("Codigo", String(9), unique=True, index=True, nullable=False)
 
+    # A qual filial esta etiqueta física pertence (Matriz ou Bahia)
+    filial_id = Column("FilialId", Integer, ForeignKey("filiais.Id"), nullable=False)
+
+    # Se estiver em trânsito, para qual filial está a viajar?
+    filial_destino_id = Column("FilialDestinoId", Integer, ForeignKey("filiais.Id"), nullable=True)
+
     # Identificação do Produto (Opcional para UAs virgens)
     produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=True)
 
@@ -44,6 +50,10 @@ class UA(Base):
     rowversion = Column("Rowversion", Integer, default=1, nullable=False)
 
     # Relacionamentos para facilitar as consultas do SQLAlchemy
+    # Precisamos especificar qual chave estrangeira (foreign_key) cada relação usa
+    filial = relationship("Filial", foreign_keys=[filial_id])
+    filial_destino = relationship("Filial", foreign_keys=[filial_destino_id])
+
     produto = relationship("Produto")
     unidade_produto = relationship("UnidadeProduto")
     endereco = relationship("Endereco")
