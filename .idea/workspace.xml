@@ -4,37 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/WMSWeb.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/familia_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/produto_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/regra_global_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/unidade_medida_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/db/database.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/familia.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/produto.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/regra_global.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/unidade_medida.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/familia.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/produto.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/regra_global.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/unidade_medida.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/unidade_produto.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/erp_sync_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/familia_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/regra_global_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/unidade_medida_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="novo wms">
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/area_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/endereco_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/estrutura_fisica_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/finalidade_endereco_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/area.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/endereco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/area.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/endereco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/estrutura_fisica.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/finalidade_endereco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/area_service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/endereco_service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/estrutura_fisica_service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/finalidade_endereco_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +47,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;wigessilva&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/wigessilva/WMSWeb&quot;,
+    &quot;accountId&quot;: &quot;836a810e-658a-45ee-a996-b9d532ca858c&quot;
+  }
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -109,10 +109,23 @@
       <updated>1774656121604</updated>
       <workItem from="1774656122546" duration="76000" />
     </task>
+    <task id="LOCAL-00001" summary="novo wms">
+      <option name="closed" value="true" />
+      <created>1774705263967</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1774705263967</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="novo wms" />
+    <option name="LAST_COMMIT_MESSAGE" value="novo wms" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

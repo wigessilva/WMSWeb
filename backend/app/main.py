@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
-from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router
+from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router, endereco_router, area_router, estrutura_fisica_router, finalidade_endereco_router
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
 from app.models.familia import Familia
@@ -8,6 +8,13 @@ from app.models.produto import Produto
 from app.models.unidade_produto import UnidadeProduto
 from app.models.unidade_medida import UnidadeMedida
 from app.models.regra_global import RegraGlobal
+
+# Importa os novos modelos de Endereçamento
+from app.models.area import Area
+from app.models.estrutura_fisica import EstruturaFisica
+from app.models.finalidade_endereco import FinalidadeEndereco
+from app.models.endereco import Endereco
+
 from app.services.scheduler_service import iniciar_scheduler
 
 # Cria as tabelas no SQL Server na inicialização
@@ -20,6 +27,12 @@ app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
 app.include_router(regra_global_router.router, prefix="/regras-globais", tags=["Regras Globais"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
+app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
+
+# Cadastros de Apoio do Endereçamento
+app.include_router(area_router.router, prefix="/areas", tags=["Áreas do Armazém"])
+app.include_router(estrutura_fisica_router.router, prefix="/estruturas-fisicas", tags=["Estruturas Físicas"])
+app.include_router(finalidade_endereco_router.router, prefix="/finalidades-endereco", tags=["Finalidades de Endereço"])
 
 # Inicia as tarefas de segundo plano assim que o servidor ligar
 @app.on_event("startup")
