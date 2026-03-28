@@ -16,6 +16,8 @@ class Produto(Base):
     familia_id = Column("FamiliaId", Integer, ForeignKey("familias.Id"), nullable=True)
     herdar_regras_familia = Column("HerdarRegrasFamilia", Boolean, default=True)
 
+    variavel_consumo = Column("VariavelConsumo", String(20), nullable=True)
+
     unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=True)
     status = Column("Status", String(50), default="pendente")  # Fica pendente ao vir do ERP
 

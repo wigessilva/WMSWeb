@@ -13,6 +13,8 @@ class Familia(Base):
     # Define se a família obedece à regra global (True) ou tem a sua própria (False)
     herdar_regras_globais = Column("HerdarRegrasGlobais", Boolean, default=True)
 
+    variavel_consumo = Column("VariavelConsumo", String(20), default="unidade", nullable=False)
+
     # Regras específicas da família (usadas apenas se herdar_regras_globais for False)
     validade_obrigatoria = Column("ValidadeObrigatoria", Boolean, nullable=True)
     lote_obrigatorio = Column("LoteObrigatorio", Boolean, nullable=True)

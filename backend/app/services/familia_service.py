@@ -9,6 +9,7 @@ class FamiliaService:
         db_obj = Familia(
             nome=dados.nome,
             descricao=dados.descricao,
+            variavel_consumo=dados.variavel_consumo,
             herdar_regras_globais=dados.herdar_regras_globais,
             validade_obrigatoria=dados.validade_obrigatoria,
             lote_obrigatorio=dados.lote_obrigatorio,
