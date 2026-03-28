@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
-from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router, endereco_router, area_router, estrutura_fisica_router, finalidade_endereco_router
+from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router, endereco_router, area_router, estrutura_fisica_router, finalidade_endereco_router, ua_router
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
 from app.models.familia import Familia
@@ -14,6 +14,8 @@ from app.models.area import Area
 from app.models.estrutura_fisica import EstruturaFisica
 from app.models.finalidade_endereco import FinalidadeEndereco
 from app.models.endereco import Endereco
+from app.models.ua import UA
+from app.models.historico_ua import HistoricoUA
 
 from app.services.scheduler_service import iniciar_scheduler
 
@@ -33,6 +35,9 @@ app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereça
 app.include_router(area_router.router, prefix="/areas", tags=["Áreas do Armazém"])
 app.include_router(estrutura_fisica_router.router, prefix="/estruturas-fisicas", tags=["Estruturas Físicas"])
 app.include_router(finalidade_endereco_router.router, prefix="/finalidades-endereco", tags=["Finalidades de Endereço"])
+
+# Gestão de Estoque
+app.include_router(ua_router.router, prefix="/uas", tags=["Unidades de Armazenamento (UAs)"])
 
 # Inicia as tarefas de segundo plano assim que o servidor ligar
 @app.on_event("startup")

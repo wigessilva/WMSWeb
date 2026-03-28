@@ -4,23 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="novo wms">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/area_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/endereco_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/estrutura_fisica_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/finalidade_endereco_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/area.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/endereco.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/area.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/endereco.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/estrutura_fisica.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/finalidade_endereco.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/area_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/endereco_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/estrutura_fisica_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/finalidade_endereco_service.py" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="modulo de endereços">
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/ua_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/historico_ua.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/ua.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/historico_ua.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/ua.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/ua_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
     </list>

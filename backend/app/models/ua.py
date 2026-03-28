@@ -1,0 +1,53 @@
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from ..db.database import Base
+
+
+class UA(Base):
+    __tablename__ = "uas"
+
+    id = Column("Id", Integer, primary_key=True, index=True)
+
+    # Ex: UA0124589 (2 letras + 7 números = 9 caracteres)
+    codigo = Column("Codigo", String(9), unique=True, index=True, nullable=False)
+
+    # Identificação do Produto (Opcional para UAs virgens)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=True)
+
+    # Rastreabilidade (vindos do Recebimento/ERP)
+    lote = Column("Lote", String(50), nullable=True)
+    data_validade = Column("DataValidade", DateTime, nullable=True)
+
+    # Quantidade amarrada à Unidade específica daquele Produto
+    quantidade = Column("Quantidade", Float, nullable=True)
+    unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("unidades_produto.Id"), nullable=True)
+
+    # Localização Física (Opcional, pois pode estar 'Em Trânsito' na empilhadora)
+    endereco_id = Column("EnderecoId", Integer, ForeignKey("enderecos.Id"), nullable=True)
+
+    # Dimensões Físicas Específicas da UA (LCA)
+    largura = Column("Largura", Float, nullable=True)
+    comprimento = Column("Comprimento", Float, nullable=True)
+    altura = Column("Altura", Float, nullable=True)
+
+    # Qualidade e Status de Ciclo de Vida
+    estado = Column("Estado", String(10), default="Bom", nullable=False)
+    status = Column("Status", String(20), default="Gerada", nullable=False)
+    observacoes = Column("Observacoes", String(255), nullable=True)
+
+    # Auditoria Padrão ACID
+    criado_em = Column("CriadoEm", DateTime, default=datetime.now)
+    atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)
+    criado_por = Column("CriadoPor", String(100), nullable=True)
+    atualizado_por = Column("AtualizadoPor", String(100), nullable=True)
+    rowversion = Column("Rowversion", Integer, default=1, nullable=False)
+
+    # Relacionamentos para facilitar as consultas do SQLAlchemy
+    produto = relationship("Produto")
+    unidade_produto = relationship("UnidadeProduto")
+    endereco = relationship("Endereco")
+
+    __mapper_args__ = {
+        "version_id_col": rowversion
+    }
