@@ -19,7 +19,13 @@ class Produto(Base):
     variavel_consumo = Column("VariavelConsumo", String(20), nullable=True)
 
     unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=True)
-    status = Column("Status", String(50), default="pendente")  # Fica pendente ao vir do ERP
+
+    # Ciclo de Vida Comercial
+    status = Column("Status", String(50), default="pendente")
+
+    # Controle de Qualidade (Chão de Fábrica)
+    bloqueado = Column("Bloqueado", Boolean, default=False)
+    motivo_bloqueio = Column("MotivoBloqueio", String(255), nullable=True)
 
     largura_mm = Column("LarguraMm", Float, nullable=True)
     comprimento_m = Column("ComprimentoM", Float, nullable=True)

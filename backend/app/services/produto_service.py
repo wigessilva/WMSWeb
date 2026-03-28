@@ -71,3 +71,30 @@ class ProdutoService:
         db.commit()
         db.refresh(produto)
         return produto
+
+    @staticmethod
+    def alterar_status(db: Session, produto_id: int, novo_status: str):
+        produto = db.query(Produto).filter(Produto.id == produto_id).first()
+        if not produto:
+            raise ValueError("Produto não encontrado.")
+
+        if novo_status not in ["ativo", "inativo", "pendente"]:
+            raise ValueError("Status deve ser: ativo, inativo ou pendente.")
+
+        produto.status = novo_status
+        db.commit()
+        db.refresh(produto)
+        return produto
+
+    @staticmethod
+    def alterar_bloqueio(db: Session, produto_id: int, dados_bloqueio):
+        produto = db.query(Produto).filter(Produto.id == produto_id).first()
+        if not produto:
+            raise ValueError("Produto não encontrado.")
+
+        produto.bloqueado = dados_bloqueio.bloqueado
+        produto.motivo_bloqueio = dados_bloqueio.motivo_bloqueio
+
+        db.commit()
+        db.refresh(produto)
+        return produto

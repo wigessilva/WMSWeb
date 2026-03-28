@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
-from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router, endereco_router, area_router, estrutura_fisica_router, finalidade_endereco_router, ua_router
+from app.api.v1.endpoints import produto_router, unidade_medida_router, regra_global_router, familia_router, endereco_router, area_router, estrutura_fisica_router, finalidade_endereco_router, ua_router, filial_router
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
 from app.models.familia import Familia
@@ -10,6 +10,7 @@ from app.models.unidade_medida import UnidadeMedida
 from app.models.regra_global import RegraGlobal
 
 # Importa os novos modelos de Endereçamento
+from app.models.filial import Filial
 from app.models.area import Area
 from app.models.estrutura_fisica import EstruturaFisica
 from app.models.finalidade_endereco import FinalidadeEndereco
@@ -32,6 +33,7 @@ app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"]
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
 
 # Cadastros de Apoio do Endereçamento
+app.include_router(filial_router.router, prefix="/filiais", tags=["Unidades e Filiais"])
 app.include_router(area_router.router, prefix="/areas", tags=["Áreas do Armazém"])
 app.include_router(estrutura_fisica_router.router, prefix="/estruturas-fisicas", tags=["Estruturas Físicas"])
 app.include_router(finalidade_endereco_router.router, prefix="/finalidades-endereco", tags=["Finalidades de Endereço"])

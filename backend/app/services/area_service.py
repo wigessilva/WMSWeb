@@ -7,7 +7,8 @@ class AreaService:
     def criar(db: Session, dados: AreaCriar):
         db_obj = Area(
             letra=dados.letra.upper(), # Força a letra a ficar sempre em maiúscula
-            descricao=dados.descricao
+            descricao=dados.descricao,
+            filial_id=dados.filial_id
         )
         db.add(db_obj)
         db.commit()

@@ -1,15 +1,16 @@
 from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
 
-class AreaBase(BaseModel):
-    letra: str
-    descricao: str
-    filial_id: int
+class FilialBase(BaseModel):
+    nome: str
+    cnpj: Optional[str] = None
+    is_matriz: bool = False
 
-class AreaCriar(AreaBase):
+class FilialCriar(FilialBase):
     pass
 
-class AreaSchema(AreaBase):
+class FilialSchema(FilialBase):
     id: int
     criado_em: datetime
     atualizado_em: datetime

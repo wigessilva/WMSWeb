@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db, get_erp_db
-from app.schemas.produto import ProdutoSchema, ProdutoEditar, ProdutoAtivar
+from app.schemas.produto import ProdutoSchema, ProdutoEditar, ProdutoAtivar, ProdutoBloqueio
+from fastapi import Query
 from app.services.produto_service import ProdutoService
 from app.services.erp_sync_service import ServicoSincronizacaoERP
 
@@ -30,3 +31,21 @@ def ativar_produto_wms(produto_id: int, dados: ProdutoAtivar, db: Session = Depe
     if not produto_ativado:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     return produto_ativado
+
+@router.patch("/{produto_id}/status", response_model=ProdutoSchema)
+def alterar_status_produto(
+    produto_id: int,
+    status: str = Query(..., description="Novo status: ativo, inativo ou pendente"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return ProdutoService.alterar_status(db, produto_id, status)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.patch("/{produto_id}/bloqueio", response_model=ProdutoSchema)
+def bloquear_desbloquear_produto(produto_id: int, dados: ProdutoBloqueio, db: Session = Depends(get_db)):
+    try:
+        return ProdutoService.alterar_bloqueio(db, produto_id, dados)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

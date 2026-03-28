@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List
 from datetime import datetime
 from .unidade_produto import UnidadeProdutoCriar, UnidadeProdutoSchema
@@ -45,6 +45,9 @@ class ProdutoSchema(ProdutoBase):
     id: int
     criado_em: datetime
     atualizado_em: datetime
+    rowversion: int
+    bloqueado: bool
+    motivo_bloqueio: Optional[str] = None
 
     class Config:
         from_attributes = True # Permite que o Pydantic leia modelos do SQLAlchemy
@@ -64,3 +67,21 @@ class ProdutoAtivar(BaseModel):
         if v is not None and v not in ["unidade", "largura", "comprimento", "peso"]:
             raise ValueError("Variavel de consumo deve ser: unidade, largura, comprimento ou peso.")
         return v
+
+
+# Schema dedicado para a ação de Bloquear/Desbloquear
+class ProdutoBloqueio(BaseModel):
+    bloqueado: bool
+    motivo_bloqueio: Optional[str] = None
+
+    @model_validator(mode='after')
+    def validar_motivo(self):
+        # Obriga a ter motivo se for bloqueio
+        if self.bloqueado and not self.motivo_bloqueio:
+            raise ValueError("É obrigatório informar o motivo para bloquear o produto.")
+
+        # Limpa o motivo automaticamente se for um desbloqueio
+        if not self.bloqueado:
+            self.motivo_bloqueio = None
+
+        return self
