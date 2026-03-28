@@ -1,0 +1,40 @@
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from ..db.database import Base
+
+
+class UnidadeProduto(Base):
+    __tablename__ = "unidades_produto"
+
+    id = Column("Id", Integer, primary_key=True, index=True)
+    # Importante: a ForeignKey agora aponta para "produtos.Id" com "I" maiúsculo
+    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=False)
+
+    # Tipo: base, produto ou recipiente
+    tipo = Column("Tipo", String(20), nullable=False)
+
+    # Chave estrangeira apontando para a unidade de medida real
+    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=False)
+
+    # Fator de conversão: Unidade Base sempre é 1.0
+    fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)
+
+    # Medidas e Peso
+    peso_bruto = Column("PesoBruto", Float, nullable=True)
+    largura = Column("Largura", Float, nullable=True)
+    comprimento = Column("Comprimento", Float, nullable=True)
+    altura = Column("Altura", Float, nullable=True)
+
+    criado_em = Column("CriadoEm", DateTime, default=datetime.now)
+    atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)
+    criado_por = Column("CriadoPor", String(100), nullable=True)
+    atualizado_por = Column("AtualizadoPor", String(100), nullable=True)
+    rowversion = Column("Rowversion", Integer, default=1, nullable=False)
+
+    produto = relationship("Produto", back_populates="unidades")
+    unidade_medida_relacao = relationship("UnidadeMedida")
+
+    __mapper_args__ = {
+        "version_id_col": rowversion
+    }
