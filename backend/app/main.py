@@ -1,6 +1,8 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # <-- NOVO IMPORT DE SEGURANÇA
+
 from app.db.database import engine, Base
 from app.services.xml_watcher_service import iniciar_robo_vigia
 from app.api.v1.endpoints import (
@@ -15,7 +17,8 @@ from app.api.v1.endpoints import (
     ua_router,
     filial_router,
     solicitacao_transferencia_router,
-    recebimento_router
+    recebimento_router,
+    configuracao_router
 )
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
@@ -41,8 +44,9 @@ Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # O que roda QUANDO O SERVIDOR LIGA
+    # O que roda QUANDO O SERVIDOR LIGA (agrupamos tudo aqui)
     robo_task = asyncio.create_task(iniciar_robo_vigia())
+    iniciar_scheduler()
     yield
     # O que roda QUANDO O SERVIDOR DESLIGA
     robo_task.cancel()
@@ -54,12 +58,25 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# --- CONFIGURAÇÃO DE CORS (O PASSE LIVRE PARA O REACT) ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite que qualquer frontend (como o seu React) converse com a API
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],
+)
+# ---------------------------------------------------------
+
 # Incluindo as rotas
 app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
 app.include_router(regra_global_router.router, prefix="/regras-globais", tags=["Regras Globais"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
+
+# AQUI ESTÁ A ROTA DA CONFIGURAÇÃO!
+app.include_router(configuracao_router.router, prefix="/api/v1/configuracao", tags=["Configurações"])
 
 # Cadastros de Apoio do Endereçamento
 app.include_router(filial_router.router, prefix="/filiais", tags=["Unidades e Filiais"])
@@ -71,11 +88,6 @@ app.include_router(finalidade_endereco_router.router, prefix="/finalidades-ender
 app.include_router(recebimento_router.router, prefix="/recebimentos", tags=["Recebimento (Inbound)"])
 app.include_router(ua_router.router, prefix="/uas", tags=["Unidades de Armazenamento (UAs)"])
 app.include_router(solicitacao_transferencia_router.router, prefix="/solicitacoes-transferencia", tags=["Transferências entre Filiais"])
-
-# Inicia as tarefas de segundo plano assim que o servidor ligar
-@app.on_event("startup")
-def iniciar_rotinas_em_segundo_plano():
-    iniciar_scheduler()
 
 @app.get("/")
 def raiz():

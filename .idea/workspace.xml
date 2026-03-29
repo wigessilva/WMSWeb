@@ -4,23 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="adiciona a transferência entre filiais">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/recebimento_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/enums.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/configuracao_integracao.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/recebimento.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/vinculo_fornecedor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/vinculo_unidade.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/recebimento.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/postcss.config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/tailwind.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Inicia a criação do frontend">
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/configuracao_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/recebimento.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/ua.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +141,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774739238820</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Inicia a criação do frontend">
+      <option name="closed" value="true" />
+      <created>1774748429458</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1774748429458</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -159,7 +161,8 @@
     <MESSAGE value="adiciona a variavel de consumo nos produtos e famílias" />
     <MESSAGE value="adiciona a estrutura multifilial" />
     <MESSAGE value="adiciona a transferência entre filiais" />
-    <option name="LAST_COMMIT_MESSAGE" value="adiciona a transferência entre filiais" />
+    <MESSAGE value="Inicia a criação do frontend" />
+    <option name="LAST_COMMIT_MESSAGE" value="Inicia a criação do frontend" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -1,0 +1,50 @@
+export enum StatusRecebimento {
+  IMPORTADO = "IMPORTADO",
+  PENDENTE = "PENDENTE",
+  AGUARDANDO_LIBERACAO = "AGUARDANDO_LIBERACAO",
+  LIBERADO = "LIBERADO",
+  EM_CONFERENCIA = "EM_CONFERENCIA",
+  EM_ANALISE = "EM_ANALISE",
+  FINALIZADO = "FINALIZADO",
+}
+
+export enum StatusRecebimentoItem {
+  PENDENTE_VINCULO = "PENDENTE_VINCULO",
+  AGUARDANDO_CONFERENCIA = "AGUARDANDO_CONFERENCIA",
+  EM_CONFERENCIA = "EM_CONFERENCIA",
+  CONFERIDO = "CONFERIDO",
+  DIVERGENTE = "DIVERGENTE",
+}
+
+export interface RecebimentoItem {
+  id: number;
+  recebimento_id: number;
+  sku: string | null;
+  descricao: string;
+  qtd_nota: number;
+  qtd_recebida: number | null;
+  und: string;
+  lote: string | null;
+  data_fabricacao: string | null;
+  data_validade: string | null;
+  data_vencimento: string | null;
+  integridade_embalagem: boolean | null;
+  integridade_material: boolean | null;
+  identificacao: boolean | null;
+  certificado_qualidade: boolean | null;
+  destino: string | null;
+  status: string;
+}
+
+export interface Recebimento {
+  id: number;
+  nfe: string;
+  oc: string | null;
+  fornecedor: string;
+  conferente_id: number | null;
+  data_inicio: string | null;
+  conclusao: string | null;
+  status: string;
+  criado_em: string;
+  itens: RecebimentoItem[];
+}
