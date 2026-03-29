@@ -12,7 +12,7 @@ class UA(Base):
     # Ex: UA0124589 (2 letras + 7 números = 9 caracteres)
     codigo = Column("Codigo", String(9), unique=True, index=True, nullable=False)
 
-    # A qual filial esta etiqueta física pertence (Matriz ou Bahia)
+    # A qual filial esta etiqueta física pertence
     filial_id = Column("FilialId", Integer, ForeignKey("filiais.Id"), nullable=False)
 
     # Se estiver em trânsito, para qual filial está a viajar?

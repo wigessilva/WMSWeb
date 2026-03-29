@@ -7,7 +7,6 @@ env/
 .idea/
 
 # Arquivos de Cache do Python
-__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -17,3 +16,28 @@ __pycache__/
 # Logs e arquivos temporários
 *.log
 .pytest_cache/
+
+# --- BACKEND (Python) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+*.db
+*.sqlite3
+
+# --- FRONTEND (React/Node) ---
+# Ignora a pasta gigante de bibliotecas do frontend
+frontend/node_modules/
+# Ignora a pasta de "construção" final do site
+frontend/dist/
+# Ignora logs de erro do npm
+frontend/npm-debug.log*
+frontend/.eslintcache
+
+# --- SISTEMA E EDITORES ---
+.DS_Store
+.vscode/
+*.swp
