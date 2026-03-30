@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Inicia a criação do frontend">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5001_mastercorp_sucesso.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5002_avery_preco_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5003_3m_qtd_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5004_adere_unidade_diff.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5005_tintas_sem_oc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_teste_amostra.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_teste_bonificacao.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,7 +141,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774748429458</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml">
+      <option name="closed" value="true" />
+      <created>1774909936047</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1774909936047</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -161,7 +162,8 @@
     <MESSAGE value="adiciona a estrutura multifilial" />
     <MESSAGE value="adiciona a transferência entre filiais" />
     <MESSAGE value="Inicia a criação do frontend" />
-    <option name="LAST_COMMIT_MESSAGE" value="Inicia a criação do frontend" />
+    <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
+    <option name="LAST_COMMIT_MESSAGE" value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

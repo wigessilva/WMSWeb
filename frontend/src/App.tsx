@@ -14,6 +14,9 @@ export default function App() {
   const [caminhoPasta, setCaminhoPasta] = useState("")
   const [roboAtivo, setRoboAtivo] = useState(false)
 
+  const [dropdownAberto, setDropdownAberto] = useState(false)
+  const [modalConfigAberto, setModalConfigAberto] = useState(false)
+
 // Função para puxar os dados do Python
   const carregarRecebimentos = async () => {
     try {
@@ -39,6 +42,7 @@ export default function App() {
     try {
       await configuracaoService.updateRoboConfig(caminhoPasta)
       alert("Configuração guardada com sucesso! O robô já sabe onde procurar.")
+      setModalConfigAberto(false)
     } catch (error) {
       console.error("Detalhes do erro:", error)
       alert("Erro ao guardar configuração. Verifique o console para mais detalhes.")
@@ -116,7 +120,6 @@ export default function App() {
           <Link to="/recebimento" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Recebimento</Link>
           <Link to="/estoque" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Estoque</Link>
           <Link to="/produtos" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Gestão de Produtos</Link>
-          <Link to="/configuracoes" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Configurações</Link>
         </nav>
 
         {/* AVATAR DO USUÁRIO */}
@@ -145,44 +148,52 @@ export default function App() {
         </header>
 
         {/* CONTEÚDO DA PÁGINA */}
-        <main className="p-8">
+        <main className="p-4">
           <Routes>
             <Route path="/" element={<h2 className="text-2xl font-bold text-wms-sidebar">Dashboard Central</h2>} />
 
             <Route path="/recebimento" element={
-              <div className="space-y-6">
+              <div className="space-y-4">
 
                 {/* TABELA DE CABEÇALHO (Mestre) */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-wms-sidebar">Romaneios de Entrada</h2>
-
+                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                  <div className="flex justify-end mb-3 relative">
                     <button
-                      onClick={carregarRecebimentos}
-                      className="border border-blue-800 text-blue-800 px-4 py-2 rounded hover:bg-blue-50 transition-colors font-medium"
+                      onClick={() => setDropdownAberto(!dropdownAberto)}
+                      className="bg-wms-sidebar text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
                     >
-                      Atualizar Tabela
+                      Ações <span className="ml-2 text-xs">▼</span>
                     </button>
+
+                    {dropdownAberto && (
+                      <div className="absolute top-10 right-0 w-52 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
+                        <button onClick={() => { carregarRecebimentos(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
+                        <button onClick={() => { setModalConfigAberto(true); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Configurar Pasta XML</button>
+                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar OC</button>
+                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Vincular SKU</button>
+                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50">Alterar Destino</button>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="overflow-y-auto max-h-64 border border-gray-200 rounded">
+                  <div className="overflow-y-auto max-h-72 border border-gray-200 rounded">
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                       <thead className="sticky top-0 bg-gray-50 shadow-sm">
-                        <tr className="text-gray-700">
-                          <th className="p-3 font-semibold border-b border-gray-200">Romaneio</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">NFe</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">OC</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">Fornecedor</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">Conferente</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">Início</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">Conclusão</th>
-                          <th className="p-3 font-semibold border-b border-gray-200">Status</th>
+                        <tr className="text-gray-700 text-sm">
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Romaneio</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">NFe</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">OC</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Fornecedor</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Conferente</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Início</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Conclusão</th>
+                          <th className="px-3 py-2 font-semibold border-b border-gray-200">Status</th>
                         </tr>
                       </thead>
                       <tbody className="text-gray-600 text-sm">
                         {recebimentos.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="p-8 text-center text-gray-500">
+                            <td colSpan={8} className="px-3 py-4 text-center text-gray-500">
                               Nenhuma nota encontrada. O robô já importou algo?
                             </td>
                           </tr>
@@ -195,15 +206,15 @@ export default function App() {
                                 recebimentoSelecionado?.id === rec.id ? "bg-blue-100" : ""
                               }`}
                             >
-                              <td className="p-3 font-medium">#{rec.id}</td>
-                              <td className="p-3 font-bold text-blue-900">{rec.nfe}</td>
-                              <td className="p-3">{rec.oc || "-"}</td>
-                              <td className="p-3">{rec.fornecedor}</td>
-                              <td className="p-3">{rec.conferente_id || "-"}</td>
-                              <td className="p-3">{rec.data_inicio ? new Date(rec.data_inicio).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="p-3">{rec.conclusao ? new Date(rec.conclusao).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="p-3">
-                                <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
+                              <td className="px-3 py-1.5 font-medium">#{rec.id}</td>
+                              <td className="px-3 py-1.5 font-bold text-blue-900">{rec.nfe}</td>
+                              <td className="px-3 py-1.5">{rec.oc || "-"}</td>
+                              <td className="px-3 py-1.5">{rec.fornecedor}</td>
+                              <td className="px-3 py-1.5">{rec.conferente_id || "-"}</td>
+                              <td className="px-3 py-1.5">{rec.data_inicio ? new Date(rec.data_inicio).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">
+                                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
                                   {rec.status}
                                 </span>
                               </td>
@@ -216,11 +227,7 @@ export default function App() {
                 </div>
 
                 {/* TABELA DE ITENS (Detalhe) */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 min-h-[300px]">
-                  <h2 className="text-xl font-bold text-gray-700 mb-4">
-                    Itens do Romaneio {recebimentoSelecionado ? `(NF: ${recebimentoSelecionado.nfe})` : ""}
-                  </h2>
-
+                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 min-h-[300px]">
                   {!recebimentoSelecionado ? (
                     <div className="flex items-center justify-center h-40 text-gray-400 border-2 border-dashed border-gray-200 rounded">
                       Selecione um romaneio na tabela acima para ver os seus itens.
@@ -228,47 +235,44 @@ export default function App() {
                   ) : (
                     <div className="overflow-x-auto border border-gray-200 rounded">
                       <table className="w-full text-left border-collapse whitespace-nowrap">
-                        <thead className="bg-gray-50 text-gray-700">
+                        <thead className="bg-gray-50 text-gray-700 text-sm">
                           <tr>
-                            <th className="p-3 font-semibold border-b border-gray-200">SKU</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Descrição</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Qtd Nota</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Qtd Recebida</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Und</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Lote</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Fab</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Val</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Vencimento</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Int. Embalagem</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Int. Material</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Identificação</th>
-                            <th className="p-3 font-semibold border-b border-gray-200 text-center">Certif. Qualidade</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Destino</th>
-                            <th className="p-3 font-semibold border-b border-gray-200">Status</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">SKU</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Descrição</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd Nota</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd Recebida</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Und</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Lote</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Fab</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Val</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Vencimento</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Int. Embalagem</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Int. Material</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Identificação</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Certif. Qualidade</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Destino</th>
+                            <th className="px-3 py-2 font-semibold border-b border-gray-200">Status</th>
                           </tr>
                         </thead>
                         <tbody className="text-gray-600 text-sm">
                           {recebimentoSelecionado.itens.map((item) => (
                             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="p-3 font-medium text-blue-800">{item.sku || "N/A"}</td>
-                              <td className="p-3">{item.descricao}</td>
-                              <td className="p-3 font-medium text-center">{item.qtd_nota}</td>
-                              <td className="p-3 font-bold text-blue-600 text-center">{item.qtd_recebida || 0}</td>
-                              <td className="p-3 text-center">{item.und}</td>
-                              <td className="p-3">{item.lote || "-"}</td>
-                              <td className="p-3">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="p-3">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="p-3">{item.data_vencimento ? new Date(item.data_vencimento).toLocaleDateString('pt-BR') : "-"}</td>
-
-                              {/* Transformamos os campos booleanos em Sim/Não. Se for null, mostra um "-" */}
-                              <td className="p-3 text-center">{item.integridade_embalagem !== null ? (item.integridade_embalagem ? "Sim" : "Não") : "-"}</td>
-                              <td className="p-3 text-center">{item.integridade_material !== null ? (item.integridade_material ? "Sim" : "Não") : "-"}</td>
-                              <td className="p-3 text-center">{item.identificacao !== null ? (item.identificacao ? "Sim" : "Não") : "-"}</td>
-                              <td className="p-3 text-center">{item.certificado_qualidade !== null ? (item.certificado_qualidade ? "Sim" : "Não") : "-"}</td>
-
-                              <td className="p-3">{item.destino || "-"}</td>
-                              <td className="p-3">
-                                <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                              <td className="px-3 py-1.5 font-medium text-blue-800">{item.sku || "N/A"}</td>
+                              <td className="px-3 py-1.5">{item.descricao}</td>
+                              <td className="px-3 py-1.5 font-medium text-center">{item.qtd_nota}</td>
+                              <td className="px-3 py-1.5 font-bold text-blue-600 text-center">{item.qtd_recebida || 0}</td>
+                              <td className="px-3 py-1.5 text-center">{item.und}</td>
+                              <td className="px-3 py-1.5">{item.lote || "-"}</td>
+                              <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{item.data_vencimento ? new Date(item.data_vencimento).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.integridade_embalagem !== null ? (item.integridade_embalagem ? "Sim" : "Não") : "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.integridade_material !== null ? (item.integridade_material ? "Sim" : "Não") : "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? (item.identificacao ? "Sim" : "Não") : "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.certificado_qualidade !== null ? (item.certificado_qualidade ? "Sim" : "Não") : "-"}</td>
+                              <td className="px-3 py-1.5">{item.destino || "-"}</td>
+                              <td className="px-3 py-1.5">
+                                <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
                                   {item.status}
                                 </span>
                               </td>
@@ -284,37 +288,36 @@ export default function App() {
 
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/produtos" element={<h2>Gestão de Produtos</h2>} />
-            <Route path="/configuracoes" element={
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 max-w-2xl">
-                <h2 className="text-2xl font-bold mb-6 text-wms-sidebar">Configurações Globais</h2>
+          </Routes>
 
-                <div className="space-y-6">
-                  <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Robô de Importação XML (NFe)</h3>
+          {modalConfigAberto && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML (NFe)</h3>
+                  <button onClick={() => setModalConfigAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+                </div>
 
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Caminho da Pasta de Origem</label>
-                      <input
-                        type="text"
-                        value={caminhoPasta}
-                        onChange={(e) => setCaminhoPasta(e.target.value)}
-                        placeholder="Ex: C:\XMLs_Entrada ou \\Servidor\Notas"
-                        className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">O robô irá vigiar esta pasta e mover os ficheiros processados de forma automática.</p>
-                    </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Caminho da Pasta de Origem</label>
+                  <input
+                    type="text"
+                    value={caminhoPasta}
+                    onChange={(e) => setCaminhoPasta(e.target.value)}
+                    placeholder="Ex: C:\XMLs_Entrada ou \\Servidor\Notas"
+                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">O robô irá vigiar esta pasta e mover os arquivos processados automaticamente.</p>
+                </div>
 
-                    <button
-                      onClick={guardarConfiguracao}
-                      className="bg-wms-sidebar text-white px-6 py-2 rounded hover:bg-blue-800 transition-colors font-medium"
-                    >
-                      Guardar Configurações
-                    </button>
-                  </div>
+                <div className="flex justify-end space-x-3 mt-4">
+                  <button onClick={() => setModalConfigAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
+                  <button onClick={guardarConfiguracao} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors">Salvar</button>
                 </div>
               </div>
-            } />
-          </Routes>
+            </div>
+          )}
+
         </main>
       </div>
     </div>
