@@ -10,6 +10,11 @@ from ..enums import StatusRecebimento, StatusRecebimentoItem
 class RecebimentoService:
     @staticmethod
     def importar_xml(db: Session, dados: RecebimentoCriar, cnpj_fornecedor: str):
+        # Verifica se a nota já foi importada para evitar duplicidade
+        recebimento_existente = db.query(Recebimento).filter(Recebimento.nfe == dados.nfe).first()
+        if recebimento_existente:
+            raise ValueError(f"A NFe {dados.nfe} já foi importada anteriormente.")
+
         # 1. Cria o Cabeçalho (O Romaneio)
         db_receb = Recebimento(
             nfe=dados.nfe,

@@ -5,16 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Inicia a criação do frontend">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/configuracao_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/recebimento.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5001_mastercorp_sucesso.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5002_avery_preco_erro.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5003_3m_qtd_erro.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5004_adere_unidade_diff.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_5005_tintas_sem_oc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_teste_amostra.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/XMLs/Processados/nfe_teste_bonificacao.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

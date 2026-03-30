@@ -107,36 +107,40 @@ export default function App() {
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-wms-sidebar text-white flex flex-col shadow-lg z-10">
-        <div className="p-6 text-2xl font-bold border-b border-blue-900 tracking-wide">
+      <aside className="w-56 bg-wms-sidebar text-white flex flex-col shadow-lg z-10">
+        <div className="p-4 text-xl font-bold border-b border-blue-900 tracking-wide">
           WMS System
         </div>
-        <nav className="flex-1 p-4 space-y-2 mt-4">
-          <Link to="/" className="block p-3 rounded hover:bg-blue-800 transition-colors font-medium">Home</Link>
-          <Link to="/recebimento" className="block p-3 rounded hover:bg-blue-800 transition-colors">Recebimento</Link>
-          <Link to="/estoque" className="block p-3 rounded hover:bg-blue-800 transition-colors">Estoque</Link>
-          <Link to="/produtos" className="block p-3 rounded hover:bg-blue-800 transition-colors">Gestão de Produtos</Link>
-          {/* Adicionamos o botão de Configurações aqui embaixo! */}
-          <Link to="/configuracoes" className="block p-3 rounded hover:bg-blue-800 transition-colors">Configurações</Link>
+        <nav className="flex-1 p-3 space-y-1 mt-2">
+          <Link to="/" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium">Home</Link>
+          <Link to="/recebimento" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Recebimento</Link>
+          <Link to="/estoque" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Estoque</Link>
+          <Link to="/produtos" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Gestão de Produtos</Link>
+          <Link to="/configuracoes" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Configurações</Link>
         </nav>
+
+        {/* AVATAR DO USUÁRIO */}
+        <div className="p-4 border-t border-blue-900 flex items-center space-x-3 cursor-pointer hover:bg-blue-800 transition-colors">
+          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-800 font-bold text-sm">
+            U
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Usuário</span>
+            <span className="text-xs text-blue-300">Sair</span>
+          </div>
+        </div>
       </aside>
 
       {/* ÁREA PRINCIPAL */}
       <div className="flex-1 bg-wms-fundo flex flex-col">
         {/* TOPBAR */}
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-8 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-700">WMS Operacional</h1>
+        <header className="h-14 bg-white shadow-sm flex items-center justify-between px-6 border-b border-gray-200">
+          <h1 className="text-lg font-semibold text-gray-700">WMS Operacional</h1>
           <div className="flex items-center space-x-6">
-            <select className="border border-gray-300 p-2 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar">
+            <select className="border border-gray-300 p-1.5 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar">
               <option>Matriz (MG)</option>
               <option>Filial (BA)</option>
             </select>
-            <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold">
-                U
-              </div>
-              <span className="text-sm font-medium">Usuário</span>
-            </div>
           </div>
         </header>
 
