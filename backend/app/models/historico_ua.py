@@ -5,21 +5,21 @@ from ..db.database import Base
 
 
 class HistoricoUA(Base):
-    __tablename__ = "historico_uas"
+    __tablename__ = "HistoricoUas"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
     # A qual UA este evento pertence
-    ua_id = Column("UaId", Integer, ForeignKey("uas.Id"), nullable=False)
+    ua_id = Column("UaId", Integer, ForeignKey("Uas.Id"), nullable=False)
 
     # O que aconteceu (Ex: CRIACAO, TRANSFERENCIA, MUDANCA_ESTADO, EXPEDICAO)
     tipo_acao = Column("TipoAcao", String(50), nullable=False)
 
     # De onde saiu (Pode ser nulo na criação)
-    origem_endereco_id = Column("OrigemEnderecoId", Integer, ForeignKey("enderecos.Id"), nullable=True)
+    origem_endereco_id = Column("OrigemEnderecoId", Integer, ForeignKey("Enderecos.Id"), nullable=True)
 
     # Para onde foi (Pode ser nulo na expedição)
-    destino_endereco_id = Column("DestinoEnderecoId", Integer, ForeignKey("enderecos.Id"), nullable=True)
+    destino_endereco_id = Column("DestinoEnderecoId", Integer, ForeignKey("Enderecos.Id"), nullable=True)
 
     # Justificativas ou detalhes do evento
     observacoes = Column("Observacoes", String(255), nullable=True)

@@ -5,12 +5,12 @@ from ..db.database import Base
 
 
 class VinculoProdutoFornecedor(Base):
-    __tablename__ = "vinculos_produto_fornecedor"
+    __tablename__ = "VinculosProdutoFornecedor"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
     # 1. SKU Interno (Aponta para o nosso cadastro de produtos)
-    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=False)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=False)
 
     # 2. Descrição Interna (Acedida automaticamente através do relacionamento abaixo)
 

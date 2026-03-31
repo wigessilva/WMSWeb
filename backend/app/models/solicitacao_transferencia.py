@@ -5,16 +5,16 @@ from ..db.database import Base
 
 
 class SolicitacaoTransferencia(Base):
-    __tablename__ = "solicitacoes_transferencia"
+    __tablename__ = "SolicitacoesTransferencia"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
     # Quem pede e quem atende
-    filial_requisitante_id = Column("FilialRequisitanteId", Integer, ForeignKey("filiais.Id"), nullable=False)
-    filial_atendente_id = Column("FilialAtendenteId", Integer, ForeignKey("filiais.Id"), nullable=False)
+    filial_requisitante_id = Column("FilialRequisitanteId", Integer, ForeignKey("Filiais.Id"), nullable=False)
+    filial_atendente_id = Column("FilialAtendenteId", Integer, ForeignKey("Filiais.Id"), nullable=False)
 
     # O que está a ser pedido
-    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=False)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=False)
 
     # Quantidades (Float para suportar peso, comprimento, largura ou unidade)
     quantidade_solicitada = Column("QuantidadeSolicitada", Float, nullable=False)

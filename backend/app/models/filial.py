@@ -4,7 +4,7 @@ from datetime import datetime
 from ..db.database import Base
 
 class Filial(Base):
-    __tablename__ = "filiais"
+    __tablename__ = "Filiais"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     nome = Column("Nome", String(100), nullable=False)

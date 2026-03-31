@@ -4,12 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria o histórico do xml e lê as ordens de compra">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/area.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/area.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/configuracao_integracao.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/configuracao_integracao.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/endereco.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/endereco.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/familia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/familia.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/models/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/filial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/filial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/historico_ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/historico_ua.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/historico_xml.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/historico_xml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/produto.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/recebimento.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/recebimento.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/regra_global.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/regra_global.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/solicitacao_transferencia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/solicitacao_transferencia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/ua.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/unidade_medida.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/unidade_medida.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/vinculo_fornecedor.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/vinculo_fornecedor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/vinculo_unidade.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/vinculo_unidade.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -168,7 +182,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774916709407</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar">
+      <option name="closed" value="true" />
+      <created>1774998856811</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1774998856811</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -184,7 +206,8 @@
     <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
     <MESSAGE value="adiciona o botão &quot;Ações&quot; no recebimento" />
     <MESSAGE value="cria o histórico do xml e lê as ordens de compra" />
-    <option name="LAST_COMMIT_MESSAGE" value="cria o histórico do xml e lê as ordens de compra" />
+    <MESSAGE value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
+    <option name="LAST_COMMIT_MESSAGE" value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

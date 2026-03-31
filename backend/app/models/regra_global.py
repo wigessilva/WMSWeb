@@ -4,7 +4,7 @@ from ..db.database import Base
 
 
 class RegraGlobal(Base):
-    __tablename__ = "regras_globais"
+    __tablename__ = "ParametrosMestres"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 

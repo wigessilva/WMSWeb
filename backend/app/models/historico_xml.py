@@ -3,7 +3,7 @@ from datetime import datetime
 from app.db.database import Base
 
 class HistoricoXML(Base):
-    __tablename__ = "historico_xml"
+    __tablename__ = "HistoricoXml"
 
     id = Column(Integer, primary_key=True, index=True)
     nfe = Column(String(50), nullable=False, unique=True)

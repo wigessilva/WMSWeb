@@ -5,7 +5,7 @@ from ..db.database import Base
 
 
 class UA(Base):
-    __tablename__ = "uas"
+    __tablename__ = "Uas"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
@@ -13,13 +13,13 @@ class UA(Base):
     codigo = Column("Codigo", String(9), unique=True, index=True, nullable=False)
 
     # A qual filial esta etiqueta física pertence
-    filial_id = Column("FilialId", Integer, ForeignKey("filiais.Id"), nullable=False)
+    filial_id = Column("FilialId", Integer, ForeignKey("Filiais.Id"), nullable=False)
 
     # Se estiver em trânsito, para qual filial está a viajar?
-    filial_destino_id = Column("FilialDestinoId", Integer, ForeignKey("filiais.Id"), nullable=True)
+    filial_destino_id = Column("FilialDestinoId", Integer, ForeignKey("Filiais.Id"), nullable=True)
 
     # Identificação do Produto (Opcional para UAs virgens)
-    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=True)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=True)
 
     # Rastreabilidade (vindos do Recebimento/ERP)
     lote = Column("Lote", String(50), nullable=True)
@@ -27,10 +27,10 @@ class UA(Base):
 
     # Quantidade amarrada à Unidade específica daquele Produto
     quantidade = Column("Quantidade", Float, nullable=True)
-    unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("unidades_produto.Id"), nullable=True)
+    unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("UnidadesProduto.Id"), nullable=True)
 
     # Localização Física (Opcional, pois pode estar 'Em Trânsito' na empilhadora)
-    endereco_id = Column("EnderecoId", Integer, ForeignKey("enderecos.Id"), nullable=True)
+    endereco_id = Column("EnderecoId", Integer, ForeignKey("Enderecos.Id"), nullable=True)
 
     # Dimensões Físicas Específicas da UA (LCA)
     largura = Column("Largura", Float, nullable=True)

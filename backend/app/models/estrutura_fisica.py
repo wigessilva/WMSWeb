@@ -3,7 +3,7 @@ from datetime import datetime
 from ..db.database import Base
 
 class EstruturaFisica(Base):
-    __tablename__ = "estruturas_fisicas"
+    __tablename__ = "EstruturasFisicas"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     nome = Column("Nome", String(50), unique=True, index=True, nullable=False)

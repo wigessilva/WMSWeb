@@ -4,7 +4,7 @@ from ..db.database import Base
 
 
 class UnidadeMedida(Base):
-    __tablename__ = "unidades_medida"
+    __tablename__ = "UnidadesMedida"
 
     # O primeiro parâmetro (ex: "Id", "Sigla") força o nome da coluna no banco em PascalCase
     id = Column("Id", Integer, primary_key=True, index=True)

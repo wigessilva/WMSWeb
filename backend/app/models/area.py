@@ -4,14 +4,14 @@ from datetime import datetime
 from ..db.database import Base
 
 class Area(Base):
-    __tablename__ = "areas"
+    __tablename__ = "Areas"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     letra = Column("Letra", String(5), unique=True, index=True, nullable=False)
     descricao = Column("Descricao", String(255), nullable=True)
 
     # Vincula esta área a uma Filial/Matriz específica
-    filial_id = Column("FilialId", Integer, ForeignKey("filiais.Id"), nullable=False)
+    filial_id = Column("FilialId", Integer, ForeignKey("Filiais.Id"), nullable=False)
 
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
     atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)

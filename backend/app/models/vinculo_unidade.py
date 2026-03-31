@@ -5,7 +5,7 @@ from ..db.database import Base
 
 
 class VinculoUnidade(Base):
-    __tablename__ = "vinculos_unidade"
+    __tablename__ = "VinculosUnidade"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
@@ -13,7 +13,7 @@ class VinculoUnidade(Base):
     unidade_externa = Column("UnidadeExterna", String(20), nullable=False, index=True)
 
     # 2. A nossa unidade interna oficial (Aponta para a tabela de Unidades de Medida do WMS)
-    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=False)
+    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=False)
 
     # Auditoria
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

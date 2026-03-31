@@ -4,7 +4,7 @@ from ..db.database import Base
 
 
 class Familia(Base):
-    __tablename__ = "familias"
+    __tablename__ = "Familias"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     nome = Column("Nome", String(100), unique=True, index=True, nullable=False)

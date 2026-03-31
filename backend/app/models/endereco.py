@@ -4,12 +4,12 @@ from datetime import datetime
 from ..db.database import Base
 
 class Endereco(Base):
-    __tablename__ = "enderecos"
+    __tablename__ = "Enderecos"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
     # Localização Física
-    area_id = Column("AreaId", Integer, ForeignKey("areas.Id"), nullable=False)
+    area_id = Column("AreaId", Integer, ForeignKey("Areas.Id"), nullable=False)
     rua = Column("Rua", Integer, nullable=False)
     predio = Column("Predio", Integer, nullable=False)
     nivel = Column("Nivel", Integer, nullable=False)
@@ -19,12 +19,12 @@ class Endereco(Base):
     codigo_formatado = Column("CodigoFormatado", String(50), unique=True, index=True, nullable=False)
 
     # Características da Vaga
-    estrutura_fisica_id = Column("EstruturaFisicaId", Integer, ForeignKey("estruturas_fisicas.Id"), nullable=False)
-    finalidade_id = Column("FinalidadeId", Integer, ForeignKey("finalidades_endereco.Id"), nullable=False)
+    estrutura_fisica_id = Column("EstruturaFisicaId", Integer, ForeignKey("EstruturasFisicas.Id"), nullable=False)
+    finalidade_id = Column("FinalidadeId", Integer, ForeignKey("FinalidadesEndereco.Id"), nullable=False)
     peso_maximo_kg = Column("PesoMaximoKg", Float, nullable=False)
 
     # Exclusivo para Picking Fixo (Se estiver vazio, é uma vaga dinâmica/pulmão)
-    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=True)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=True)
     capacidade_maxima_und = Column("CapacidadeMaximaUnd", Integer, nullable=True)
 
     # AUDITORIA E CONCORRÊNCIA (Padrão ACID)

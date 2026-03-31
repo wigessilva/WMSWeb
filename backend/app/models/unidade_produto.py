@@ -5,17 +5,17 @@ from ..db.database import Base
 
 
 class UnidadeProduto(Base):
-    __tablename__ = "unidades_produto"
+    __tablename__ = "UnidadesProduto"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     # Importante: a ForeignKey agora aponta para "produtos.Id" com "I" maiúsculo
-    produto_id = Column("ProdutoId", Integer, ForeignKey("produtos.Id"), nullable=False)
+    produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=False)
 
     # Tipo: base, produto ou recipiente
     tipo = Column("Tipo", String(20), nullable=False)
 
     # Chave estrangeira apontando para a unidade de medida real
-    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=False)
+    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=False)
 
     # Fator de conversão: Unidade Base sempre é 1.0
     fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)

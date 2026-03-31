@@ -5,7 +5,7 @@ from ..db.database import Base
 
 
 class Recebimento(Base):
-    __tablename__ = "recebimentos"
+    __tablename__ = "Recebimentos"
 
     # Este ID é o seu Romaneio (auto-incremento 1, 2, 3...)
     id = Column("Id", Integer, primary_key=True, index=True)
@@ -35,13 +35,13 @@ class Recebimento(Base):
 
 
 class RecebimentoItem(Base):
-    __tablename__ = "recebimento_itens"
+    __tablename__ = "RecebimentoItens"
 
     id = Column("Id", Integer, primary_key=True, index=True)
-    recebimento_id = Column("RecebimentoId", Integer, ForeignKey("recebimentos.Id"), nullable=False)
+    recebimento_id = Column("RecebimentoId", Integer, ForeignKey("Recebimentos.Id"), nullable=False)
 
     # O SKU nasce nulo e aguarda o vínculo (De/Para) do usuário
-    sku = Column("Sku", Integer, ForeignKey("produtos.Id"), nullable=True)
+    sku = Column("Sku", Integer, ForeignKey("Produtos.Id"), nullable=True)
 
     descricao = Column("Descricao", String(255), nullable=False)
     qtd_nota = Column("QtdNota", Float, nullable=False)
@@ -60,7 +60,7 @@ class RecebimentoItem(Base):
     certif_qual = Column("CertifQual", String(10), nullable=True)
 
     # Direcionamento (Cross-docking para outra filial, por exemplo)
-    destino_id = Column("DestinoId", Integer, ForeignKey("filiais.Id"), nullable=True)
+    destino_id = Column("DestinoId", Integer, ForeignKey("Filiais.Id"), nullable=True)
 
     status = Column("Status", String(50), default="Pendente", nullable=False)
 

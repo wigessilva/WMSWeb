@@ -5,7 +5,7 @@ from ..db.database import Base
 
 
 class Produto(Base):
-    __tablename__ = "produtos"
+    __tablename__ = "Produtos"
 
     id = Column("Id", Integer, primary_key=True, index=True)
     sku = Column("Sku", String(50), unique=True, index=True, nullable=False)
@@ -13,12 +13,12 @@ class Produto(Base):
     referencia = Column("Referencia", String(100), nullable=True)  # Vem da coluna Ref do ERP
 
     # Chave estrangeira ligando à tabela de famílias
-    familia_id = Column("FamiliaId", Integer, ForeignKey("familias.Id"), nullable=True)
+    familia_id = Column("FamiliaId", Integer, ForeignKey("Familias.Id"), nullable=True)
     herdar_regras_familia = Column("HerdarRegrasFamilia", Boolean, default=True)
 
     variavel_consumo = Column("VariavelConsumo", String(20), nullable=True)
 
-    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("unidades_medida.Id"), nullable=True)
+    unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
 
     # Ciclo de Vida Comercial
     status = Column("Status", String(50), default="pendente")

@@ -4,7 +4,7 @@ from ..db.database import Base
 
 
 class ConfiguracaoIntegracao(Base):
-    __tablename__ = "configuracoes_integracao"
+    __tablename__ = "ConfiguracoesIntegracao"
 
     id = Column("Id", Integer, primary_key=True, index=True)
 
