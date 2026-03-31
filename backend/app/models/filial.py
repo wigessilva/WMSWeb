@@ -7,9 +7,10 @@ class Filial(Base):
     __tablename__ = "filiais"
 
     id = Column("Id", Integer, primary_key=True, index=True)
-    nome = Column("Nome", String(100), nullable=False)  # Ex: Matriz MG, Filial BA
-    cnpj = Column("Cnpj", String(20), index=True, nullable=True)  # Removido o unique=True
+    nome = Column("Nome", String(100), nullable=False)
+    cnpj = Column("Cnpj", String(20), index=True, nullable=True)
     is_matriz = Column("IsMatriz", Boolean, default=False, nullable=False)
+    ativo = Column("Ativo", Boolean, default=False, nullable=False)
 
     # Auditoria
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

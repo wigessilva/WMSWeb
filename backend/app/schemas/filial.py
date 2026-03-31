@@ -6,6 +6,7 @@ class FilialBase(BaseModel):
     nome: str
     cnpj: Optional[str] = None
     is_matriz: bool = False
+    ativo: bool = True
 
 class FilialCriar(FilialBase):
     pass

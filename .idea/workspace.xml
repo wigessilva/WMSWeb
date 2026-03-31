@@ -4,21 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="adiciona o botão &quot;Ações&quot; no recebimento">
-      <change afterPath="$PROJECT_DIR$/backend/app/models/historico_xml.py" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria o histórico do xml e lê as ordens de compra">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Com_Erro/nfe_5001_mastercorp_sucesso.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Com_Erro/nfe_5002_avery_preco_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Com_Erro/nfe_5003_3m_qtd_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Com_Erro/nfe_5004_adere_unidade_diff.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Com_Erro/nfe_5006_avery.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5005_tintas_sem_oc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_teste_amostra.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_teste_bonificacao.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/recebimento_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/recebimento_router.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/filial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/filial.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
     </list>
@@ -171,7 +160,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774910941060</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="cria o histórico do xml e lê as ordens de compra">
+      <option name="closed" value="true" />
+      <created>1774916709407</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1774916709407</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -186,7 +183,8 @@
     <MESSAGE value="Inicia a criação do frontend" />
     <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
     <MESSAGE value="adiciona o botão &quot;Ações&quot; no recebimento" />
-    <option name="LAST_COMMIT_MESSAGE" value="adiciona o botão &quot;Ações&quot; no recebimento" />
+    <MESSAGE value="cria o histórico do xml e lê as ordens de compra" />
+    <option name="LAST_COMMIT_MESSAGE" value="cria o histórico do xml e lê as ordens de compra" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -1,8 +1,15 @@
 import axios from 'axios';
 import type { Recebimento } from '../types/recebimento';
 
-// URL base atualizada para a porta 8005 e o prefixo definido no main.py
+// URL padrão de fallback, caso o usuário ainda não tenha escolhido nenhuma
 const api = axios.create({ baseURL: 'http://localhost:8005/recebimentos' });
+
+// Adicionamos um interceptador que muda a URL base antes de a requisição sair
+api.interceptors.request.use((config) => {
+  const urlServidorFilial = localStorage.getItem('wms_api_url') || 'http://localhost:8005';
+  config.baseURL = `${urlServidorFilial}/recebimentos`;
+  return config;
+});
 
 export const recebimentoService = {
   // Busca todos os recebimentos com os seus itens na base de dados

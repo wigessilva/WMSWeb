@@ -19,6 +19,33 @@ export default function App() {
   const [modalOCAberto, setModalOCAberto] = useState(false)
   const [ocDigitada, setOcDigitada] = useState("")
 
+  // Controles dos menus da Sidebar
+  const [menuConfigAberto, setMenuConfigAberto] = useState(false)
+  const [menuProdutosAberto, setMenuProdutosAberto] = useState(false)
+  const [menuEstoqueAberto, setMenuEstoqueAberto] = useState(false)
+
+  // Estado para armazenar as filiais vindas do banco
+  const [filiais, setFiliais] = useState<any[]>([])
+
+  useEffect(() => {
+    const buscarFiliais = async () => {
+      try {
+        const urlBase = localStorage.getItem('wms_api_url') || 'http://localhost:8005';
+        // Ajuste a rota se o seu endpoint for diferente (ex: usando api.get('/filiais'))
+        const response = await fetch(`${urlBase}/filiais/`);
+        if (response.ok) {
+          const dados = await response.json();
+          // Filtra para exibir na Topbar apenas as filiais ativas
+          setFiliais(dados.filter((f: any) => f.ativo !== false));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar filiais do banco:", error);
+      }
+    };
+
+    buscarFiliais();
+  }, []);
+
 // Função para puxar os dados do Python
   const carregarRecebimentos = async () => {
     try {
@@ -157,18 +184,77 @@ export default function App() {
     <div className="flex min-h-screen font-sans text-gray-800">
       {/* SIDEBAR */}
       <aside className="w-56 bg-wms-sidebar text-white flex flex-col shadow-lg z-10">
-        <div className="p-4 text-xl font-bold border-b border-blue-900 tracking-wide">
-          WMS System
+        <div className="p-4 text-xl font-bold tracking-wide">
+          WMS
         </div>
-        <nav className="flex-1 p-3 space-y-1 mt-2">
-          <Link to="/" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium">Home</Link>
-          <Link to="/recebimento" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Recebimento</Link>
-          <Link to="/estoque" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Estoque</Link>
-          <Link to="/produtos" className="block p-2.5 rounded hover:bg-blue-800 transition-colors text-sm">Gestão de Produtos</Link>
+        <nav className="flex-1 p-3 space-y-2 mt-2 overflow-y-auto">
+
+          {/* 1. CONFIGURAÇÕES */}
+          <div>
+            <button
+              onClick={() => setMenuConfigAberto(!menuConfigAberto)}
+              className="w-full text-left p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium flex justify-between items-center"
+            >
+              Configurações
+              <span className="text-xs font-bold">{menuConfigAberto ? 'v' : '<'}</span>
+            </button>
+            {menuConfigAberto && (
+              <div className="pl-4 mt-1 space-y-1 ml-2">
+                <Link to="/usuarios" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Usuários</Link>
+                <Link to="/perfis" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Perfis</Link>
+                <Link to="/filiais" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Filiais</Link>
+                <Link to="/unidades-medida" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Unidades de Medida</Link>
+                <Link to="/parametros" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Parâmetros Mestres</Link>
+                <Link to="/impressao" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Impressão</Link>
+              </div>
+            )}
+          </div>
+
+          {/* 2. HOME */}
+          <Link to="/" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Home</Link>
+
+          {/* 3. GESTÃO DE PRODUTOS */}
+          <div>
+            <button
+              onClick={() => setMenuProdutosAberto(!menuProdutosAberto)}
+              className="w-full text-left p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium flex justify-between items-center"
+            >
+              Gestão de Produtos
+              <span className="text-xs font-bold">{menuProdutosAberto ? 'v' : '<'}</span>
+            </button>
+            {menuProdutosAberto && (
+              <div className="pl-4 mt-1 space-y-1 ml-2">
+                <Link to="/produtos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Produtos</Link>
+                <Link to="/familias" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Famílias</Link>
+                <Link to="/vinculos-fornecedores" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Fornecedores</Link>
+              </div>
+            )}
+          </div>
+
+          {/* 4. ESTOQUE */}
+          <div>
+            <button
+              onClick={() => setMenuEstoqueAberto(!menuEstoqueAberto)}
+              className="w-full text-left p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium flex justify-between items-center"
+            >
+              Estoque
+              <span className="text-xs font-bold">{menuEstoqueAberto ? 'v' : '<'}</span>
+            </button>
+            {menuEstoqueAberto && (
+              <div className="pl-4 mt-1 space-y-1 ml-2">
+                <Link to="/estoque/uas" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">UAs</Link>
+                <Link to="/estoque/enderecos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Endereços</Link>
+              </div>
+            )}
+          </div>
+
+          {/* 5. RECEBIMENTO */}
+          <Link to="/recebimento" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Recebimento</Link>
+
         </nav>
 
         {/* AVATAR DO USUÁRIO */}
-        <div className="p-4 border-t border-blue-900 flex items-center space-x-3 cursor-pointer hover:bg-blue-800 transition-colors">
+        <div className="p-4 flex items-center space-x-3 cursor-pointer hover:bg-[#1d6197] transition-colors">
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-800 font-bold text-sm">
             U
           </div>
@@ -185,9 +271,25 @@ export default function App() {
         <header className="h-14 bg-white shadow-sm flex items-center justify-between px-6 border-b border-gray-200">
           <h1 className="text-lg font-semibold text-gray-700">WMS Operacional</h1>
           <div className="flex items-center space-x-6">
-            <select className="border border-gray-300 p-1.5 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar">
-              <option>Matriz (MG)</option>
-              <option>Filial (BA)</option>
+            <select
+              value={localStorage.getItem('wms_api_url') || "http://localhost:8005"}
+              onChange={(e) => {
+                localStorage.setItem('wms_api_url', e.target.value);
+                // Recarrega a página para limpar os estados antigos e buscar os dados da nova filial
+                window.location.reload();
+              }}
+              className="border border-gray-300 p-1.5 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar cursor-pointer"
+            >
+              {filiais.length === 0 ? (
+                <option value="http://localhost:8005">Carregando filiais...</option>
+              ) : (
+                filiais.map((filial) => (
+                  // Substitua 'url_api' pelo nome exato da coluna no seu banco onde você guarda o IP/URL do servidor da filial
+                  <option key={filial.id} value={filial.url_api || `http://${filial.ip}:8005`}>
+                    {filial.nome} {filial.is_matriz ? "(Matriz)" : "(Filial)"}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </header>
@@ -205,7 +307,7 @@ export default function App() {
                   <div className="flex justify-end mb-3 relative">
                     <button
                       onClick={() => setDropdownAberto(!dropdownAberto)}
-                      className="bg-wms-sidebar text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
+                      className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
                     >
                       Ações <span className="ml-2 text-xs">▼</span>
                     </button>
