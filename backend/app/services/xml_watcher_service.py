@@ -2,7 +2,7 @@ import os
 import shutil
 import asyncio
 import xml.etree.ElementTree as ET
-from app.db.database import SessionLocal
+from app.db.database import SessionLocal, SessionLocalERP
 from app.schemas.recebimento import RecebimentoCriar, RecebimentoItemCriar
 from app.services.recebimento_service import RecebimentoService
 from app.models.configuracao_integracao import ConfiguracaoIntegracao
@@ -45,9 +45,19 @@ def extrair_dados_nfe(caminho_arquivo):
                 )
                 itens.append(item)
 
+    # Tenta encontrar a tag xPed (Ordem de Compra) no XML
+    tag_xped = None
+    for elem in root.iter():
+        if elem.tag.endswith('xPed'):
+            tag_xped = elem
+            break
+
+    oc_extraida = tag_xped.text if tag_xped is not None else None
+
     # 3. Monta o formulário de envio
     dados_recebimento = RecebimentoCriar(
         nfe=nfe,
+        oc=oc_extraida,  # Passa a OC para o schema
         fornecedor=fornecedor[:150],
         itens=itens
     )
@@ -60,6 +70,7 @@ async def iniciar_robo_vigia():
 
     while True:
         db = SessionLocal()
+        db_erp = SessionLocalERP()  # Instancia a conexão com o ERP
         try:
             # Pede à base de dados o caminho que o utilizador guardou no ecrã
             config = db.query(ConfiguracaoIntegracao).filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
@@ -83,7 +94,10 @@ async def iniciar_robo_vigia():
 
                         try:
                             dados, cnpj_forn = extrair_dados_nfe(caminho_completo)
-                            RecebimentoService.importar_xml(db=db, dados=dados, cnpj_fornecedor=cnpj_forn)
+
+                            # Adicionamos o db_erp aqui na chamada do serviço
+                            RecebimentoService.importar_xml(db=db, db_erp=db_erp, dados=dados,
+                                                            cnpj_fornecedor=cnpj_forn)
 
                             shutil.move(caminho_completo, os.path.join(pasta_processados, arquivo))
                             print(f"✅ Sucesso! {arquivo} importado e movido.")
@@ -94,5 +108,6 @@ async def iniciar_robo_vigia():
             print(f"⚠️ Erro no loop principal do Robô: {e}")
         finally:
             db.close()
+            db_erp.close()  # Fecha a conexão do ERP para não prender recursos
 
         await asyncio.sleep(10)

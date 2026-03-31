@@ -16,6 +16,11 @@ export const recebimentoService = {
     return response.data;
   },
 
+  sincronizarOCsPendentes: async () => {
+    const response = await api.post('/sincronizar-ocs');
+    return response.data;
+  },
+
   liberar: async (id: number): Promise<Recebimento> => {
     const response = await api.post(`/${id}/liberar`);
     return response.data;
@@ -29,5 +34,10 @@ export const recebimentoService = {
   finalizar: async (id: number): Promise<Recebimento> => {
     const response = await api.post(`/${id}/finalizar`);
     return response.data;
-  }
+  },
+
+  vincularOC: async (id: number, oc: string) => {
+    const response = await api.post(`/${id}/vincular-oc?oc=${oc}`);
+    return response.data;
+  },
 };

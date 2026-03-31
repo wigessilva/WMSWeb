@@ -27,6 +27,7 @@ from app.models.produto import Produto
 from app.models.unidade_produto import UnidadeProduto
 from app.models.unidade_medida import UnidadeMedida
 from app.models.regra_global import RegraGlobal
+from app.models.historico_xml import HistoricoXML
 
 # Importa os novos modelos de Endereçamento
 from app.models.filial import Filial

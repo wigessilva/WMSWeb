@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import datetime
 from ..models.recebimento import Recebimento, RecebimentoItem
+from ..models.historico_xml import HistoricoXML
 from ..models.vinculo_fornecedor import VinculoProdutoFornecedor
 from ..models.vinculo_unidade import VinculoUnidade
 from ..schemas.recebimento import RecebimentoCriar
@@ -9,21 +11,38 @@ from ..enums import StatusRecebimento, StatusRecebimentoItem
 
 class RecebimentoService:
     @staticmethod
-    def importar_xml(db: Session, dados: RecebimentoCriar, cnpj_fornecedor: str):
+    def importar_xml(db: Session, db_erp: Session, dados: RecebimentoCriar, cnpj_fornecedor: str):
         # Verifica se a nota já foi importada para evitar duplicidade
         recebimento_existente = db.query(Recebimento).filter(Recebimento.nfe == dados.nfe).first()
         if recebimento_existente:
             raise ValueError(f"A NFe {dados.nfe} já foi importada anteriormente.")
 
+        # 0. Verifica se a OC (que veio da tag <xPed>) existe no ERP
+        oc_verificada = None
+        if dados.oc:
+            # Procura no ERP pela coluna correta (NumeroOC)
+            query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+            resultado_erp = db_erp.execute(query_erp, {"oc": dados.oc}).first()
+            if resultado_erp:
+                oc_verificada = dados.oc
+
         # 1. Cria o Cabeçalho (O Romaneio)
         db_receb = Recebimento(
             nfe=dados.nfe,
-            oc=dados.oc,
+            oc=oc_verificada,  # Salva a OC se encontrou no ERP, senão insere Null
             fornecedor=dados.fornecedor,
             status=StatusRecebimento.IMPORTADO.value
         )
         db.add(db_receb)
         db.flush()  # Guarda temporariamente para gerar o ID (Romaneio)
+
+        # 1.5 Salva a tag original na tabela de histórico
+        db_historico = HistoricoXML(
+            nfe=dados.nfe,
+            xped_original=dados.oc,
+            conteudo_xml="Salvo para auditoria futura"
+        )
+        db.add(db_historico)
 
         # 2. Insere os itens e tenta fazer a tradução (De/Para) automaticamente
         for item_dados in dados.itens:
@@ -121,3 +140,46 @@ class RecebimentoService:
         db.commit()
         db.refresh(recebimento)
         return recebimento
+
+    @staticmethod
+    def vincular_oc(db_wms: Session, db_erp: Session, recebimento_id: int, oc: str):
+        recebimento = db_wms.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+
+        # Vai na tabela do ERP verificar se a OC existe
+        query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+        resultado_erp = db_erp.execute(query_erp, {"oc": oc}).first()
+
+        if not resultado_erp:
+            raise ValueError(f"A OC {oc} não foi encontrada no ERP.")
+
+        # Se a query retornou algo, a OC existe! Então vinculamos:
+        recebimento.oc = oc
+        db_wms.commit()
+        db_wms.refresh(recebimento)
+        return recebimento
+
+    @staticmethod
+    def sincronizar_ocs_pendentes(db_wms: Session, db_erp: Session):
+        # Busca romaneios sem OC vinculada
+        recebimentos_sem_oc = db_wms.query(Recebimento).filter(Recebimento.oc == None).all()
+        atualizados = 0
+
+        for rec in recebimentos_sem_oc:
+            # Olha no histórico qual era a tag XML original vinculada à NFe
+            historico = db_wms.query(HistoricoXML).filter(HistoricoXML.nfe == rec.nfe).first()
+
+            if historico and historico.xped_original:
+                # Vai no ERP procurar a OC original usando a tabela de PedidosCompra
+                query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+                resultado_erp = db_erp.execute(query_erp, {"oc": historico.xped_original}).first()
+
+                if resultado_erp:
+                    rec.oc = historico.xped_original
+                    atualizados += 1
+
+        if atualizados > 0:
+            db_wms.commit()
+
+        return {"atualizados": atualizados}

@@ -16,6 +16,8 @@ export default function App() {
 
   const [dropdownAberto, setDropdownAberto] = useState(false)
   const [modalConfigAberto, setModalConfigAberto] = useState(false)
+  const [modalOCAberto, setModalOCAberto] = useState(false)
+  const [ocDigitada, setOcDigitada] = useState("")
 
 // Função para puxar os dados do Python
   const carregarRecebimentos = async () => {
@@ -46,6 +48,37 @@ export default function App() {
     } catch (error) {
       console.error("Detalhes do erro:", error)
       alert("Erro ao guardar configuração. Verifique o console para mais detalhes.")
+    }
+  }
+
+  const salvarOC = async () => {
+    if (!recebimentoSelecionado) return
+
+    if (!ocDigitada || ocDigitada.trim() === "") {
+      alert("Por favor, digite uma OC válida.")
+      return
+    }
+
+    setCarregando(true)
+    try {
+      // Agora a chamada é real e atravessa a ponte até o FastAPI!
+      const recAtualizado = await recebimentoService.vincularOC(recebimentoSelecionado.id, ocDigitada)
+
+      // Atualiza o recebimento na tela com os dados reais que voltaram do banco
+      const novosRecebimentos = recebimentos.map(rec =>
+        rec.id === recebimentoSelecionado.id ? recAtualizado : rec
+      )
+
+      setRecebimentos(novosRecebimentos)
+      setRecebimentoSelecionado(recAtualizado)
+
+      alert(`OC ${ocDigitada} encontrada no ERP e vinculada com sucesso!`)
+      setModalOCAberto(false)
+    } catch (error) {
+      console.error("Erro ao buscar OC:", error)
+      alert("Erro na comunicação com o servidor ou OC não encontrada.")
+    } finally {
+      setCarregando(false)
     }
   }
 
@@ -108,6 +141,18 @@ export default function App() {
     fileInputRef.current?.click()
   }
 
+  const sincronizarEAtualizar = async () => {
+    setCarregando(true)
+    try {
+      await recebimentoService.sincronizarOCsPendentes()
+      await carregarRecebimentos()
+    } catch (error) {
+      console.error("Erro na sincronização:", error)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
       {/* SIDEBAR */}
@@ -167,9 +212,22 @@ export default function App() {
 
                     {dropdownAberto && (
                       <div className="absolute top-10 right-0 w-52 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                        <button onClick={() => { carregarRecebimentos(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
+                        <button onClick={() => { sincronizarEAtualizar(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
                         <button onClick={() => { setModalConfigAberto(true); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Configurar Pasta XML</button>
-                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar OC</button>
+                        <button
+                          onClick={() => {
+                            if (!recebimentoSelecionado) {
+                              alert("Selecione um romaneio na tabela para editar a OC.");
+                              return;
+                            }
+                            setOcDigitada(recebimentoSelecionado.oc || "");
+                            setModalOCAberto(true);
+                            setDropdownAberto(false);
+                          }}
+                          className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
+                        >
+                          Editar OC
+                        </button>
                         <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Vincular SKU</button>
                         <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50">Alterar Destino</button>
                       </div>
@@ -307,12 +365,42 @@ export default function App() {
                     placeholder="Ex: C:\XMLs_Entrada ou \\Servidor\Notas"
                     className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar"
                   />
-                  <p className="text-xs text-gray-500 mt-2">O robô irá vigiar esta pasta e mover os arquivos processados automaticamente.</p>
+                  <p className="text-xs text-gray-500 mt-2">O sistema varre esta pasta em busca de notas fiscais.</p>
                 </div>
 
                 <div className="flex justify-end space-x-3 mt-4">
                   <button onClick={() => setModalConfigAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
                   <button onClick={guardarConfiguracao} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors">Salvar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {modalOCAberto && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-lg font-bold text-wms-sidebar">Editar Ordem de Compra</h3>
+                  <button onClick={() => setModalOCAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Número da OC no ERP</label>
+                  <input
+                    type="text"
+                    value={ocDigitada}
+                    onChange={(e) => setOcDigitada(e.target.value)}
+                    placeholder="Ex: 123456"
+                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">O sistema irá procurar e validar este número na tabela PedidosCompra do ERP.</p>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-4">
+                  <button onClick={() => setModalOCAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
+                  <button onClick={salvarOC} disabled={carregando} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors disabled:opacity-50">
+                    {carregando ? 'Buscando...' : 'Buscar e Vincular'}
+                  </button>
                 </div>
               </div>
             </div>
