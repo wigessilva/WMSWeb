@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:8005/api/v1/configuracao' });
+const api = axios.create({ baseURL: 'http://localhost:8006/api/v1/configuracao' });
 
 export const configuracaoService = {
   getRoboConfig: async () => {

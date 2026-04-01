@@ -1,7 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # <-- NOVO IMPORT DE SEGURANÇA
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1.endpoints import perfil_router, usuario_router, auth_router
+
+from app.models.perfil import Perfil
+from app.models.usuario import Usuario
+
+from app.db.database import SessionLocal
+from app.db.init_db import inicializar_dados_padrao
 
 from app.db.database import engine, Base
 from app.services.xml_watcher_service import iniciar_robo_vigia
@@ -42,6 +50,12 @@ from app.services.scheduler_service import iniciar_scheduler
 
 # Cria as tabelas no SQL Server na inicialização
 Base.metadata.create_all(bind=engine)
+
+db = SessionLocal()
+try:
+    inicializar_dados_padrao(db)
+finally:
+    db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,6 +103,11 @@ app.include_router(finalidade_endereco_router.router, prefix="/finalidades-ender
 app.include_router(recebimento_router.router, prefix="/recebimentos", tags=["Recebimento (Inbound)"])
 app.include_router(ua_router.router, prefix="/uas", tags=["Unidades de Armazenamento (UAs)"])
 app.include_router(solicitacao_transferencia_router.router, prefix="/solicitacoes-transferencia", tags=["Transferências entre Filiais"])
+
+# Gestão de Acessos
+app.include_router(auth_router.router, prefix="/auth", tags=["Autenticação"])
+app.include_router(perfil_router.router, prefix="/perfis", tags=["Perfis de Acesso"])
+app.include_router(usuario_router.router, prefix="/usuarios", tags=["Utilizadores"])
 
 @app.get("/")
 def raiz():

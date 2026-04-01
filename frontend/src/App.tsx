@@ -5,8 +5,28 @@ import { useEffect } from 'react'
 import { recebimentoService } from './services/recebimentoService'
 import type { Recebimento } from './types/recebimento'
 import { configuracaoService } from './services/configuracaoService'
+import Perfis from './pages/Perfis'
+import Usuarios from './pages/Usuarios'
+import Login from './pages/Login'
+import type { Usuario } from './types/usuario'
 
 export default function App() {
+  // Tenta recuperar o utilizador da sessão caso ele faça F5 (recarregar a página)
+  const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(() => {
+    const user = sessionStorage.getItem('wms_sessao_usuario');
+    return user ? JSON.parse(user) : null;
+  })
+
+  const handleLogin = (usuario: Usuario) => {
+    sessionStorage.setItem('wms_sessao_usuario', JSON.stringify(usuario));
+    setUsuarioLogado(usuario);
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('wms_sessao_usuario');
+    setUsuarioLogado(null);
+  }
+
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([])
   const [recebimentoSelecionado, setRecebimentoSelecionado] = useState<Recebimento | null>(null)
   const [carregando, setCarregando] = useState(false)
@@ -18,6 +38,7 @@ export default function App() {
   const [modalConfigAberto, setModalConfigAberto] = useState(false)
   const [modalOCAberto, setModalOCAberto] = useState(false)
   const [ocDigitada, setOcDigitada] = useState("")
+  const [modalLogoutAberto, setModalLogoutAberto] = useState(false)
 
   // Controles dos menus da Sidebar
   const [menuConfigAberto, setMenuConfigAberto] = useState(false)
@@ -30,7 +51,7 @@ export default function App() {
   useEffect(() => {
     const buscarFiliais = async () => {
       try {
-        const urlBase = localStorage.getItem('wms_api_url') || 'http://localhost:8005';
+        const urlBase = localStorage.getItem('wms_api_url') || 'http://localhost:8006';
         // Ajuste a rota se o seu endpoint for diferente (ex: usando api.get('/filiais'))
         const response = await fetch(`${urlBase}/filiais/`);
         if (response.ok) {
@@ -180,6 +201,11 @@ export default function App() {
     }
   }
 
+  // SE NÃO HOUVER UTILIZADOR LOGADO, MOSTRA APENAS O ECRÃ DE LOGIN
+  if (!usuarioLogado) {
+    return <Login onLogin={handleLogin} />
+  }
+
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
       {/* SIDEBAR */}
@@ -254,13 +280,17 @@ export default function App() {
         </nav>
 
         {/* AVATAR DO USUÁRIO */}
-        <div className="p-4 flex items-center space-x-3 cursor-pointer hover:bg-[#1d6197] transition-colors">
-          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-800 font-bold text-sm">
-            U
+        <div
+          onClick={() => setModalLogoutAberto(true)}
+          className="p-4 flex items-center space-x-3 cursor-pointer hover:bg-[#1d6197] transition-colors border-t border-blue-900"
+          title="Clique para sair do sistema"
+        >
+          <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm uppercase">
+            {usuarioLogado.nome.charAt(0)}
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">Usuário</span>
-            <span className="text-xs text-blue-300">Sair</span>
+          <div className="flex flex-col overflow-hidden">
+            <span className="text-sm font-medium truncate w-32">{usuarioLogado.nome}</span>
+            <span className="text-xs text-blue-300 hover:text-white transition-colors">Encerrar Sessão</span>
           </div>
         </div>
       </aside>
@@ -272,7 +302,7 @@ export default function App() {
           <h1 className="text-lg font-semibold text-gray-700">WMS Operacional</h1>
           <div className="flex items-center space-x-6">
             <select
-              value={localStorage.getItem('wms_api_url') || "http://localhost:8005"}
+              value={localStorage.getItem('wms_api_url') || "http://localhost:8006"}
               onChange={(e) => {
                 localStorage.setItem('wms_api_url', e.target.value);
                 // Recarrega a página para limpar os estados antigos e buscar os dados da nova filial
@@ -281,7 +311,7 @@ export default function App() {
               className="border border-gray-300 p-1.5 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar cursor-pointer"
             >
               {filiais.length === 0 ? (
-                <option value="http://localhost:8005">Carregando filiais...</option>
+                <option value="http://localhost:8006">Carregando filiais...</option>
               ) : (
                 filiais.map((filial) => (
                   // Substitua 'url_api' pelo nome exato da coluna no seu banco onde você guarda o IP/URL do servidor da filial
@@ -448,6 +478,8 @@ export default function App() {
 
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/produtos" element={<h2>Gestão de Produtos</h2>} />
+            <Route path="/perfis" element={<Perfis />} />
+            <Route path="/usuarios" element={<Usuarios />} />
           </Routes>
 
           {modalConfigAberto && (
@@ -495,13 +527,39 @@ export default function App() {
                     placeholder="Ex: 123456"
                     className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar"
                   />
-                  <p className="text-xs text-gray-500 mt-2">O sistema irá procurar e validar este número na tabela PedidosCompra do ERP.</p>
+                  <p className="text-xs text-gray-500 mt-2">O sistema irá procurar e validar este número na tabela de pedidos de compra do ERP.</p>
                 </div>
 
                 <div className="flex justify-end space-x-3 mt-4">
                   <button onClick={() => setModalOCAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
                   <button onClick={salvarOC} disabled={carregando} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors disabled:opacity-50">
                     {carregando ? 'Buscando...' : 'Buscar e Vincular'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {modalLogoutAberto && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full text-center">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Encerrar Sessão</h3>
+                <p className="text-gray-600 text-sm mb-6">Tem certeza que deseja sair do sistema?</p>
+                <div className="flex justify-center space-x-3">
+                  <button
+                    onClick={() => setModalLogoutAberto(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors w-full"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setModalLogoutAberto(false)
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors w-full shadow-sm"
+                  >
+                    Sair
                   </button>
                 </div>
               </div>

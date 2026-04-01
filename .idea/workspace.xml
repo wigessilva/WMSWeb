@@ -4,26 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="muda o nome das tabelas do banco para PascalCase">
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/auth_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/perfil_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/usuario_router.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/core/security.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/db/init_db.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/perfil.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/usuario.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/perfil.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/schemas/usuario.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/perfil_service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/services/usuario_service.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Login.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/authService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/perfil.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/usuario.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/area.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/area.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/configuracao_integracao.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/configuracao_integracao.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/endereco.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/endereco.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/estrutura_fisica.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/familia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/familia.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/filial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/finalidade_endereco.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/historico_ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/historico_ua.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/historico_xml.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/historico_xml.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/recebimento.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/recebimento.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/regra_global.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/regra_global.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/solicitacao_transferencia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/solicitacao_transferencia.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/ua.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/ua.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/unidade_medida.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/unidade_medida.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/vinculo_fornecedor.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/vinculo_fornecedor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/vinculo_unidade.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/vinculo_unidade.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -190,7 +195,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774998856811</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="muda o nome das tabelas do banco para PascalCase">
+      <option name="closed" value="true" />
+      <created>1775000572073</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1775000572073</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -207,7 +220,8 @@
     <MESSAGE value="adiciona o botão &quot;Ações&quot; no recebimento" />
     <MESSAGE value="cria o histórico do xml e lê as ordens de compra" />
     <MESSAGE value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
-    <option name="LAST_COMMIT_MESSAGE" value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
+    <MESSAGE value="muda o nome das tabelas do banco para PascalCase" />
+    <option name="LAST_COMMIT_MESSAGE" value="muda o nome das tabelas do banco para PascalCase" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
