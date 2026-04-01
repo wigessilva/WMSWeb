@@ -39,6 +39,7 @@ export default function App() {
   const [modalOCAberto, setModalOCAberto] = useState(false)
   const [ocDigitada, setOcDigitada] = useState("")
   const [modalLogoutAberto, setModalLogoutAberto] = useState(false)
+  const [sidebarAberta, setSidebarAberta] = useState(true)
 
   // Controles dos menus da Sidebar
   const [menuConfigAberto, setMenuConfigAberto] = useState(false)
@@ -209,11 +210,22 @@ export default function App() {
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
       {/* SIDEBAR */}
-      <aside className="w-56 bg-wms-sidebar text-white flex flex-col shadow-lg z-10">
-        <div className="p-4 text-xl font-bold tracking-wide">
-          WMS
+      <aside className={`bg-wms-sidebar text-white flex flex-col shadow-lg z-10 transition-all duration-300 overflow-x-hidden ${sidebarAberta ? 'w-56' : 'w-16'}`}>
+        <div className={`p-4 flex items-center ${sidebarAberta ? 'justify-between' : 'justify-center'} min-h-[60px] whitespace-nowrap`}>
+          {sidebarAberta && <span className="text-xl font-bold tracking-wide">WMS</span>}
+          <button
+            onClick={() => setSidebarAberta(!sidebarAberta)}
+            className="p-1 hover:bg-[#1d6197] rounded transition-colors flex-shrink-0 text-white"
+            title={sidebarAberta ? "Fechar menu" : "Abrir menu"}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
-        <nav className="flex-1 p-3 space-y-2 mt-2 overflow-y-auto">
+
+        {sidebarAberta ? (
+          <nav className="flex-1 p-3 space-y-2 mt-2 overflow-y-auto overflow-x-hidden whitespace-nowrap">
 
           {/* 1. CONFIGURAÇÕES */}
           <div>
@@ -277,21 +289,26 @@ export default function App() {
           {/* 5. RECEBIMENTO */}
           <Link to="/recebimento" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Recebimento</Link>
 
-        </nav>
+          </nav>
+        ) : (
+          <div className="flex-1"></div>
+        )}
 
         {/* AVATAR DO USUÁRIO */}
         <div
           onClick={() => setModalLogoutAberto(true)}
-          className="p-4 flex items-center space-x-3 cursor-pointer hover:bg-[#1d6197] transition-colors border-t border-blue-900"
+          className={`p-4 flex items-center cursor-pointer hover:bg-[#1d6197] transition-colors whitespace-nowrap ${sidebarAberta ? 'space-x-3' : 'justify-center'}`}
           title="Clique para sair do sistema"
         >
-          <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm uppercase">
+          <div className="w-8 h-8 flex-shrink-0 bg-blue-300 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm uppercase">
             {usuarioLogado.nome.charAt(0)}
           </div>
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-medium truncate w-32">{usuarioLogado.nome}</span>
-            <span className="text-xs text-blue-300 hover:text-white transition-colors">Encerrar Sessão</span>
-          </div>
+          {sidebarAberta && (
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-sm font-medium truncate w-32">{usuarioLogado.nome}</span>
+              <span className="text-xs text-blue-300 hover:text-white transition-colors">Encerrar Sessão</span>
+            </div>
+          )}
         </div>
       </aside>
 
