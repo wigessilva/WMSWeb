@@ -1,10 +1,9 @@
 import axios from 'axios';
 import type { Recebimento } from '../types/recebimento';
 
-// URL padrão de fallback, caso o usuário ainda não tenha escolhido nenhuma
-const api = axios.create({ baseURL: 'http://localhost:8006/recebimentos' });
+const api = axios.create();
 
-// Adicionamos um interceptador que muda a URL base antes de a requisição sair
+// Redireciona a requisição inteira para o IP do servidor da filial selecionada
 api.interceptors.request.use((config) => {
   const urlServidorFilial = localStorage.getItem('wms_api_url') || 'http://localhost:8006';
   config.baseURL = `${urlServidorFilial}/recebimentos`;

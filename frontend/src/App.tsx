@@ -20,6 +20,11 @@ export default function App() {
   const handleLogin = (usuario: Usuario) => {
     sessionStorage.setItem('wms_sessao_usuario', JSON.stringify(usuario));
     setUsuarioLogado(usuario);
+
+    // Se o utilizador tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
+    if (usuario.filiais && usuario.filiais.length > 0 && !localStorage.getItem('wms_api_url')) {
+      localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8006');
+    }
   }
 
   const handleLogout = () => {
@@ -45,28 +50,6 @@ export default function App() {
   const [menuConfigAberto, setMenuConfigAberto] = useState(false)
   const [menuProdutosAberto, setMenuProdutosAberto] = useState(false)
   const [menuEstoqueAberto, setMenuEstoqueAberto] = useState(false)
-
-  // Estado para armazenar as filiais vindas do banco
-  const [filiais, setFiliais] = useState<any[]>([])
-
-  useEffect(() => {
-    const buscarFiliais = async () => {
-      try {
-        const urlBase = localStorage.getItem('wms_api_url') || 'http://localhost:8006';
-        // Ajuste a rota se o seu endpoint for diferente (ex: usando api.get('/filiais'))
-        const response = await fetch(`${urlBase}/filiais/`);
-        if (response.ok) {
-          const dados = await response.json();
-          // Filtra para exibir na Topbar apenas as filiais ativas
-          setFiliais(dados.filter((f: any) => f.ativo !== false));
-        }
-      } catch (error) {
-        console.error("Erro ao buscar filiais do banco:", error);
-      }
-    };
-
-    buscarFiliais();
-  }, []);
 
 // Função para puxar os dados do Python
   const carregarRecebimentos = async () => {
@@ -319,21 +302,20 @@ export default function App() {
           <h1 className="text-lg font-semibold text-gray-700">WMS Operacional</h1>
           <div className="flex items-center space-x-6">
             <select
-              value={localStorage.getItem('wms_api_url') || "http://localhost:8006"}
+              value={localStorage.getItem('wms_api_url') || ""}
               onChange={(e) => {
                 localStorage.setItem('wms_api_url', e.target.value);
-                // Recarrega a página para limpar os estados antigos e buscar os dados da nova filial
+                // Recarrega a página para o React passar a apontar para o servidor físico escolhido
                 window.location.reload();
               }}
               className="border border-gray-300 p-1.5 rounded text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-wms-sidebar cursor-pointer"
             >
-              {filiais.length === 0 ? (
-                <option value="http://localhost:8006">Carregando filiais...</option>
+              {!usuarioLogado?.filiais || usuarioLogado.filiais.length === 0 ? (
+                <option value="">Nenhuma filial vinculada</option>
               ) : (
-                filiais.map((filial) => (
-                  // Substitua 'url_api' pelo nome exato da coluna no seu banco onde você guarda o IP/URL do servidor da filial
-                  <option key={filial.id} value={filial.url_api || `http://${filial.ip}:8005`}>
-                    {filial.nome} {filial.is_matriz ? "(Matriz)" : "(Filial)"}
+                usuarioLogado.filiais.map((filial) => (
+                  <option key={filial.id} value={filial.url_api || `http://localhost:8006`}>
+                    {filial.nome}
                   </option>
                 ))
               )}

@@ -5,30 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="muda o nome das tabelas do banco para PascalCase">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/auth_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/perfil_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/usuario_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/core/security.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/db/init_db.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/perfil.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/models/usuario.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/perfil.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/usuario.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/perfil_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/usuario_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Login.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/authService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/perfil.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/usuario.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/api/dependencies.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/app/models/usuario_filial.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/filial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/usuario.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/usuario.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/filial.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/filial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/usuario.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/usuario.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/usuario_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/usuario_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/recebimentoService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/types/usuario.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/usuario.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,23 +72,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;ai.playground.ignore.import.keys.banner.in.settings&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/PyCharm/Projects/WMSWeb&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "ai.playground.ignore.import.keys.banner.in.settings": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "master",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "D:/PyCharm/Projects/WMSWeb",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

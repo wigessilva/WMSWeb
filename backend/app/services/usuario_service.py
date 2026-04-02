@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from ..models.usuario import Usuario
 from ..models.perfil import Perfil
+from ..models.filial import Filial
 from ..schemas.usuario import UsuarioCriar, UsuarioLogin
 from ..core.security import obter_hash_senha, verificar_senha
 
@@ -39,6 +40,12 @@ def criar_usuario(db: Session, usuario: UsuarioCriar, usuario_logado_id: int):
         perfil_id=usuario.perfil_id,
         ativo=usuario.ativo
     )
+
+    # Vincula o utilizador as filiais selecionadas
+    if usuario.filiais_ids:
+        filiais_db = db.query(Filial).filter(Filial.id.in_(usuario.filiais_ids)).all()
+        db_usuario.filiais = filiais_db
+
     db.add(db_usuario)
     db.commit()
     db.refresh(db_usuario)

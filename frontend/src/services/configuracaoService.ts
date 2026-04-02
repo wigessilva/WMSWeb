@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:8006/api/v1/configuracao' });
+const api = axios.create();
+
+// Redireciona a requisição inteira para o IP do servidor da filial selecionada
+api.interceptors.request.use((config) => {
+  const urlServidorFilial = localStorage.getItem('wms_api_url') || 'http://localhost:8006';
+  config.baseURL = `${urlServidorFilial}/api/v1/configuracao`;
+  return config;
+});
 
 export const configuracaoService = {
   getRoboConfig: async () => {

@@ -5,6 +5,7 @@ from datetime import datetime
 class FilialBase(BaseModel):
     nome: str
     cnpj: Optional[str] = None
+    url_api: Optional[str] = None
     is_matriz: bool = False
     ativo: bool = True
 

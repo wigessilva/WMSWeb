@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
+from .usuario_filial import usuario_filial
 
 
 class Usuario(Base):
@@ -25,6 +26,9 @@ class Usuario(Base):
 
     # Relacionamento
     perfil_relacao = relationship("Perfil", back_populates="usuarios")
+
+    # Relacionamento com filiais
+    filiais = relationship("Filial", secondary=usuario_filial, back_populates="usuarios")
 
     __mapper_args__ = {
         "version_id_col": rowversion

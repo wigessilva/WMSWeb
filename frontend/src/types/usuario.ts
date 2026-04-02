@@ -1,3 +1,9 @@
+export interface FilialResumo {
+  id: number;
+  nome: string;
+  url_api?: string;
+}
+
 export interface Usuario {
   id: number;
   nome: string;
@@ -5,12 +11,14 @@ export interface Usuario {
   perfil_id: number;
   ativo: boolean;
   ultimo_login?: string;
+  filiais?: FilialResumo[];
 }
 
 export interface UsuarioCriar {
   nome: string;
   login: string;
-  senha?: string; // A senha só vai na criação
+  senha?: string;
   perfil_id: number;
   ativo: boolean;
+  filiais_ids?: number[];
 }

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
+from .usuario_filial import usuario_filial
 
 class Filial(Base):
     __tablename__ = "Filiais"
@@ -9,6 +10,7 @@ class Filial(Base):
     id = Column("Id", Integer, primary_key=True, index=True)
     nome = Column("Nome", String(100), nullable=False)
     cnpj = Column("Cnpj", String(20), index=True, nullable=True)
+    url_api = Column("UrlApi", String(255), nullable=True)  # Ex: http://192.168.1.50:8006
     is_matriz = Column("IsMatriz", Boolean, default=False, nullable=False)
     ativo = Column("Ativo", Boolean, default=False, nullable=False)
 
@@ -21,6 +23,9 @@ class Filial(Base):
 
     # Uma filial possui várias áreas (Pulmão, Recebimento, etc.)
     areas = relationship("Area", back_populates="filial_relacao")
+
+    # Relacionamento com usuarios
+    usuarios = relationship("Usuario", secondary=usuario_filial, back_populates="filiais")
 
     __mapper_args__ = {
         "version_id_col": rowversion

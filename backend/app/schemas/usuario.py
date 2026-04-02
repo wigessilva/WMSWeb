@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class UsuarioBase(BaseModel):
@@ -10,6 +10,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCriar(UsuarioBase):
     senha: str
+    filiais_ids: List[int] = []
 
     @field_validator('senha')
     @classmethod
@@ -20,12 +21,21 @@ class UsuarioCriar(UsuarioBase):
             raise ValueError('A senha deve ter exatamente 6 dígitos.')
         return v
 
+class FilialResumo(BaseModel):
+    id: int
+    nome: str
+    url_api: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class UsuarioSchema(UsuarioBase):
     id: int
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
     atualizado_em: datetime
     rowversion: int
+    filiais: List[FilialResumo] = []
     # Nota: A senha_hash nunca deve vir para o Frontend, por isso não a colocamos aqui!
 
     class Config:
