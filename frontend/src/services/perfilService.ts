@@ -1,6 +1,6 @@
 import type { Perfil, PerfilCriar } from '../types/perfil';
 
-const getBaseUrl = () => localStorage.getItem('wms_api_url') || 'http://localhost:8006';
+const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
 
 const getHeaders = () => ({
   'Content-Type': 'application/json'

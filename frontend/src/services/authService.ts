@@ -1,6 +1,6 @@
 import type { Usuario } from '../types/usuario';
 
-const getBaseUrl = () => localStorage.getItem('wms_api_url') || 'http://localhost:8006';
+const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
 
 export const authService = {
   login: async (loginStr: string, senhaStr: string): Promise<Usuario> => {

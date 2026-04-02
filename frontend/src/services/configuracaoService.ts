@@ -4,7 +4,7 @@ const api = axios.create();
 
 // Redireciona a requisição inteira para o IP do servidor da filial selecionada
 api.interceptors.request.use((config) => {
-  const urlServidorFilial = localStorage.getItem('wms_api_url') || 'http://localhost:8006';
+  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
   config.baseURL = `${urlServidorFilial}/api/v1/configuracao`;
   return config;
 });
