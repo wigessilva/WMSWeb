@@ -12,6 +12,7 @@ import VinculosUnidades from './pages/VinculosUnidades'
 import Recebimentos from './pages/Recebimentos'
 import Produtos from './pages/Produtos'
 import Familias from './pages/Familias'
+import ParametrosMestres from './pages/ParametrosMestres'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -197,6 +198,7 @@ export default function App() {
             <Route path="/filiais" element={<Filiais />} />
             <Route path="/unidades-medida" element={<UnidadesMedida />} />
             <Route path="/vinculos-unidades" element={<VinculosUnidades />} />
+            <Route path="/parametros" element={<ParametrosMestres />} />
           </Routes>
 
           {modalLogoutAberto && (

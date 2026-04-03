@@ -10,12 +10,12 @@ class Familia(Base):
     nome = Column("Nome", String(100), unique=True, index=True, nullable=False)
     descricao = Column("Descricao", String(255), nullable=True)
 
-    # Define se a família obedece à regra global (True) ou tem a sua própria (False)
-    herdar_regras_globais = Column("HerdarRegrasGlobais", Boolean, default=True)
+    # Define se a família obedece aos parâmetros mestres (True) ou tem a sua própria (False)
+    herdar_parametros_mestres = Column("HerdarParametrosMestres", Boolean, default=True)
 
     variavel_consumo = Column("VariavelConsumo", String(20), default="unidade", nullable=False)
 
-    # Regras específicas da família (usadas apenas se herdar_regras_globais for False)
+    # Regras específicas da família (usadas apenas se herdar_parametros_mestres for False)
     validade_obrigatoria = Column("ValidadeObrigatoria", Boolean, nullable=True)
     lote_obrigatorio = Column("LoteObrigatorio", Boolean, nullable=True)
     modelo_giro = Column("ModeloGiro", String(10), nullable=True)

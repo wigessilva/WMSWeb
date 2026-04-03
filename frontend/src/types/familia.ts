@@ -3,7 +3,7 @@ export interface Familia {
   nome: string;
   descricao: string | null;
   variavel_consumo: string;
-  herdar_regras_globais: boolean;
+  herdar_parametros_mestres: boolean;
   validade_obrigatoria: boolean | null;
   lote_obrigatorio: boolean | null;
   modelo_giro: string | null;

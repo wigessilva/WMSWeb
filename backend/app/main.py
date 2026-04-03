@@ -16,7 +16,7 @@ from app.services.xml_watcher_service import iniciar_robo_vigia
 from app.api.v1.endpoints import (
     produto_router,
     unidade_medida_router,
-    regra_global_router,
+    parametros_mestres_router,
     familia_router,
     endereco_router,
     area_router,
@@ -36,8 +36,9 @@ from app.models.produto import Produto
 from app.models.unidade_produto import UnidadeProduto
 from app.models.unidade_medida import UnidadeMedida
 from app.models.vinculo_unidade import VinculoUnidade
-from app.models.regra_global import RegraGlobal
+from app.models.parametros_mestres import ParametrosMestres
 from app.models.historico_xml import HistoricoXML
+from app.models.configuracao_integracao import ConfiguracaoIntegracao
 
 # Importa os novos modelos de Endereçamento
 from app.models.filial import Filial
@@ -89,7 +90,7 @@ app.add_middleware(
 app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
 app.include_router(vinculo_unidade_router.router, prefix="/vinculos-unidade", tags=["Vínculos de Unidades"])
-app.include_router(regra_global_router.router, prefix="/regras-globais", tags=["Regras Globais"])
+app.include_router(parametros_mestres_router.router, prefix="/parametros-mestres", tags=["Parâmetros Mestres"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
 

@@ -15,12 +15,7 @@ class ConfigUpdate(BaseModel):
 @router.get("/robo-nfe")
 def obter_configuracao(db: Session = Depends(get_db)):
     config = db.query(ConfiguracaoIntegracao).filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
-    if not config:
-        config = ConfiguracaoIntegracao(nome_servico="ROBO_NFE", caminho_diretorio="", ativo=True)
-        db.add(config)
-        db.commit()
-        db.refresh(config)
-    return {"caminho_diretorio": config.caminho_diretorio}
+    return {"caminho_diretorio": config.caminho_diretorio if config else ""}
 
 
 @router.put("/robo-nfe")

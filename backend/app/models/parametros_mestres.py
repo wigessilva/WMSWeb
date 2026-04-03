@@ -3,7 +3,7 @@ from datetime import datetime
 from ..db.database import Base
 
 
-class RegraGlobal(Base):
+class ParametrosMestres(Base):
     __tablename__ = "ParametrosMestres"
 
     id = Column("Id", Integer, primary_key=True, index=True)
@@ -20,6 +20,8 @@ class RegraGlobal(Base):
     # True = Bloqueia, False = Permite movimentação
     bloquear_vencido = Column("BloquearVencido", Boolean, default=True, nullable=False)
     bloquear_reprovado = Column("BloquearReprovado", Boolean, default=True, nullable=False)
+    bloquear_sem_validade = Column("BloquearSemValidade", Boolean, default=False, nullable=False)
+    bloquear_sem_lote = Column("BloquearSemLote", Boolean, default=False, nullable=False)
 
     # AUDITORIA E CONCORRÊNCIA (Padrão ACID)
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

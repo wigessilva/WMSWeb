@@ -10,7 +10,7 @@ class FamiliaService:
             nome=dados.nome,
             descricao=dados.descricao,
             variavel_consumo=dados.variavel_consumo,
-            herdar_regras_globais=dados.herdar_regras_globais,
+            herdar_parametros_mestres=dados.herdar_parametros_mestres,
             validade_obrigatoria=dados.validade_obrigatoria,
             lote_obrigatorio=dados.lote_obrigatorio,
             modelo_giro=dados.modelo_giro,
@@ -18,8 +18,8 @@ class FamiliaService:
             bloquear_reprovado=dados.bloquear_reprovado
         )
 
-        # Regra de negócio: Se herda regras globais, anula qualquer regra local enviada
-        if db_obj.herdar_regras_globais:
+        # Regra de negócio: Se herda parâmetros mestres, anula qualquer regra local enviada
+        if db_obj.herdar_parametros_mestres:
             db_obj.validade_obrigatoria = None
             db_obj.lote_obrigatorio = None
             db_obj.modelo_giro = None
@@ -45,9 +45,8 @@ class FamiliaService:
         for chave, valor in dados_atualizar.items():
             setattr(db_obj, chave, valor)
 
-        # Regra de negócio: Se mudou para herdar regras globais (ou se já herdava),
         # limpa as regras locais para garantir a integridade do banco
-        if db_obj.herdar_regras_globais:
+        if db_obj.herdar_parametros_mestres:
             db_obj.validade_obrigatoria = None
             db_obj.lote_obrigatorio = None
             db_obj.modelo_giro = None

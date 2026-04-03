@@ -1,21 +1,26 @@
-import axios from 'axios';
+const getBaseUrl = () => {
+  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8006';
+  return `${urlServidorFilial}/api/v1/configuracao`;
+};
 
-const api = axios.create();
-
-// Redireciona a requisição inteira para o IP do servidor da filial selecionada
-api.interceptors.request.use((config) => {
-  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
-  config.baseURL = `${urlServidorFilial}/api/v1/configuracao`;
-  return config;
+const getHeaders = () => ({
+  'Content-Type': 'application/json'
 });
 
 export const configuracaoService = {
   getRoboConfig: async () => {
-    const response = await api.get('/robo-nfe');
-    return response.data;
+    const response = await fetch(`${getBaseUrl()}/robo-nfe`, { headers: getHeaders() });
+    if (!response.ok) throw new Error("Erro ao buscar configuração do robô");
+    return response.json();
   },
+
   updateRoboConfig: async (caminho_diretorio: string) => {
-    const response = await api.put('/robo-nfe', { caminho_diretorio });
-    return response.data;
+    const response = await fetch(`${getBaseUrl()}/robo-nfe`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ caminho_diretorio })
+    });
+    if (!response.ok) throw new Error("Erro ao atualizar configuração do robô");
+    return response.json();
   }
 };

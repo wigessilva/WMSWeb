@@ -4,7 +4,7 @@ export interface Produto {
   descricao: string;
   referencia: string | null;
   familia_id: number | null;
-  herdar_regras_familia: boolean;
+  herdar_parametros_familia: boolean;
   variavel_consumo: string | null;
   unidade_medida_id: number | null;
   status: string;

@@ -14,7 +14,7 @@ class Produto(Base):
 
     # Chave estrangeira ligando à tabela de famílias
     familia_id = Column("FamiliaId", Integer, ForeignKey("Familias.Id"), nullable=True)
-    herdar_regras_familia = Column("HerdarRegrasFamilia", Boolean, default=True)
+    herdar_parametros_familia = Column("HerdarParametrosFamilia", Boolean, default=True)
 
     variavel_consumo = Column("VariavelConsumo", String(20), nullable=True)
 

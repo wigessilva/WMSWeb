@@ -6,7 +6,7 @@ class FamiliaBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
     variavel_consumo: str = Field(default="unidade")
-    herdar_regras_globais: bool = True
+    herdar_parametros_mestres: bool = True
     validade_obrigatoria: Optional[bool] = None
 
     @field_validator('variavel_consumo')
@@ -27,7 +27,7 @@ class FamiliaEditar(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
     variavel_consumo: Optional[str] = None
-    herdar_regras_globais: Optional[bool] = None
+    herdar_parametros_mestres: Optional[bool] = None
     validade_obrigatoria: Optional[bool] = None
 
     @field_validator('variavel_consumo')
