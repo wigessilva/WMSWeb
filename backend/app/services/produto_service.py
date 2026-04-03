@@ -16,10 +16,6 @@ class ProdutoService:
         for chave, valor in dados_atualizar.items():
             setattr(db_produto, chave, valor)
 
-        # Regra de negócio: Se o produto passar a herdar regras da família, limpa a sua variável local
-        if db_produto.herdar_regras_familia:
-            db_produto.variavel_consumo = None
-
         db.commit()
         db.refresh(db_produto)
         return db_produto
@@ -47,14 +43,7 @@ class ProdutoService:
 
         # 1. Atualiza os dados do Produto
         produto.familia_id = dados_ativacao.familia_id
-        produto.herdar_regras_familia = dados_ativacao.herdar_regras_familia
-
-        # Regra de negócio: Se herda da família, anula a variável local
-        if dados_ativacao.herdar_regras_familia:
-            produto.variavel_consumo = None
-        else:
-            produto.variavel_consumo = dados_ativacao.variavel_consumo
-
+        produto.variavel_consumo = dados_ativacao.variavel_consumo
         produto.status = "ativo"
 
         # 2. Limpa as unidades antigas (caso o usuário esteja reativando/editando)
