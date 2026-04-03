@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { perfilService } from '../services/perfilService';
 import type { Perfil } from '../types/perfil';
+import toast from 'react-hot-toast';
 
 export default function Perfis() {
   const [perfis, setPerfis] = useState<Perfil[]>([]);
@@ -8,6 +9,7 @@ export default function Perfis() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [erroNome, setErroNome] = useState('');
 
   // Novos estados para busca, dropdown, seleção e edição
   const [termoBusca, setTermoBusca] = useState('');
@@ -29,18 +31,20 @@ export default function Perfis() {
     setModoEdicao(false);
     setNome('');
     setDescricao('');
+    setErroNome('');
     setModalAberto(true);
     setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
     if (!perfilSelecionado) {
-      alert("Selecione um perfil");
+      toast.error("Selecione um perfil");
       return;
     }
     setModoEdicao(true);
     setNome(perfilSelecionado.nome);
     setDescricao(perfilSelecionado.descricao || '');
+    setErroNome('');
     setModalAberto(true);
     setDropdownAberto(false);
   };
@@ -60,23 +64,24 @@ export default function Perfis() {
 
   const salvarPerfil = async () => {
     if (!nome.trim()) {
-      alert("O nome do perfil é obrigatório");
+      setErroNome("O nome do perfil é obrigatório");
       return;
     }
+    setErroNome('');
     setCarregando(true);
     try {
       if (modoEdicao && perfilSelecionado) {
         // Caso exista um método atualizar no seu perfilService
         await perfilService.atualizar(perfilSelecionado.id, { nome, descricao });
-        alert("Perfil atualizado com sucesso!");
+        toast.success("Perfil atualizado com sucesso!");
       } else {
         await perfilService.criar({ nome, descricao });
-        alert("Perfil criado com sucesso!");
+        toast.success("Perfil criado com sucesso!");
       }
       setModalAberto(false);
       carregarPerfis();
     } catch (error: any) {
-      alert(error.message || "Erro ao salvar perfil");
+      toast.error(error.message || "Erro ao salvar perfil");
     } finally {
       setCarregando(false);
     }
@@ -84,16 +89,16 @@ export default function Perfis() {
 
   const excluirPerfil = async (id: number, nomePerfil: string) => {
     if (nomePerfil === "Administrador") {
-      alert("O perfil Administrador não pode ser excluído.");
+      toast.error("O perfil Administrador não pode ser excluído.");
       return;
     }
     if (window.confirm(`Tem a certeza que deseja excluir o perfil ${nomePerfil}?`)) {
       try {
         await perfilService.excluir(id);
-        alert("Perfil excluído com sucesso!");
+        toast.success("Perfil excluído com sucesso!");
         carregarPerfis();
       } catch (error: any) {
-        alert(error.message || "Erro ao excluir perfil. Verifique se existem usuários vinculados.");
+        toast.error(error.message || "Erro ao excluir perfil. Verifique se existem usuários vinculados.");
       }
     }
   };
@@ -193,10 +198,20 @@ export default function Perfis() {
                 <input
                   type="text"
                   value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  onChange={(e) => {
+                    setNome(e.target.value);
+                    if (e.target.value.trim()) setErroNome('');
+                  }}
                   placeholder="Ex: Estoquista"
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
+                    erroNome
+                      ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                      : 'border-gray-300 focus:ring-[#1a63b6]'
+                  }`}
                 />
+                {erroNome && (
+                  <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erroNome}</span>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>

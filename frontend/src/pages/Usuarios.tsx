@@ -3,6 +3,7 @@ import { usuarioService } from '../services/usuarioService';
 import { perfilService } from '../services/perfilService';
 import type { Usuario } from '../types/usuario';
 import type { Perfil } from '../types/perfil';
+import toast from 'react-hot-toast';
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -22,6 +23,15 @@ export default function Usuarios() {
   const [senha, setSenha] = useState('');
   const [perfilId, setPerfilId] = useState<number | ''>('');
   const [senhaAutorizacao, setSenhaAutorizacao] = useState('');
+
+  // Estados de Erro
+  const [erros, setErros] = useState({
+    nome: '',
+    login: '',
+    senha: '',
+    perfilId: '',
+    senhaAutorizacao: ''
+  });
 
   // Subimos a função para ser utilizada no filtro abaixo
   const getNomePerfil = (id: number) => {
@@ -47,21 +57,23 @@ export default function Usuarios() {
     setSenha('');
     setPerfilId('');
     setSenhaAutorizacao('');
+    setErros({ nome: '', login: '', senha: '', perfilId: '', senhaAutorizacao: '' });
     setModalAberto(true);
     setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
     if (!usuarioSelecionado) {
-      alert("Selecione um usuário");
+      toast.error("Selecione um usuário");
       return;
     }
     setModoEdicao(true);
     setNome(usuarioSelecionado.nome);
     setLogin(usuarioSelecionado.login);
-    setSenha(''); // Deixamos em branco. Se o administrador quiser alterar a senha, ele digita. Se deixar em branco, mantém a antiga.
+    setSenha('');
     setPerfilId(usuarioSelecionado.perfil_id);
     setSenhaAutorizacao('');
+    setErros({ nome: '', login: '', senha: '', perfilId: '', senhaAutorizacao: '' });
     setModalAberto(true);
     setDropdownAberto(false);
   };
@@ -84,20 +96,26 @@ export default function Usuarios() {
   }, []);
 
   const salvarUsuario = async () => {
-    if (!nome.trim() || !login.trim() || perfilId === '' || (!modoEdicao && !senha)) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
-      return;
+    let novosErros = { nome: '', login: '', senha: '', perfilId: '', senhaAutorizacao: '' };
+    let temErro = false;
+
+    if (!nome.trim()) { novosErros.nome = 'Obrigatório'; temErro = true; }
+    if (!login.trim()) { novosErros.login = 'Obrigatório'; temErro = true; }
+    if (perfilId === '') { novosErros.perfilId = 'Selecione um perfil'; temErro = true; }
+    if (!modoEdicao && !senha) { novosErros.senha = 'Obrigatório'; temErro = true; }
+
+    if (senha && !/^\d{6}$/.test(senha)) {
+      novosErros.senha = 'Deve conter 6 números';
+      temErro = true;
     }
 
     if (modoEdicao && !senhaAutorizacao) {
-      alert("Por favor, digite a sua password para autorizar a alteração.");
-      return;
+      novosErros.senhaAutorizacao = 'A sua senha é necessária';
+      temErro = true;
     }
 
-    if (senha && !/^\d{6}$/.test(senha)) {
-      alert("A password deve conter exatamente 6 dígitos numéricos.");
-      return;
-    }
+    setErros(novosErros);
+    if (temErro) return;
 
     // Recupera o ID de quem está logado na sessão do WMS
     const sessao = sessionStorage.getItem('wms_sessao_usuario');
@@ -116,16 +134,16 @@ export default function Usuarios() {
         if (senha) dadosAtualizados.senha = senha;
 
         await usuarioService.atualizar(usuarioSelecionado.id, dadosAtualizados);
-        alert("Usuário atualizado com sucesso!");
+        toast.success("Usuário atualizado com sucesso!");
       } else {
         await usuarioService.criar({ nome, login, senha, perfil_id: Number(perfilId), ativo: true });
-        alert("Usuário criado com sucesso!");
+        toast.success("Usuário criado com sucesso!");
       }
 
       setModalAberto(false);
       carregarDados();
     } catch (error: any) {
-      alert(error.message || "Erro ao salvar usuário");
+      toast.error(error.message || "Erro ao salvar usuário");
     } finally {
       setCarregando(false);
     }
@@ -135,10 +153,10 @@ export default function Usuarios() {
     if (window.confirm(`Tem a certeza que deseja inativar o usuário ${nomeUsuario}? O acesso ao sistema será revogado.`)) {
       try {
         await usuarioService.inativar(id);
-        alert("Usuário inativado com sucesso!");
+        toast.success("Usuário inativado com sucesso!");
         carregarDados();
       } catch (error: any) {
-        alert(error.message || "Erro ao inativar usuário");
+        toast.error(error.message || "Erro ao inativar usuário");
       }
     }
   };
@@ -175,11 +193,11 @@ export default function Usuarios() {
                 <button
                   onClick={() => {
                     if (!usuarioSelecionado) {
-                      alert("Selecione um usuário");
+                      toast.error("Selecione um usuário");
                       return;
                     }
                     if (!usuarioSelecionado.ativo) {
-                      alert("Este usuário já se encontra inativo.");
+                      toast.error("Este usuário já se encontra inativo");
                       setDropdownAberto(false);
                       return;
                     }
@@ -253,9 +271,13 @@ export default function Usuarios() {
                 <input
                   type="text"
                   value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  onChange={(e) => {
+                    setNome(e.target.value);
+                    if (e.target.value.trim()) setErros({...erros, nome: ''});
+                  }}
+                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.nome ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
                 />
+                {erros.nome && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.nome}</span>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -264,21 +286,27 @@ export default function Usuarios() {
                   <input
                     type="text"
                     value={login}
-                    onChange={(e) => setLogin(e.target.value)}
-                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                    onChange={(e) => {
+                      setLogin(e.target.value);
+                      if (e.target.value.trim()) setErros({...erros, login: ''});
+                    }}
+                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.login ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
                   />
+                  {erros.login && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.login}</span>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Senha {modoEdicao ? '' : ''}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
                   <input
                     type="password"
                     maxLength={6}
                     value={senha}
-                    onChange={(e) => setSenha(e.target.value.replace(/\D/g, ''))} // Força a digitar apenas números
-                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                    onChange={(e) => {
+                      setSenha(e.target.value.replace(/\D/g, ''));
+                      setErros({...erros, senha: ''});
+                    }}
+                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.senha ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
                   />
+                  {erros.senha && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.senha}</span>}
                 </div>
               </div>
 
@@ -286,16 +314,19 @@ export default function Usuarios() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Perfil de Acesso</label>
                 <select
                   value={perfilId}
-                  onChange={(e) => setPerfilId(Number(e.target.value))}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] bg-white"
+                  onChange={(e) => {
+                    setPerfilId(Number(e.target.value));
+                    setErros({...erros, perfilId: ''});
+                  }}
+                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.perfilId ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
                 >
                   <option value="" disabled>Selecione...</option>
                   {perfis.map((p) => (
                     <option key={p.id} value={p.id}>{p.nome}</option>
                   ))}
                 </select>
+                {erros.perfilId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.perfilId}</span>}
 
-                {/* CAMPO DE AUTORIZAÇÃO DE SEGURANÇA */}
               {modoEdicao && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
                   <label className="block text-sm font-medium text-red-800 mb-1">
@@ -305,13 +336,15 @@ export default function Usuarios() {
                     type="password"
                     maxLength={6}
                     value={senhaAutorizacao}
-                    onChange={(e) => setSenhaAutorizacao(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => {
+                      setSenhaAutorizacao(e.target.value.replace(/\D/g, ''));
+                      setErros({...erros, senhaAutorizacao: ''});
+                    }}
                     placeholder="Digite a sua senha para confirmar"
-                    className="w-full border border-red-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.senhaAutorizacao ? 'border-red-500 focus:ring-red-500' : 'border-red-200 focus:ring-red-500'}`}
                   />
-                  <p className="text-xs text-red-600 mt-1">
-                    Confirme que é você para salvar as alterações
-                  </p>
+                  {erros.senhaAutorizacao && <span className="text-xs text-red-600 font-bold mt-1 inline-block">{erros.senhaAutorizacao}</span>}
+                  {!erros.senhaAutorizacao && <p className="text-xs text-red-600 mt-1">Confirme que é você para salvar as alterações</p>}
                 </div>
               )}
               </div>

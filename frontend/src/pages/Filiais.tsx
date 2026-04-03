@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { filialService } from '../services/filialService';
 import type { Filial } from '../types/filial';
+import toast from 'react-hot-toast';
 
 export default function Filiais() {
   const [filiais, setFiliais] = useState<Filial[]>([]);
@@ -13,6 +14,7 @@ export default function Filiais() {
   const [urlApi, setUrlApi] = useState('');
   const [isMatriz, setIsMatriz] = useState(false);
   const [ativo, setAtivo] = useState(true);
+  const [erroNome, setErroNome] = useState('');
 
   // Controles de tela
   const [termoBusca, setTermoBusca] = useState('');
@@ -45,6 +47,7 @@ export default function Filiais() {
   const abrirModalCriar = () => {
     setModoEdicao(false);
     setNome('');
+    setErroNome('');
     setCnpj('');
     setUrlApi('');
     setIsMatriz(false);
@@ -55,11 +58,12 @@ export default function Filiais() {
 
   const abrirModalEditar = () => {
     if (!filialSelecionada) {
-      alert("Selecione uma filial");
+      toast.error("Selecione uma filial");
       return;
     }
     setModoEdicao(true);
     setNome(filialSelecionada.nome);
+    setErroNome('');
     setCnpj(filialSelecionada.cnpj || '');
     setUrlApi(filialSelecionada.url_api || '');
     setIsMatriz(filialSelecionada.is_matriz);
@@ -70,9 +74,10 @@ export default function Filiais() {
 
   const salvarFilial = async () => {
     if (!nome.trim()) {
-      alert("O nome da filial é obrigatório");
+      setErroNome("O nome da filial é obrigatório");
       return;
     }
+    setErroNome("");
 
     setCarregando(true);
     const payload = {
@@ -104,10 +109,10 @@ export default function Filiais() {
     if (window.confirm(`Tem certeza que deseja excluir a filial ${nomeFilial}?`)) {
       try {
         await filialService.excluir(id);
-        alert("Filial excluída com sucesso!");
+        toast.success("Filial excluída com sucesso!");
         carregarFiliais();
       } catch (error: any) {
-        alert(error.message || "Erro ao excluir filial. Verifique se existem dependências.");
+        toast.error(error.message || "Erro ao excluir filial. Verifique se existem dependências.");
       }
     }
   };
@@ -142,7 +147,7 @@ export default function Filiais() {
                 <button
                   onClick={() => {
                     if (!filialSelecionada) {
-                      alert("Selecione uma filial");
+                      toast.error("Selecione uma filial");
                       return;
                     }
                     excluirFilial(filialSelecionada.id, filialSelecionada.nome);
@@ -223,9 +228,19 @@ export default function Filiais() {
                 <input
                   type="text"
                   value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  onChange={(e) => {
+                    setNome(e.target.value);
+                    if (e.target.value.trim()) setErroNome('');
+                  }}
+                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
+                    erroNome
+                      ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                      : 'border-gray-300 focus:ring-[#1a63b6]'
+                  }`}
                 />
+                {erroNome && (
+                  <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erroNome}</span>
+                )}
               </div>
 
               <div>

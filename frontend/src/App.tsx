@@ -10,6 +10,7 @@ import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
 import Filiais from './pages/Filiais'
 import type { Usuario } from './types/usuario'
+import { Toaster, toast } from 'react-hot-toast'
 
 export default function App() {
   // Tenta recuperar o usuário da sessão caso ele faça F5 (recarregar a página)
@@ -53,7 +54,7 @@ export default function App() {
   const [menuProdutosAberto, setMenuProdutosAberto] = useState(false)
   const [menuEstoqueAberto, setMenuEstoqueAberto] = useState(false)
 
-// Função para puxar os dados do Python
+  // Função para puxar os dados do Python
   const carregarRecebimentos = async (termo?: string) => {
     try {
       const dados = await recebimentoService.listar(termo)
@@ -62,6 +63,7 @@ export default function App() {
       if (termo !== undefined) setRecebimentoSelecionado(null)
     } catch (error) {
       console.error("Erro ao carregar notas:", error)
+      toast.error("Erro ao carregar os notas. Verifique a conexão com o servidor")
     }
   }
 
@@ -83,11 +85,11 @@ export default function App() {
   const guardarConfiguracao = async () => {
     try {
       await configuracaoService.updateRoboConfig(caminhoPasta)
-      alert("Configuração guardada com sucesso! O robô já sabe onde procurar.")
+      toast.success("Configuração guardada com sucesso! O robô já sabe onde procurar.")
       setModalConfigAberto(false)
     } catch (error) {
       console.error("Detalhes do erro:", error)
-      alert("Erro ao guardar configuração. Verifique o console para mais detalhes.")
+      toast.error("Erro ao guardar configuração. Verifique o console para mais detalhes.")
     }
   }
 
@@ -95,7 +97,7 @@ export default function App() {
     if (!recebimentoSelecionado) return
 
     if (!ocDigitada || ocDigitada.trim() === "") {
-      alert("Por favor, digite uma OC válida.")
+      toast.error("Por favor, digite uma OC válida.")
       return
     }
 
@@ -112,11 +114,11 @@ export default function App() {
       setRecebimentos(novosRecebimentos)
       setRecebimentoSelecionado(recAtualizado)
 
-      alert(`OC ${ocDigitada} encontrada no ERP e vinculada com sucesso!`)
+      toast.success(`OC ${ocDigitada} vinculada com sucesso!`)
       setModalOCAberto(false)
     } catch (error) {
       console.error("Erro ao buscar OC:", error)
-      alert("Erro na comunicação com o servidor ou OC não encontrada.")
+      toast.error("Erro na comunicação com o servidor ou OC não encontrada.")
     } finally {
       setCarregando(false)
     }
@@ -164,11 +166,11 @@ export default function App() {
 
       // Adiciona o novo recebimento na lista para aparecer na tabela
       setRecebimentos([...recebimentos, novoRecebimento])
-      alert("Romaneio importado com sucesso!")
+      toast.success("Romaneio importado com sucesso!")
 
     } catch (error) {
       console.error("Erro ao importar:", error)
-      alert("Erro ao comunicar com o backend. Verifique se o FastAPI está rodando na porta 8000.")
+      toast.error("Erro ao comunicar com o backend. Verifique a conexão.")
     } finally {
       setCarregando(false)
       // Limpa o input para permitir selecionar o mesmo arquivo novamente se precisar
@@ -186,8 +188,10 @@ export default function App() {
     try {
       await recebimentoService.sincronizarOCsPendentes()
       await carregarRecebimentos()
+      toast.success("Sincronização concluída com sucesso!")
     } catch (error) {
       console.error("Erro na sincronização:", error)
+      toast.error("Erro ao sincronizar com o ERP")
     } finally {
       setCarregando(false)
     }
@@ -200,6 +204,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
+      <Toaster position="top-right" />
       {/* SIDEBAR */}
       <aside className={`bg-wms-sidebar text-white flex flex-col shadow-lg z-10 transition-all duration-300 overflow-x-hidden ${sidebarAberta ? 'w-56' : 'w-16'}`}>
         <div className={`p-4 flex items-center ${sidebarAberta ? 'justify-between' : 'justify-center'} min-h-[60px] whitespace-nowrap`}>
@@ -373,7 +378,7 @@ export default function App() {
                           <button
                             onClick={() => {
                               if (!recebimentoSelecionado) {
-                                alert("Selecione um romaneio na tabela para editar a OC.");
+                                toast.error("Selecione um romaneio na tabela para editar a OC.");
                                 return;
                               }
                               setOcDigitada(recebimentoSelecionado.oc || "");

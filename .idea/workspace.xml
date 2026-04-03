@@ -4,22 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Adiciona campo de busca no recebimento">
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/filialService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/filial.ts" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Atualiza as telas de usuários e perfis e adiciona a tela de filiais">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/usuario_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/usuario_router.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/db/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/db/init_db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/usuario.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/usuario.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/filial_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/filial_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/usuario_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/usuario_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/usuarioService.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -226,7 +218,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775177716298</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Atualiza as telas de usuários e perfis e adiciona a tela de filiais">
+      <option name="closed" value="true" />
+      <created>1775183774052</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1775183774052</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -248,7 +248,8 @@
     <MESSAGE value="cria as variaveis de ambiente do frontend" />
     <MESSAGE value="corrige erro de notas não aparecerem" />
     <MESSAGE value="Adiciona campo de busca no recebimento" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adiciona campo de busca no recebimento" />
+    <MESSAGE value="Atualiza as telas de usuários e perfis e adiciona a tela de filiais" />
+    <option name="LAST_COMMIT_MESSAGE" value="Atualiza as telas de usuários e perfis e adiciona a tela de filiais" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
