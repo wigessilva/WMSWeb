@@ -10,6 +10,7 @@ import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
 import Filiais from './pages/Filiais'
 import UnidadesMedida from './pages/UnidadesMedida'
+import VinculosUnidades from './pages/VinculosUnidades'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -239,6 +240,7 @@ export default function App() {
                 <Link to="/perfis" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Perfis</Link>
                 <Link to="/filiais" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Filiais</Link>
                 <Link to="/unidades-medida" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Unidades de Medida</Link>
+                <Link to="/vinculos-unidades" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Unidades</Link>
                 <Link to="/parametros" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Parâmetros Mestres</Link>
                 <Link to="/impressao" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Impressão</Link>
               </div>
@@ -513,13 +515,14 @@ export default function App() {
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/filiais" element={<Filiais />} />
             <Route path="/unidades-medida" element={<UnidadesMedida />} />
+            <Route path="/vinculos-unidades" element={<VinculosUnidades />} />
           </Routes>
 
           {modalConfigAberto && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML (NFe)</h3>
+                  <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML</h3>
                   <button onClick={() => setModalConfigAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
                 </div>
 

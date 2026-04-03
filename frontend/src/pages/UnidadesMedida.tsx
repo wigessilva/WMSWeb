@@ -63,29 +63,28 @@ export default function UnidadesMedida() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-lg font-bold text-gray-800">Unidades de Medida</h2>
-          <p className="text-sm text-gray-500">Listagem mestre sincronizada com o ERP.</p>
-        </div>
-        <button
-          onClick={sincronizarComERP}
-          disabled={carregando}
-          className="bg-[#1a63b6] text-white px-4 py-2 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm disabled:opacity-50"
-        >
-          {carregando ? 'Sincronizando...' : '↻ Sincronizar com ERP'}
-        </button>
-      </div>
-
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="mb-3 w-1/4 min-w-[200px]">
-          <input
-            type="text"
-            placeholder="Buscar por Sigla ou Descrição"
-            value={termoBusca}
-            onChange={(e) => setTermoBusca(e.target.value)}
-            className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-          />
+        <div className="flex justify-between items-center mb-3">
+
+          <div className="flex w-1/6 min-w-[125px]">
+            <input
+              type="text"
+              placeholder="Buscar"
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
+              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+            />
+          </div>
+
+          <div>
+            <button
+              onClick={sincronizarComERP}
+              disabled={carregando}
+              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm disabled:opacity-50"
+            >
+              {carregando ? 'Sincronizando...' : '↻ Sincronizar'}
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto border border-gray-200 rounded">

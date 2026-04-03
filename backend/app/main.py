@@ -26,7 +26,8 @@ from app.api.v1.endpoints import (
     filial_router,
     solicitacao_transferencia_router,
     recebimento_router,
-    configuracao_router
+    configuracao_router,
+    vinculo_unidade_router
 )
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
@@ -34,6 +35,7 @@ from app.models.familia import Familia
 from app.models.produto import Produto
 from app.models.unidade_produto import UnidadeProduto
 from app.models.unidade_medida import UnidadeMedida
+from app.models.vinculo_unidade import VinculoUnidade
 from app.models.regra_global import RegraGlobal
 from app.models.historico_xml import HistoricoXML
 
@@ -86,6 +88,7 @@ app.add_middleware(
 # Incluindo as rotas
 app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
+app.include_router(vinculo_unidade_router.router, prefix="/vinculos-unidade", tags=["Vínculos de Unidades"])
 app.include_router(regra_global_router.router, prefix="/regras-globais", tags=["Regras Globais"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
