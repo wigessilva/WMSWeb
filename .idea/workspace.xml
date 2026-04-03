@@ -4,14 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Atualiza as telas de usuários e perfis e adiciona a tela de filiais">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Adiciona inline errors onde era cabível">
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/UnidadesMedida.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/unidadeMedidaService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/unidadeMedida.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/unidade_medida_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/unidade_medida_router.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/unidade_medida.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/unidade_medida.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/erp_sync_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/erp_sync_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/unidade_medida_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/unidade_medida_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -226,7 +229,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775183774052</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Adiciona inline errors onde era cabível">
+      <option name="closed" value="true" />
+      <created>1775216342278</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1775216342278</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -249,7 +260,8 @@
     <MESSAGE value="corrige erro de notas não aparecerem" />
     <MESSAGE value="Adiciona campo de busca no recebimento" />
     <MESSAGE value="Atualiza as telas de usuários e perfis e adiciona a tela de filiais" />
-    <option name="LAST_COMMIT_MESSAGE" value="Atualiza as telas de usuários e perfis e adiciona a tela de filiais" />
+    <MESSAGE value="Adiciona inline errors onde era cabível" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adiciona inline errors onde era cabível" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -1,0 +1,8 @@
+export interface UnidadeMedida {
+  id: number;
+  sigla: string;
+  desc: string;
+  decimais: boolean;
+  criado_em: string;
+  atualizado_em: string;
+}

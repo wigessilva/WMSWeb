@@ -16,3 +16,7 @@ class UnidadeMedidaSchema(UnidadeMedidaBase):
 
     class Config:
         from_attributes = True # Permite ler do SQLAlchemy
+
+
+class UnidadeMedidaAtualizarDecimais(BaseModel):
+    decimais: bool

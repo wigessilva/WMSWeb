@@ -154,7 +154,7 @@ export default function Perfis() {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="bg-gray-50 text-gray-700 text-sm">
               <tr>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200">Nome do Perfil</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200">Nome</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 w-1/2">Descrição</th>
               </tr>
             </thead>
@@ -194,7 +194,7 @@ export default function Perfis() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Perfil</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
                 <input
                   type="text"
                   value={nome}
@@ -202,7 +202,6 @@ export default function Perfis() {
                     setNome(e.target.value);
                     if (e.target.value.trim()) setErroNome('');
                   }}
-                  placeholder="Ex: Estoquista"
                   className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
                     erroNome
                       ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -218,7 +217,6 @@ export default function Perfis() {
                 <textarea
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
-                  placeholder="Ex: Realiza recebimento, liberação e expedição de materias"
                   rows={3}
                   className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] resize-none"
                 />

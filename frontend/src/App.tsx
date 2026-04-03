@@ -9,6 +9,7 @@ import Perfis from './pages/Perfis'
 import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
 import Filiais from './pages/Filiais'
+import UnidadesMedida from './pages/UnidadesMedida'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -511,6 +512,7 @@ export default function App() {
             <Route path="/perfis" element={<Perfis />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/filiais" element={<Filiais />} />
+            <Route path="/unidades-medida" element={<UnidadesMedida />} />
           </Routes>
 
           {modalConfigAberto && (
