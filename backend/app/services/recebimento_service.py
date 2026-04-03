@@ -4,6 +4,7 @@ from datetime import datetime
 from ..models.recebimento import Recebimento, RecebimentoItem
 from ..models.historico_xml import HistoricoXML
 from ..models.vinculo_fornecedor import VinculoProdutoFornecedor
+from ..models.unidade_medida import UnidadeMedida
 from ..models.vinculo_unidade import VinculoUnidade
 from ..schemas.recebimento import RecebimentoCriar
 from ..enums import StatusRecebimento, StatusRecebimentoItem
@@ -54,14 +55,23 @@ class RecebimentoService:
             ).first()
 
             # Tenta descobrir a Unidade interna
-            vinculo_und = db.query(VinculoUnidade).filter(
-                VinculoUnidade.unidade_externa == item_dados.und
+            # Confere primeiro se existe na tabela UnidadesMedida (sigla exata)
+            unidade_interna_direta = db.query(UnidadeMedida).filter(
+                UnidadeMedida.sigla == item_dados.und
             ).first()
+
+            vinculo_und = None
+            if not unidade_interna_direta:
+                # Se não achou direto, confere na tabela de vínculos
+                vinculo_und = db.query(VinculoUnidade).filter(
+                    VinculoUnidade.unidade_externa == item_dados.und
+                ).first()
 
             # Define o status do item
             sku_encontrado = vinculo_prod.produto_id if vinculo_prod else None
+            unidade_resolvida = unidade_interna_direta or vinculo_und
             status_item = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value if (
-                        sku_encontrado and vinculo_und) else StatusRecebimentoItem.PENDENTE_VINCULO.value
+                    sku_encontrado and unidade_resolvida) else StatusRecebimentoItem.PENDENTE_VINCULO.value
 
             novo_item = RecebimentoItem(
                 recebimento_id=db_receb.id,
@@ -183,3 +193,36 @@ class RecebimentoService:
             db_wms.commit()
 
         return {"atualizados": atualizados}
+
+    @staticmethod
+    def vincular_unidade_pendente(db: Session, recebimento_id: int, unidade_externa: str, unidade_medida_id: int):
+        # Verifica se o vínculo já existe globalmente
+        existente = db.query(VinculoUnidade).filter(
+            VinculoUnidade.unidade_externa == unidade_externa.upper()
+        ).first()
+
+        # Se não existir, cria o vínculo na tabela global para futuros xmls
+        if not existente:
+            novo_vinculo = VinculoUnidade(
+                unidade_externa=unidade_externa.upper(),
+                unidade_medida_id=unidade_medida_id
+            )
+            db.add(novo_vinculo)
+            db.flush()
+
+        # Atualiza os itens deste recebimento que estavam pendentes por causa desta unidade
+        itens = db.query(RecebimentoItem).filter(
+            RecebimentoItem.recebimento_id == recebimento_id,
+            RecebimentoItem.und == unidade_externa,
+            RecebimentoItem.status == StatusRecebimentoItem.PENDENTE_VINCULO.value
+        ).all()
+
+        for item in itens:
+            # Se o SKU já estiver preenchido, o item tem tudo o que precisa e sai da pendência
+            if item.sku:
+                item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+
+        db.commit()
+
+        # Atualiza o status do pai (romaneio) para ver se sai de PENDENTE
+        return RecebimentoService.atualizar_status_pai(db, recebimento_id)

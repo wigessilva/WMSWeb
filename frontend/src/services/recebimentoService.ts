@@ -47,4 +47,14 @@ export const recebimentoService = {
     const response = await api.post(`/${id}/vincular-oc?oc=${oc}`);
     return response.data;
   },
+
+  vincularUnidade: async (id: number, unidadeExterna: string, unidadeMedidaId: number): Promise<Recebimento> => {
+    const response = await api.post(`/${id}/vincular-unidade`, null, {
+      params: {
+        unidade_externa: unidadeExterna,
+        unidade_medida_id: unidadeMedidaId
+      }
+    });
+    return response.data;
+  },
 };

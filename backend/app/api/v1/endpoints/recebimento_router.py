@@ -71,6 +71,23 @@ def vincular_oc(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/{id}/vincular-unidade", response_model=RecebimentoSchema)
+def vincular_unidade(
+    id: int = Path(...),
+    unidade_externa: str = Query(..., description="Unidade externa da NFe"),
+    unidade_medida_id: int = Query(..., description="ID da unidade de medida interna correspondente"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.vincular_unidade_pendente(
+            db=db,
+            recebimento_id=id,
+            unidade_externa=unidade_externa,
+            unidade_medida_id=unidade_medida_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/sincronizar-ocs", response_model=dict)
 def sincronizar_ocs(
     db: Session = Depends(get_db),
