@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db, get_erp_db
-from app.schemas.produto import ProdutoSchema, ProdutoEditar, ProdutoAtivar, ProdutoBloqueio
+from app.schemas.produto import ProdutoSchema, ProdutoEditar, ProdutoAtivar, ProdutoBloqueio, Optional
 from fastapi import Query
 from app.services.produto_service import ProdutoService
 from app.services.erp_sync_service import ServicoSincronizacaoERP
@@ -22,8 +22,12 @@ def editar_produto(produto_id: int, produto: ProdutoEditar, db: Session = Depend
     return produto_atualizado
 
 @router.get("/", response_model=list[ProdutoSchema])
-def listar_produtos(db: Session = Depends(get_db)):
-    return ProdutoService.listar_todos(db)
+def listar_produtos(
+    busca: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Passamos o termo de busca para o service decidir como filtrar
+    return ProdutoService.listar_todos(db, busca=busca)
 
 @router.post("/{produto_id}/ativar", response_model=ProdutoSchema)
 def ativar_produto_wms(produto_id: int, dados: ProdutoAtivar, db: Session = Depends(get_db)):

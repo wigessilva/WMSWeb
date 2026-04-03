@@ -29,8 +29,15 @@ class ProdutoService:
         return db.query(Produto).filter(Produto.id == produto_id).first()
 
     @staticmethod
-    def listar_todos(db: Session):
-        return db.query(Produto).all()
+    def listar_todos(db: Session, busca: str = None):
+        query = db.query(Produto)
+        if busca:
+            # Filtra por SKU ou Descrição que contenham o termo (case-insensitive)
+            filtro = f"%{busca}%"
+            query = query.filter(
+                (Produto.sku.ilike(filtro)) | (Produto.descricao.ilike(filtro))
+            )
+        return query.all()
 
     @staticmethod
     def ativar_produto(db: Session, produto_id: int, dados_ativacao: ProdutoAtivar):
