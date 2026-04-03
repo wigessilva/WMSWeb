@@ -12,7 +12,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
 
-  // Lembra o último utilizador que fez login no computador
+  // Lembra o último usuário que fez login no computador
   useEffect(() => {
     const ultimoLogin = localStorage.getItem('wms_ultimo_login');
     if (ultimoLogin) {

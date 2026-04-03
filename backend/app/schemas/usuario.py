@@ -45,3 +45,12 @@ class UsuarioSchema(UsuarioBase):
 class UsuarioLogin(BaseModel):
     login: str
     senha: str
+
+
+class UsuarioAtualizar(BaseModel):
+    nome: Optional[str] = None
+    login: Optional[str] = None
+    senha: Optional[str] = None
+    perfil_id: Optional[int] = None
+    usuario_logado_id: int
+    senha_autorizacao: str

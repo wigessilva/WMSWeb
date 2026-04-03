@@ -8,10 +8,11 @@ import { configuracaoService } from './services/configuracaoService'
 import Perfis from './pages/Perfis'
 import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
+import Filiais from './pages/Filiais'
 import type { Usuario } from './types/usuario'
 
 export default function App() {
-  // Tenta recuperar o utilizador da sessão caso ele faça F5 (recarregar a página)
+  // Tenta recuperar o usuário da sessão caso ele faça F5 (recarregar a página)
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(() => {
     const user = sessionStorage.getItem('wms_sessao_usuario');
     return user ? JSON.parse(user) : null;
@@ -21,7 +22,7 @@ export default function App() {
     sessionStorage.setItem('wms_sessao_usuario', JSON.stringify(usuario));
     setUsuarioLogado(usuario);
 
-    // Se o utilizador tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
+    // Se o usuário tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
     if (usuario.filiais && usuario.filiais.length > 0 && !localStorage.getItem('wms_api_url')) {
       localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8006');
     }
@@ -192,7 +193,7 @@ export default function App() {
     }
   }
 
-  // SE NÃO HOUVER UTILIZADOR LOGADO, MOSTRA APENAS O ECRÃ DE LOGIN
+  // SE NÃO HOUVER USUÁRIO LOGADO, MOSTRA APENAS O ECRÃ DE LOGIN
   if (!usuarioLogado) {
     return <Login onLogin={handleLogin} />
   }
@@ -504,6 +505,7 @@ export default function App() {
             <Route path="/produtos" element={<h2>Gestão de Produtos</h2>} />
             <Route path="/perfis" element={<Perfis />} />
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/filiais" element={<Filiais />} />
           </Routes>
 
           {modalConfigAberto && (

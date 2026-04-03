@@ -14,7 +14,7 @@ def inicializar_dados_padrao(db: Session):
         db.commit()
         db.refresh(perfil_admin)
 
-    # 2. Verifica se já existe o utilizador admin master
+    # 2. Verifica se já existe o usuário admin master
     usuario_admin = db.query(Usuario).filter(Usuario.login == "admin").first()
 
     if not usuario_admin:

@@ -27,6 +27,19 @@ export const usuarioService = {
     return response.json();
   },
 
+  atualizar: async (id: number, dados: any): Promise<Usuario> => {
+    const response = await fetch(`${getBaseUrl()}/usuarios/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(dados),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao atualizar');
+    }
+    return response.json();
+  },
+
   inativar: async (id: number): Promise<Usuario> => {
     const response = await fetch(`${getBaseUrl()}/usuarios/${id}/inativar`, {
       method: 'PUT',

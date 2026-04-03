@@ -1,0 +1,291 @@
+import { useState, useEffect, useMemo } from 'react';
+import { filialService } from '../services/filialService';
+import type { Filial } from '../types/filial';
+
+export default function Filiais() {
+  const [filiais, setFiliais] = useState<Filial[]>([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [carregando, setCarregando] = useState(false);
+
+  // Campos do formulário
+  const [nome, setNome] = useState('');
+  const [cnpj, setCnpj] = useState('');
+  const [urlApi, setUrlApi] = useState('');
+  const [isMatriz, setIsMatriz] = useState(false);
+  const [ativo, setAtivo] = useState(true);
+
+  // Controles de tela
+  const [termoBusca, setTermoBusca] = useState('');
+  const [dropdownAberto, setDropdownAberto] = useState(false);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [filialSelecionada, setFilialSelecionada] = useState<Filial | null>(null);
+
+  const filiaisFiltradas = useMemo(() => {
+    if (!termoBusca) return filiais;
+    const termo = termoBusca.toLowerCase();
+    return filiais.filter(f =>
+      f.nome.toLowerCase().includes(termo) ||
+      (f.cnpj && f.cnpj.includes(termo))
+    );
+  }, [filiais, termoBusca]);
+
+  const carregarFiliais = async () => {
+    try {
+      const dados = await filialService.listar();
+      setFiliais(dados);
+    } catch (error) {
+      console.error("Erro ao carregar filiais:", error);
+    }
+  };
+
+  useEffect(() => {
+    carregarFiliais();
+  }, []);
+
+  const abrirModalCriar = () => {
+    setModoEdicao(false);
+    setNome('');
+    setCnpj('');
+    setUrlApi('');
+    setIsMatriz(false);
+    setAtivo(true);
+    setModalAberto(true);
+    setDropdownAberto(false);
+  };
+
+  const abrirModalEditar = () => {
+    if (!filialSelecionada) {
+      alert("Selecione uma filial");
+      return;
+    }
+    setModoEdicao(true);
+    setNome(filialSelecionada.nome);
+    setCnpj(filialSelecionada.cnpj || '');
+    setUrlApi(filialSelecionada.url_api || '');
+    setIsMatriz(filialSelecionada.is_matriz);
+    setAtivo(filialSelecionada.ativo);
+    setModalAberto(true);
+    setDropdownAberto(false);
+  };
+
+  const salvarFilial = async () => {
+    if (!nome.trim()) {
+      alert("O nome da filial é obrigatório");
+      return;
+    }
+
+    setCarregando(true);
+    const payload = {
+      nome,
+      cnpj: cnpj || null,
+      url_api: urlApi || null,
+      is_matriz: isMatriz,
+      ativo
+    };
+
+    try {
+      if (modoEdicao && filialSelecionada) {
+        await filialService.atualizar(filialSelecionada.id, payload);
+        alert("Filial atualizada com sucesso!");
+      } else {
+        await filialService.criar(payload);
+        alert("Filial criada com sucesso!");
+      }
+      setModalAberto(false);
+      carregarFiliais();
+    } catch (error: any) {
+      alert(error.message || "Erro ao salvar filial");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const excluirFilial = async (id: number, nomeFilial: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir a filial ${nomeFilial}?`)) {
+      try {
+        await filialService.excluir(id);
+        alert("Filial excluída com sucesso!");
+        carregarFiliais();
+      } catch (error: any) {
+        alert(error.message || "Erro ao excluir filial. Verifique se existem dependências.");
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex justify-between items-center mb-3">
+
+          <div className="flex w-1/6 min-w-[125px]">
+            <input
+              type="text"
+              placeholder="Buscar"
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
+              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+            />
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setDropdownAberto(!dropdownAberto)}
+              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
+            >
+              Ações <span className="ml-2 text-xs">▼</span>
+            </button>
+
+            {dropdownAberto && (
+              <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
+                <button onClick={abrirModalCriar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Adicionar</button>
+                <button onClick={abrirModalEditar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar</button>
+                <button
+                  onClick={() => {
+                    if (!filialSelecionada) {
+                      alert("Selecione uma filial");
+                      return;
+                    }
+                    excluirFilial(filialSelecionada.id, filialSelecionada.nome);
+                    setDropdownAberto(false);
+                  }}
+                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium"
+                >
+                  Excluir
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border border-gray-200 rounded">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead className="bg-gray-50 text-gray-700 text-sm">
+              <tr>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200">Nome</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200">CNPJ</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200">URL API</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Tipo</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-600 text-sm">
+              {filiaisFiltradas.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                    Nenhuma filial encontrada.
+                  </td>
+                </tr>
+              ) : (
+                filiaisFiltradas.map((f) => (
+                  <tr
+                    key={f.id}
+                    onClick={() => setFilialSelecionada(f)}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
+                      filialSelecionada?.id === f.id ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-2 font-semibold text-blue-900">{f.nome}</td>
+                    <td className="px-4 py-2">{f.cnpj || "-"}</td>
+                    <td className="px-4 py-2">{f.url_api || "-"}</td>
+                    <td className="px-4 py-2 text-center">
+                      {f.is_matriz ? (
+                        <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-xs font-semibold">Matriz</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">Filial</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {f.ativo ? (
+                        <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-semibold">Ativo</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-xs font-semibold">Inativo</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {modalAberto && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Filial' : 'Criar Filial'}</h3>
+              <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+                <input
+                  type="text"
+                  value={cnpj}
+                  onChange={(e) => setCnpj(e.target.value)}
+                  placeholder="Opcional"
+                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">URL API (Integração ERP)</label>
+                <input
+                  type="text"
+                  value={urlApi}
+                  onChange={(e) => setUrlApi(e.target.value)}
+                  placeholder="Ex: http://192.168.1.100:8006"
+                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isMatriz}
+                    onChange={(e) => setIsMatriz(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]"
+                  />
+                  <span className="text-sm font-medium text-gray-700">É Matriz?</span>
+                </label>
+
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ativo}
+                    onChange={(e) => setAtivo(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Ativo</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button onClick={() => setModalAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
+              <button
+                onClick={salvarFilial}
+                disabled={carregando}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] hover:bg-blue-800 rounded transition-colors disabled:opacity-50"
+              >
+                {carregando ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
