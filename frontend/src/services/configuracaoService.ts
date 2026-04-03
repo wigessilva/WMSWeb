@@ -1,5 +1,5 @@
 const getBaseUrl = () => {
-  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8006';
+  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8007';
   return `${urlServidorFilial}/api/v1/configuracao`;
 };
 

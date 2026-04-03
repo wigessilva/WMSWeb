@@ -10,21 +10,17 @@ class FamiliaService:
             nome=dados.nome,
             descricao=dados.descricao,
             variavel_consumo=dados.variavel_consumo,
-            herdar_parametros_mestres=dados.herdar_parametros_mestres,
-            validade_obrigatoria=dados.validade_obrigatoria,
+            tipo_validade=dados.tipo_validade,
+            prazo_validade=dados.prazo_validade,
+            vencimento_minimo=dados.vencimento_minimo,
+            area_armazenagem_preferencial=dados.area_armazenagem_preferencial,
             lote_obrigatorio=dados.lote_obrigatorio,
             modelo_giro=dados.modelo_giro,
             bloquear_vencido=dados.bloquear_vencido,
+            bloquear_sem_validade=dados.bloquear_sem_validade,
+            bloquear_sem_lote=dados.bloquear_sem_lote,
             bloquear_reprovado=dados.bloquear_reprovado
         )
-
-        # Regra de negócio: Se herda parâmetros mestres, anula qualquer regra local enviada
-        if db_obj.herdar_parametros_mestres:
-            db_obj.validade_obrigatoria = None
-            db_obj.lote_obrigatorio = None
-            db_obj.modelo_giro = None
-            db_obj.bloquear_vencido = None
-            db_obj.bloquear_reprovado = None
 
         db.add(db_obj)
         db.commit()
@@ -44,14 +40,6 @@ class FamiliaService:
         dados_atualizar = dados.model_dump(exclude_unset=True)
         for chave, valor in dados_atualizar.items():
             setattr(db_obj, chave, valor)
-
-        # limpa as regras locais para garantir a integridade do banco
-        if db_obj.herdar_parametros_mestres:
-            db_obj.validade_obrigatoria = None
-            db_obj.lote_obrigatorio = None
-            db_obj.modelo_giro = None
-            db_obj.bloquear_vencido = None
-            db_obj.bloquear_reprovado = None
 
         db.commit()
         db.refresh(db_obj)

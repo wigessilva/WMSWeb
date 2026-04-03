@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { familiaService } from '../services/familiaService'
+import { parametrosMestresService } from '../services/parametrosMestresService'
 import type { Familia } from '../types/familia'
 
 export default function Familias() {
@@ -11,6 +12,7 @@ export default function Familias() {
   const [dropdownAberto, setDropdownAberto] = useState(false)
 
   const [modalCriarAberto, setModalCriarAberto] = useState(false)
+  const [modoEdicao, setModoEdicao] = useState(false)
   const [novoNome, setNovoNome] = useState("")
   const [novaDescricao, setNovaDescricao] = useState("")
   const [salvando, setSalvando] = useState(false)
@@ -26,6 +28,149 @@ export default function Familias() {
   const [bloquearSemValidade, setBloquearSemValidade] = useState(false)
   const [bloquearSemLote, setBloquearSemLote] = useState(false)
   const [bloquearReprovado, setBloquearReprovado] = useState(false)
+  const [lockValidade, setLockValidade] = useState(true)
+  const [lockLote, setLockLote] = useState(true)
+  const [lockGiro, setLockGiro] = useState(true)
+  const [lockBloqueios, setLockBloqueios] = useState(true)
+
+  const [parametrosGlobais, setParametrosGlobais] = useState<any>(null)
+
+  const carregarParametrosGlobais = async () => {
+    try {
+      const dados = await parametrosMestresService.obter()
+      if (dados) {
+        setParametrosGlobais(dados)
+        setTipoValidade(dados.validade_obrigatoria ? "obrigatoria" : "opcional")
+        setControleLote(dados.lote_obrigatorio ? "obrigatorio" : "opcional")
+        setGiroEstoque(dados.modelo_giro || "FEFO")
+        setBloquearVencido(dados.bloquear_vencido ?? false)
+        setBloquearSemValidade(dados.bloquear_sem_validade ?? false)
+        setBloquearSemLote(dados.bloquear_sem_lote ?? false)
+        setBloquearReprovado(dados.bloquear_reprovado ?? false)
+      }
+    } catch (error) {
+      console.error("Erro ao carregar parâmetros globais:", error)
+    }
+  }
+
+  const resetarFormulario = () => {
+    setModoEdicao(false);
+    setNovoNome("");
+    setNovaDescricao("");
+    setPrazoValidade("");
+    setVencimentoMinimo("");
+    setVariavelConsumo("unidade");
+    setAreaArmazenagem("");
+
+    setLockValidade(true);
+    setLockLote(true);
+    setLockGiro(true);
+    setLockBloqueios(true);
+
+    if (parametrosGlobais) {
+      setTipoValidade(parametrosGlobais.validade_obrigatoria ? "obrigatoria" : "opcional");
+      setControleLote(parametrosGlobais.lote_obrigatorio ? "obrigatorio" : "opcional");
+      setGiroEstoque(parametrosGlobais.modelo_giro || "FEFO");
+      setBloquearVencido(parametrosGlobais.bloquear_vencido ?? false);
+      setBloquearSemValidade(parametrosGlobais.bloquear_sem_validade ?? false);
+      setBloquearSemLote(parametrosGlobais.bloquear_sem_lote ?? false);
+      setBloquearReprovado(parametrosGlobais.bloquear_reprovado ?? false);
+    } else {
+      setTipoValidade("sem_validade");
+      setControleLote("opcional");
+      setGiroEstoque("FEFO");
+      setBloquearVencido(false);
+      setBloquearSemValidade(false);
+      setBloquearSemLote(false);
+      setBloquearReprovado(false);
+    }
+  }
+
+  const toggleLockValidade = () => {
+    const novo = !lockValidade;
+    setLockValidade(novo);
+    if (novo) {
+      setTipoValidade(parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional");
+    }
+  };
+
+  const toggleLockLote = () => {
+    const novo = !lockLote;
+    setLockLote(novo);
+    if (novo) {
+      setControleLote(parametrosGlobais?.lote_obrigatorio ? "obrigatorio" : "opcional");
+    }
+  };
+
+  const toggleLockGiro = () => {
+    const novo = !lockGiro;
+    setLockGiro(novo);
+    if (novo) {
+      setGiroEstoque(parametrosGlobais?.modelo_giro || "FEFO");
+    }
+  };
+
+  const toggleLockBloqueios = () => {
+    const novo = !lockBloqueios;
+    setLockBloqueios(novo);
+    if (novo) {
+      setBloquearVencido(parametrosGlobais?.bloquear_vencido ?? false);
+      setBloquearSemValidade(parametrosGlobais?.bloquear_sem_validade ?? false);
+      setBloquearSemLote(parametrosGlobais?.bloquear_sem_lote ?? false);
+      setBloquearReprovado(parametrosGlobais?.bloquear_reprovado ?? false);
+    }
+  };
+
+  const abrirModalEditar = () => {
+    if (!familiaSelecionada) {
+      toast.error("Selecione uma família.");
+      return;
+    }
+
+    setModoEdicao(true);
+    setNovoNome(familiaSelecionada.nome);
+    setNovaDescricao(familiaSelecionada.descricao || "");
+    setVariavelConsumo(familiaSelecionada.variavel_consumo);
+    setAreaArmazenagem(familiaSelecionada.area_armazenagem_preferencial || "");
+
+    const herdaValidade = familiaSelecionada.tipo_validade === null;
+    setLockValidade(herdaValidade);
+
+    // Os prazos são carregados independentemente de a família herdar ou não a regra global
+    setPrazoValidade(familiaSelecionada.prazo_validade?.toString() || "");
+    setVencimentoMinimo(familiaSelecionada.vencimento_minimo?.toString() || "");
+
+    if (!herdaValidade) {
+        setTipoValidade(familiaSelecionada.tipo_validade || "sem_validade");
+    } else {
+        setTipoValidade(parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional");
+    }
+
+    const herdaLote = familiaSelecionada.lote_obrigatorio === null;
+    setLockLote(herdaLote);
+    setControleLote(herdaLote ? (parametrosGlobais?.lote_obrigatorio ? "obrigatorio" : "opcional") : (familiaSelecionada.lote_obrigatorio ? "obrigatorio" : "opcional"));
+
+    const herdaGiro = familiaSelecionada.modelo_giro === null;
+    setLockGiro(herdaGiro);
+    setGiroEstoque(herdaGiro ? (parametrosGlobais?.modelo_giro || "FEFO") : (familiaSelecionada.modelo_giro || "FEFO"));
+
+    const herdaBloqueios = familiaSelecionada.bloquear_vencido === null;
+    setLockBloqueios(herdaBloqueios);
+    if (!herdaBloqueios) {
+        setBloquearVencido(familiaSelecionada.bloquear_vencido ?? false);
+        setBloquearSemValidade(familiaSelecionada.bloquear_sem_validade ?? false);
+        setBloquearSemLote(familiaSelecionada.bloquear_sem_lote ?? false);
+        setBloquearReprovado(familiaSelecionada.bloquear_reprovado ?? false);
+    } else {
+        setBloquearVencido(parametrosGlobais?.bloquear_vencido ?? false);
+        setBloquearSemValidade(parametrosGlobais?.bloquear_sem_validade ?? false);
+        setBloquearSemLote(parametrosGlobais?.bloquear_sem_lote ?? false);
+        setBloquearReprovado(parametrosGlobais?.bloquear_reprovado ?? false);
+    }
+
+    setDropdownAberto(false);
+    setModalCriarAberto(true);
+  }
 
   const carregarFamilias = async (termo?: string) => {
     try {
@@ -43,6 +188,7 @@ export default function Familias() {
 
   useEffect(() => {
     carregarFamilias()
+    carregarParametrosGlobais()
   }, [])
 
   const handleExcluir = async () => {
@@ -58,7 +204,7 @@ export default function Familias() {
     }
   }
 
-  const handleCriar = async (e: React.FormEvent) => {
+  const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNome.trim()) {
       toast.error("O nome é obrigatório.");
@@ -66,39 +212,36 @@ export default function Familias() {
     }
     try {
       setSalvando(true);
-      await familiaService.criar({
+      const payload = {
         nome: novoNome,
         descricao: novaDescricao || undefined,
-        tipo_validade: tipoValidade,
-        prazo_validade: prazoValidade ? Number(prazoValidade) : undefined,
-        vencimento_minimo: vencimentoMinimo ? Number(vencimentoMinimo) : undefined,
         variavel_consumo: variavelConsumo,
+        tipo_validade: lockValidade ? undefined : tipoValidade,
+        prazo_validade: tipoValidade === "sem_validade" || !prazoValidade ? undefined : Number(prazoValidade),
+        vencimento_minimo: tipoValidade === "sem_validade" || !vencimentoMinimo ? undefined : Number(vencimentoMinimo),
         area_armazenagem_preferencial: areaArmazenagem || undefined,
-        controle_lote: controleLote,
-        giro_estoque: giroEstoque,
-        bloquear_vencido: bloquearVencido,
-        bloquear_sem_validade: bloquearSemValidade,
-        bloquear_sem_lote: bloquearSemLote,
-        bloquear_reprovado: bloquearReprovado
-      });
-      toast.success("Família criada com sucesso!");
+        lote_obrigatorio: lockLote ? undefined : (controleLote === "obrigatorio"),
+        modelo_giro: lockGiro ? undefined : giroEstoque,
+        bloquear_vencido: lockBloqueios ? undefined : bloquearVencido,
+        bloquear_sem_validade: lockBloqueios ? undefined : bloquearSemValidade,
+        bloquear_sem_lote: lockBloqueios ? undefined : bloquearSemLote,
+        bloquear_reprovado: lockBloqueios ? undefined : bloquearReprovado
+      };
+
+      if (modoEdicao && familiaSelecionada) {
+        await familiaService.atualizar(familiaSelecionada.id, payload);
+        toast.success("Família atualizada com sucesso!");
+      } else {
+        await familiaService.criar(payload);
+        toast.success("Família criada com sucesso!");
+      }
+
       setModalCriarAberto(false);
-      setNovoNome("");
-      setNovaDescricao("");
-      setTipoValidade("sem_validade");
-      setPrazoValidade("");
-      setVencimentoMinimo("");
-      setVariavelConsumo("unidade");
-      setAreaArmazenagem("");
-      setControleLote("opcional");
-      setGiroEstoque("FEFO");
-      setBloquearVencido(false);
-      setBloquearSemValidade(false);
-      setBloquearSemLote(false);
-      setBloquearReprovado(false);
+      resetarFormulario();
       carregarFamilias();
     } catch (error) {
-      toast.error("Erro ao criar família.");
+      console.error("Erro ao salvar família:", error);
+      toast.error("Erro ao salvar família. Verifique o console.");
     } finally {
       setSalvando(false);
     }
@@ -131,13 +274,9 @@ export default function Familias() {
 
             {dropdownAberto && (
               <div className="absolute top-10 right-0 w-48 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={() => { setDropdownAberto(false); setModalCriarAberto(true); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Criar</button>
+                <button onClick={() => { setDropdownAberto(false); resetarFormulario(); setModalCriarAberto(true); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Criar</button>
                 <button
-                  onClick={() => {
-                    if (!familiaSelecionada) { toast.error("Selecione uma família."); return; }
-                    setDropdownAberto(false);
-                    toast.info("Funcionalidade Editar em breve");
-                  }}
+                  onClick={abrirModalEditar}
                   className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
                 >
                   Editar
@@ -192,8 +331,8 @@ export default function Familias() {
       {modalCriarAberto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Criar Família</h2>
-            <form onSubmit={handleCriar} className="space-y-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">{modoEdicao ? 'Editar Família' : 'Criar Família'}</h2>
+            <form onSubmit={handleSalvar} className="space-y-6">
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -222,11 +361,17 @@ export default function Familias() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Validade</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">Validade</label>
+                      <button type="button" onClick={toggleLockValidade} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                        {lockValidade ? "🔒 Herdar" : "🔓 Exceção"}
+                      </button>
+                    </div>
                     <select
                       value={tipoValidade}
                       onChange={(e) => setTipoValidade(e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      disabled={lockValidade}
+                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockValidade ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
                     >
                       <option value="sem_validade">Sem Validade</option>
                       <option value="opcional">Opcional</option>
@@ -240,7 +385,7 @@ export default function Familias() {
                       value={prazoValidade}
                       onChange={(e) => setPrazoValidade(e.target.value)}
                       min="0"
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
                       disabled={tipoValidade === "sem_validade"}
                     />
                   </div>
@@ -251,7 +396,7 @@ export default function Familias() {
                       value={vencimentoMinimo}
                       onChange={(e) => setVencimentoMinimo(e.target.value)}
                       min="0"
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
                       disabled={tipoValidade === "sem_validade"}
                     />
                   </div>
@@ -287,22 +432,34 @@ export default function Familias() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Controle de Lote</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">Controle de Lote</label>
+                      <button type="button" onClick={toggleLockLote} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                        {lockLote ? "🔒 Herdar" : "🔓 Exceção"}
+                      </button>
+                    </div>
                     <select
                       value={controleLote}
                       onChange={(e) => setControleLote(e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      disabled={lockLote}
+                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockLote ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
                     >
                       <option value="opcional">Opcional</option>
                       <option value="obrigatorio">Obrigatório</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Giro de Estoque</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">Giro de Estoque</label>
+                      <button type="button" onClick={toggleLockGiro} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                        {lockGiro ? "🔒 Herdar" : "🔓 Exceção"}
+                      </button>
+                    </div>
                     <select
                       value={giroEstoque}
                       onChange={(e) => setGiroEstoque(e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      disabled={lockGiro}
+                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockGiro ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
                     >
                       <option value="FEFO">FEFO</option>
                       <option value="FIFO">FIFO</option>
@@ -312,8 +469,13 @@ export default function Familias() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bloqueios Automáticos</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Bloqueios Automáticos</label>
+                    <button type="button" onClick={toggleLockBloqueios} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                      {lockBloqueios ? "🔒 Herdar" : "🔓 Exceção"}
+                    </button>
+                  </div>
+                  <div className={`grid grid-cols-2 gap-2 p-2 rounded ${lockBloqueios ? 'opacity-60 pointer-events-none bg-gray-100 border border-gray-200' : 'border border-blue-300 bg-white'}`}>
                     <label className="flex items-center space-x-2">
                       <input type="checkbox" checked={bloquearVencido} onChange={(e) => setBloquearVencido(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
                       <span className="text-sm text-gray-700">Produto vencido</span>
@@ -340,8 +502,7 @@ export default function Familias() {
                   type="button"
                   onClick={() => {
                     setModalCriarAberto(false);
-                    setNovoNome("");
-                    setNovaDescricao("");
+                    resetarFormulario();
                   }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
                   disabled={salvando}

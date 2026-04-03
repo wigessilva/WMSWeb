@@ -16,6 +16,26 @@ export const familiaService = {
     return response.json();
   },
 
+  criar: async (familia: FamiliaCriar): Promise<Familia> => {
+    const response = await fetch(`${getBaseUrl()}/familias/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(familia)
+    });
+    if (!response.ok) throw new Error('Erro ao criar família');
+    return response.json();
+  },
+
+  atualizar: async (id: number, familia: Partial<FamiliaCriar>): Promise<Familia> => {
+    const response = await fetch(`${getBaseUrl()}/familias/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(familia)
+    });
+    if (!response.ok) throw new Error('Erro ao atualizar família');
+    return response.json();
+  },
+
   excluir: async (id: number): Promise<void> => {
     const response = await fetch(`${getBaseUrl()}/familias/${id}`, {
       method: 'DELETE',

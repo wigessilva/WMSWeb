@@ -29,7 +29,7 @@ export default function App() {
 
     // Se o usuário tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
     if (usuario.filiais && usuario.filiais.length > 0 && !localStorage.getItem('wms_api_url')) {
-      localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8006');
+      localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8007');
     }
   }
 
@@ -161,7 +161,7 @@ export default function App() {
       <div className="flex-1 bg-wms-fundo flex flex-col">
         {/* TOPBAR */}
         <header className="h-14 bg-white shadow-sm flex items-center justify-between px-6 border-b border-gray-200">
-          <h1 className="text-lg font-semibold text-gray-700">WMS Operacional</h1>
+          <h1 className="text-lg font-semibold text-gray-700"></h1>
           <div className="flex items-center space-x-6">
             <select
               value={localStorage.getItem('wms_api_url') || ""}

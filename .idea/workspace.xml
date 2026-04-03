@@ -4,7 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria a tela de unidades de medida" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Cria a tela de parametros mestres">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/familia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/familia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas/familia.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/familia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/services/familia_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/familia_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/configuracaoService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/familiaService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/familiaService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/parametrosMestresService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/parametrosMestresService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/types/familia.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/familia.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
