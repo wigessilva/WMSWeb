@@ -35,6 +35,7 @@ export default function App() {
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([])
   const [recebimentoSelecionado, setRecebimentoSelecionado] = useState<Recebimento | null>(null)
   const [carregando, setCarregando] = useState(false)
+  const [termoBusca, setTermoBusca] = useState("")
 
   const [caminhoPasta, setCaminhoPasta] = useState("")
   const [roboAtivo, setRoboAtivo] = useState(false)
@@ -52,10 +53,12 @@ export default function App() {
   const [menuEstoqueAberto, setMenuEstoqueAberto] = useState(false)
 
 // Função para puxar os dados do Python
-  const carregarRecebimentos = async () => {
+  const carregarRecebimentos = async (termo?: string) => {
     try {
-      const dados = await recebimentoService.listar()
+      const dados = await recebimentoService.listar(termo)
       setRecebimentos(dados)
+      // Se houver busca, limpamos a seleção atual para evitar erros na tela de itens
+      if (termo !== undefined) setRecebimentoSelecionado(null)
     } catch (error) {
       console.error("Erro ao carregar notas:", error)
     }
@@ -337,36 +340,54 @@ export default function App() {
 
                 {/* TABELA DE CABEÇALHO (Mestre) */}
                 <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                  <div className="flex justify-end mb-3 relative">
-                    <button
-                      onClick={() => setDropdownAberto(!dropdownAberto)}
-                      className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-                    >
-                      Ações <span className="ml-2 text-xs">▼</span>
-                    </button>
+                  <div className="flex justify-between items-center mb-3">
 
-                    {dropdownAberto && (
-                      <div className="absolute top-10 right-0 w-52 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                        <button onClick={() => { sincronizarEAtualizar(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
-                        <button onClick={() => { setModalConfigAberto(true); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Configurar Pasta XML</button>
-                        <button
-                          onClick={() => {
-                            if (!recebimentoSelecionado) {
-                              alert("Selecione um romaneio na tabela para editar a OC.");
-                              return;
-                            }
-                            setOcDigitada(recebimentoSelecionado.oc || "");
-                            setModalOCAberto(true);
-                            setDropdownAberto(false);
-                          }}
-                          className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
-                        >
-                          Editar OC
-                        </button>
-                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Vincular SKU</button>
-                        <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50">Alterar Destino</button>
-                      </div>
-                    )}
+                    {/* CAMPO DE BUSCA ESQUERDA */}
+                    <div className="flex w-1/6 min-w-[125px]">
+                      <input
+                        type="text"
+                        placeholder="Buscar"
+                        value={termoBusca}
+                        onChange={(e) => {
+                          setTermoBusca(e.target.value);
+                          carregarRecebimentos(e.target.value);
+                        }}
+                        className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                      />
+                    </div>
+
+                    {/* BOTÃO AÇÕES DIREITA */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setDropdownAberto(!dropdownAberto)}
+                        className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
+                      >
+                        Ações <span className="ml-2 text-xs">▼</span>
+                      </button>
+
+                      {dropdownAberto && (
+                        <div className="absolute top-10 right-0 w-52 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
+                          <button onClick={() => { sincronizarEAtualizar(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
+                          <button onClick={() => { setModalConfigAberto(true); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Configurar Pasta XML</button>
+                          <button
+                            onClick={() => {
+                              if (!recebimentoSelecionado) {
+                                alert("Selecione um romaneio na tabela para editar a OC.");
+                                return;
+                              }
+                              setOcDigitada(recebimentoSelecionado.oc || "");
+                              setModalOCAberto(true);
+                              setDropdownAberto(false);
+                            }}
+                            className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
+                          >
+                            Editar OC
+                          </button>
+                          <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Vincular SKU</button>
+                          <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50">Alterar Destino</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="overflow-y-auto max-h-72 border border-gray-200 rounded">
@@ -387,7 +408,7 @@ export default function App() {
                         {recebimentos.length === 0 ? (
                           <tr>
                             <td colSpan={8} className="px-3 py-4 text-center text-gray-500">
-                              Nenhuma nota encontrada. O robô já importou algo?
+                              Nenhuma nota encontrada.
                             </td>
                           </tr>
                         ) : (

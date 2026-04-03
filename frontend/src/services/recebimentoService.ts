@@ -11,9 +11,10 @@ api.interceptors.request.use((config) => {
 });
 
 export const recebimentoService = {
-  // Busca todos os recebimentos com os seus itens na base de dados
-  listar: async (): Promise<Recebimento[]> => {
-    const response = await api.get('/');
+  // Busca todos os recebimentos com os seus itens na base de dados (com busca opcional)
+  listar: async (termo?: string): Promise<Recebimento[]> => {
+    const params = termo ? { termo } : {};
+    const response = await api.get('/', { params });
     return response.data;
   },
 

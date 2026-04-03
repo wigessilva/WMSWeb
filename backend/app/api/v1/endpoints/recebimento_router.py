@@ -1,19 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Optional
 
 from app.db.database import get_db, get_erp_db
 from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema
 from app.services.recebimento_service import RecebimentoService
-from app.models.recebimento import Recebimento
+from app.models.recebimento import Recebimento, RecebimentoItem
 
 router = APIRouter()
 
 # --- NOVA ROTA DE LISTAGEM ---
 @router.get("/", response_model=List[RecebimentoSchema])
-def listar_recebimentos(db: Session = Depends(get_db)):
-    # Puxa todos os recebimentos ordenados do mais recente para o mais antigo
-    return db.query(Recebimento).order_by(Recebimento.criado_em.desc()).all()
+def listar_recebimentos(termo: Optional[str] = Query(None, description="Termo de busca geral"), db: Session = Depends(get_db)):
+    query = db.query(Recebimento)
+
+    if termo:
+        # Busca em campos do cabeçalho e verifica se algum item do romaneio corresponde
+        query = query.outerjoin(Recebimento.itens).filter(
+            or_(
+                Recebimento.nfe.ilike(f"%{termo}%"),
+                Recebimento.fornecedor.ilike(f"%{termo}%"),
+                Recebimento.oc.ilike(f"%{termo}%"),
+                RecebimentoItem.descricao.ilike(f"%{termo}%"),
+                RecebimentoItem.lote.ilike(f"%{termo}%")
+            )
+        ).distinct() # Distinct impede que o romaneio se repita se o termo for achado em 2 itens dele
+
+    return query.order_by(Recebimento.criado_em.desc()).all()
 
 @router.post("/importar", response_model=RecebimentoSchema)
 def importar_romaneio(
