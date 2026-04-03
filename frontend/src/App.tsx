@@ -10,6 +10,7 @@ import Filiais from './pages/Filiais'
 import UnidadesMedida from './pages/UnidadesMedida'
 import VinculosUnidades from './pages/VinculosUnidades'
 import Recebimentos from './pages/Recebimentos'
+import Produtos from './pages/Produtos'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -188,7 +189,7 @@ export default function App() {
             <Route path="/" element={<h2 className="text-2xl font-bold text-wms-sidebar">Dashboard Central</h2>} />
             <Route path="/recebimento" element={<Recebimentos />} />
             <Route path="/estoque" element={<h2>Estoque</h2>} />
-            <Route path="/produtos" element={<h2>Gestão de Produtos</h2>} />
+            <Route path="/produtos" element={<Produtos />} />
             <Route path="/perfis" element={<Perfis />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/filiais" element={<Filiais />} />
