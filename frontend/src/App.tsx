@@ -61,16 +61,20 @@ export default function App() {
     }
   }
 
-  // O React chama isto sozinho quando o sistema inicia
+  // O React chama isto sozinho quando o sistema inicia ou quando há login
   useEffect(() => {
-    carregarRecebimentos()
-  }, [])
+    if (usuarioLogado) {
+      carregarRecebimentos()
+    }
+  }, [usuarioLogado])
 
   useEffect(() => {
-    configuracaoService.getRoboConfig().then(dados => {
-      setCaminhoPasta(dados.caminho_diretorio || "")
-    }).catch(err => console.error("Erro ao carregar configuração inicial", err))
-  }, [])
+    if (usuarioLogado) {
+      configuracaoService.getRoboConfig().then(dados => {
+        setCaminhoPasta(dados.caminho_diretorio || "")
+      }).catch(err => console.error("Erro ao carregar configuração inicial", err))
+    }
+  }, [usuarioLogado])
 
   const guardarConfiguracao = async () => {
     try {
@@ -399,8 +403,8 @@ export default function App() {
                               <td className="px-3 py-1.5 font-bold text-blue-900">{rec.nfe}</td>
                               <td className="px-3 py-1.5">{rec.oc || "-"}</td>
                               <td className="px-3 py-1.5">{rec.fornecedor}</td>
-                              <td className="px-3 py-1.5">{rec.conferente_id || "-"}</td>
-                              <td className="px-3 py-1.5">{rec.data_inicio ? new Date(rec.data_inicio).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{rec.conferente || "-"}</td>
+                              <td className="px-3 py-1.5">{rec.inicio ? new Date(rec.inicio).toLocaleDateString('pt-BR') : "-"}</td>
                               <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleDateString('pt-BR') : "-"}</td>
                               <td className="px-3 py-1.5">
                                 <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
@@ -452,13 +456,13 @@ export default function App() {
                               <td className="px-3 py-1.5 font-bold text-blue-600 text-center">{item.qtd_recebida || 0}</td>
                               <td className="px-3 py-1.5 text-center">{item.und}</td>
                               <td className="px-3 py-1.5">{item.lote || "-"}</td>
-                              <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="px-3 py-1.5">{item.data_vencimento ? new Date(item.data_vencimento).toLocaleDateString('pt-BR') : "-"}</td>
-                              <td className="px-3 py-1.5 text-center">{item.integridade_embalagem !== null ? (item.integridade_embalagem ? "Sim" : "Não") : "-"}</td>
-                              <td className="px-3 py-1.5 text-center">{item.integridade_material !== null ? (item.integridade_material ? "Sim" : "Não") : "-"}</td>
-                              <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? (item.identificacao ? "Sim" : "Não") : "-"}</td>
-                              <td className="px-3 py-1.5 text-center">{item.certificado_qualidade !== null ? (item.certificado_qualidade ? "Sim" : "Não") : "-"}</td>
+                              <td className="px-3 py-1.5">{item.fab ? new Date(item.fab).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{item.val ? new Date(item.val).toLocaleDateString('pt-BR') : "-"}</td>
+                              <td className="px-3 py-1.5">{item.vencimento || "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.int_embalagem || "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.int_material || "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.identificacao || "-"}</td>
+                              <td className="px-3 py-1.5 text-center">{item.certif_qual || "-"}</td>
                               <td className="px-3 py-1.5">{item.destino || "-"}</td>
                               <td className="px-3 py-1.5">
                                 <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
