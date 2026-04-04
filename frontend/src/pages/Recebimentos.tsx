@@ -4,6 +4,9 @@ import { configuracaoService } from '../services/configuracaoService'
 import { unidadeMedidaService } from '../services/unidadeMedidaService'
 import { vinculoUnidadeService } from '../services/vinculoUnidadeService'
 import { Modal } from '../components/Modal'
+import { Button } from '../components/Button'
+import { Input } from '../components/Input'
+import { ActionToolbar } from '../components/ActionToolbar'
 import type { VinculoUnidade } from '../types/vinculoUnidade'
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
@@ -16,8 +19,6 @@ export default function Recebimentos() {
   const [termoBusca, setTermoBusca] = useState("")
 
   const [caminhoPasta, setCaminhoPasta] = useState("")
-
-  const [dropdownAberto, setDropdownAberto] = useState(false)
   const [modalConfigAberto, setModalConfigAberto] = useState(false)
   const [modalOCAberto, setModalOCAberto] = useState(false)
   const [ocDigitada, setOcDigitada] = useState("")
@@ -147,83 +148,48 @@ export default function Recebimentos() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => {
-                setTermoBusca(e.target.value);
-                carregarRecebimentos(e.target.value);
-              }}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-52 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={() => { sincronizarEAtualizar(); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Atualizar</button>
-                <button onClick={() => { setModalConfigAberto(true); setDropdownAberto(false); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Configurar Pasta XML</button>
-                <button
-                  onClick={() => {
-                    if (!recebimentoSelecionado) {
-                      toast.error("Selecione um romaneio na tabela para editar a OC.");
-                      return;
-                    }
-                    setOcDigitada(recebimentoSelecionado.oc || "");
-                    setModalOCAberto(true);
-                    setDropdownAberto(false);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
-                >
-                  Editar OC
-                </button>
-
-                {(!recebimentoSelecionado || unidadesPendentes.length > 0) && (
-                  <button
-                    onClick={() => {
-                      if (!recebimentoSelecionado) {
-                        toast.error("Selecione um romaneio na tabela.");
-                        return;
-                      }
-
-                      // Procura um item que esteja pendente para extrair a unidade do XML
-                      const itemPendente = recebimentoSelecionado.itens.find(i =>
-                        i.status.includes("Pendente")
-                      );
-
-                      if (itemPendente) {
-                        setUnidadeExterna(itemPendente.und);
-                      } else if (recebimentoSelecionado.itens.length > 0) {
-                        setUnidadeExterna(recebimentoSelecionado.itens[0].und);
-                      } else {
-                        setUnidadeExterna("");
-                      }
-
-                      setModalUnidadeAberto(true);
-                      setDropdownAberto(false);
-                    }}
-                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
-                  >
-                    Vincular Unidade
-                  </button>
-                )}
-
-                <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Vincular SKU</button>
-                <button onClick={() => setDropdownAberto(false)} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50">Alterar Destino</button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={(termo) => {
+            setTermoBusca(termo);
+            carregarRecebimentos(termo);
+          }}
+          acoes={[
+            { label: "Atualizar", onClick: sincronizarEAtualizar },
+            { label: "Configurar Pasta XML", onClick: () => setModalConfigAberto(true) },
+            {
+              label: "Editar OC",
+              onClick: () => {
+                if (!recebimentoSelecionado) {
+                  toast.error("Selecione um romaneio na tabela para editar a OC.");
+                  return;
+                }
+                setOcDigitada(recebimentoSelecionado.oc || "");
+                setModalOCAberto(true);
+              }
+            },
+            ...(!recebimentoSelecionado || unidadesPendentes.length > 0 ? [{
+              label: "Vincular Unidade",
+              onClick: () => {
+                if (!recebimentoSelecionado) {
+                  toast.error("Selecione um romaneio na tabela.");
+                  return;
+                }
+                const itemPendente = recebimentoSelecionado.itens.find(i => i.status.includes("Pendente"));
+                if (itemPendente) {
+                  setUnidadeExterna(itemPendente.und);
+                } else if (recebimentoSelecionado.itens.length > 0) {
+                  setUnidadeExterna(recebimentoSelecionado.itens[0].und);
+                } else {
+                  setUnidadeExterna("");
+                }
+                setModalUnidadeAberto(true);
+              }
+            }] : []),
+            { label: "Vincular SKU", onClick: () => {} },
+            { label: "Alterar Destino", onClick: () => {} }
+          ]}
+        />
 
         <div className="overflow-y-auto max-h-72 border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -332,7 +298,6 @@ export default function Recebimentos() {
         )}
       </div>
 
-      {/* Modais Antigos */}
       <Modal isOpen={modalConfigAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
             <div className="flex justify-between items-center mb-5">
@@ -340,12 +305,11 @@ export default function Recebimentos() {
               <button onClick={() => setModalConfigAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Caminho da Pasta de Origem</label>
-              <input type="text" value={caminhoPasta} onChange={(e) => setCaminhoPasta(e.target.value)} className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar" />
+              <Input label="Caminho da Pasta de Origem" value={caminhoPasta} onChange={(e) => setCaminhoPasta(e.target.value)} />
             </div>
             <div className="flex justify-end space-x-3 mt-4">
-              <button onClick={() => setModalConfigAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button onClick={guardarConfiguracao} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors">Salvar</button>
+              <Button variant="secondary" onClick={() => setModalConfigAberto(false)}>Cancelar</Button>
+              <Button variant="primary" onClick={guardarConfiguracao}>Salvar</Button>
             </div>
           </div>
       </Modal>
@@ -357,17 +321,15 @@ export default function Recebimentos() {
               <button onClick={() => setModalOCAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Número da OC no ERP</label>
-              <input type="text" value={ocDigitada} onChange={(e) => setOcDigitada(e.target.value)} className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar" />
+              <Input label="Número da OC no ERP" value={ocDigitada} onChange={(e) => setOcDigitada(e.target.value)} />
             </div>
             <div className="flex justify-end space-x-3 mt-4">
-              <button onClick={() => setModalOCAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button onClick={salvarOC} disabled={carregando} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors disabled:opacity-50">{carregando ? 'Buscando...' : 'Buscar e Vincular'}</button>
+              <Button variant="secondary" onClick={() => setModalOCAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} loadingText="Buscando..." onClick={salvarOC}>Buscar e Vincular</Button>
             </div>
           </div>
       </Modal>
 
-      {/* Novo Modal de Vincular Unidade */}
       <Modal isOpen={modalUnidadeAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
             <div className="flex justify-between items-center mb-5">
@@ -375,35 +337,35 @@ export default function Recebimentos() {
               <button onClick={() => setModalUnidadeAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sigla no XML</label>
-              <input
-                type="text"
-                value={unidadeExterna}
-                readOnly
-                className="w-full border border-gray-300 p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none uppercase font-semibold"
-              />
-            </div>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sigla no XML</label>
+                <input
+                  type="text"
+                  value={unidadeExterna}
+                  readOnly
+                  className="w-full border border-gray-300 p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none uppercase font-semibold"
+                />
+              </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Unidade Interna</label>
-              <select
-                value={unidadeInternaId}
-                onChange={(e) => setUnidadeInternaId(Number(e.target.value))}
-                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-wms-sidebar"
-              >
-                <option value="">Selecione...</option>
-                {unidadesInternas.map(u => (
-                  <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
-                ))}
-              </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna</label>
+                <select
+                  value={unidadeInternaId}
+                  onChange={(e) => setUnidadeInternaId(Number(e.target.value))}
+                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                >
+                  <option value="">Selecione...</option>
+                  {unidadesInternas.map(u => (
+                    <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3">
-              <button onClick={() => setModalUnidadeAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded">Cancelar</button>
-              <button onClick={salvarVinculoUnidade} disabled={carregando} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded disabled:opacity-50">
-                {carregando ? 'Salvando...' : 'Salvar Vínculo'}
-              </button>
+              <Button variant="secondary" onClick={() => setModalUnidadeAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} onClick={salvarVinculoUnidade}>Salvar Vínculo</Button>
             </div>
           </div>
       </Modal>

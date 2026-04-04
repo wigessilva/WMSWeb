@@ -4,16 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="torna o modal num componente global">
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ActionToolbar.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/Button.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/Input.tsx" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="implementa input e botões globais">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/VinculosUnidades.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/VinculosUnidades.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -316,14 +310,21 @@
       <option name="project" value="LOCAL" />
       <updated>1775310285325</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="implementa input e botões globais">
+      <option name="closed" value="true" />
+      <created>1775313081840</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1775313081840</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="adiciona as unidades de armazenamento" />
     <MESSAGE value="adiciona a variavel de consumo nos produtos e famílias" />
     <MESSAGE value="adiciona a estrutura multifilial" />
     <MESSAGE value="adiciona a transferência entre filiais" />
@@ -348,7 +349,8 @@
     <MESSAGE value="corrige bugs do overlay" />
     <MESSAGE value="corrige memória da edição de unidades" />
     <MESSAGE value="torna o modal num componente global" />
-    <option name="LAST_COMMIT_MESSAGE" value="torna o modal num componente global" />
+    <MESSAGE value="implementa input e botões globais" />
+    <option name="LAST_COMMIT_MESSAGE" value="implementa input e botões globais" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

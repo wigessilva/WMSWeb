@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { toast } from 'react-hot-toast'
+import { Modal } from '../components/Modal'
+import { Button } from '../components/Button'
+import { Input } from '../components/Input'
+import { ActionToolbar } from '../components/ActionToolbar'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
@@ -33,7 +36,6 @@ export default function Produtos() {
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [termoBusca, setTermoBusca] = useState("")
-  const [dropdownAberto, setDropdownAberto] = useState(false)
 
   // Estados do Modal e Dependências
   const [modalEditarAberto, setModalEditarAberto] = useState(false)
@@ -408,56 +410,29 @@ export default function Produtos() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => {
-                setTermoBusca(e.target.value);
-                carregarProdutos(e.target.value);
-              }}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-48 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button
-                  onClick={() => {
-                    if (!produtoSelecionado) {
-                      toast.error("Selecione um produto na tabela.");
-                      return;
-                    }
-                    setDropdownAberto(false);
-                    abrirModalEditar(produtoSelecionado);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => {
-                    setDropdownAberto(false);
-                    sincronizarEAtualizar();
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50"
-                >
-                  Sincronizar
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={(termo) => {
+            setTermoBusca(termo);
+            carregarProdutos(termo);
+          }}
+          acoes={[
+            {
+              label: "Editar",
+              onClick: () => {
+                if (!produtoSelecionado) {
+                  toast.error("Selecione um produto na tabela.");
+                  return;
+                }
+                abrirModalEditar(produtoSelecionado);
+              }
+            },
+            {
+              label: "Sincronizar",
+              onClick: sincronizarEAtualizar
+            }
+          ]}
+        />
 
         <div className="overflow-y-auto max-h-[600px] border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -504,8 +479,11 @@ export default function Produtos() {
       </div>
 
       {/* Modal de Edição */}
-      {modalEditarAberto && produtoSelecionado && createPortal(
-        <div className={`fixed inset-0 z-[1000] flex items-center justify-center p-4 ${modalMotivoAberto || modalEditarUnidadeAberto || modalConfirmarPesoAberto ? 'bg-transparent' : 'bg-black bg-opacity-50'}`}>
+      <Modal
+        isOpen={modalEditarAberto && !!produtoSelecionado}
+        zIndexClass="z-[1000]"
+        fundoTransparente={modalMotivoAberto || modalEditarUnidadeAberto || modalConfirmarPesoAberto}
+      >
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
             {/* Abas */}
             <div className="flex border-b border-gray-200 mb-4">
@@ -828,30 +806,15 @@ export default function Produtos() {
 
               {/* Botões do Rodapé */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setModalEditarAberto(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-                  disabled={salvando}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvando}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors flex items-center shadow-sm disabled:opacity-50"
-                >
-                  {salvando ? "Salvando..." : "Salvar"}
-                </button>
+                <Button type="button" variant="secondary" onClick={() => setModalEditarAberto(false)}>Cancelar</Button>
+                <Button type="submit" variant="primary" loading={salvando}>Salvar</Button>
               </div>
             </form>
           </div>
-        </div>
-      , document.body)}
+      </Modal>
 
       {/* Modal de Motivo de Bloqueio */}
-      {modalMotivoAberto && createPortal(
-        <div className="fixed inset-0 z-[1010] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <Modal isOpen={modalMotivoAberto} zIndexClass="z-[1010]">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Motivo do Bloqueio</h3>
             <textarea
@@ -861,35 +824,21 @@ export default function Produtos() {
               autoFocus
             />
             <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => { setModalMotivoAberto(false); setMotivoBloqueio(""); }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!motivoBloqueio.trim()) {
-                     toast.error("O motivo é obrigatório para realizar o bloqueio.");
-                     return;
-                  }
+              <Button type="button" variant="secondary" onClick={() => { setProdutoBloqueado(false); setModalMotivoAberto(false); setMotivoBloqueio(""); }}>Cancelar</Button>
+              <Button type="button" variant="danger" disabled={!motivoBloqueio.trim()} onClick={() => {
                   setProdutoBloqueado(true);
                   setModalMotivoAberto(false);
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-800 transition-colors"
-              >
-                Confirmar Bloqueio
-              </button>
+              }}>Confirmar Bloqueio</Button>
             </div>
           </div>
-        </div>
-      , document.body)}
+      </Modal>
 
       {/* Modal de Edição de Unidade */}
-      {modalEditarUnidadeAberto && createPortal(
-        <div className={`fixed inset-0 z-[1010] flex items-center justify-center p-4 ${modalConfirmarPesoAberto ? 'bg-transparent' : 'bg-black bg-opacity-50'}`}>
+      <Modal
+        isOpen={modalEditarUnidadeAberto}
+        zIndexClass="z-[1010]"
+        fundoTransparente={modalConfirmarPesoAberto}
+      >
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Editar Unidade</h3>
 
@@ -964,52 +913,25 @@ export default function Produtos() {
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
-                onClick={() => setModalEditarUnidadeAberto(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleAplicarUnidade}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors"
-              >
-                Aplicar
-              </button>
+              <Button type="button" variant="secondary" onClick={() => setModalEditarUnidadeAberto(false)}>Cancelar</Button>
+              <Button type="button" variant="primary" onClick={handleAplicarUnidade}>Aplicar</Button>
             </div>
           </div>
-        </div>
-      , document.body)}
+      </Modal>
 
       {/* Modal de Confirmação de Cálculo de Peso */}
-      {modalConfirmarPesoAberto && createPortal(
-        <div className="fixed inset-0 z-[1020] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <Modal isOpen={modalConfirmarPesoAberto} zIndexClass="z-[1020]">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-3">Atualizar pesos?</h3>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
               Deseja que o sistema calcule <strong>automaticamente</strong> o peso das outras embalagens?
             </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => confirmarCalculoPeso(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              >
-                Não
-              </button>
-              <button
-                type="button"
-                onClick={() => confirmarCalculoPeso(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors"
-              >
-                Sim
-              </button>
+            <div className="flex justify-end space-x-3 mt-4">
+              <Button type="button" variant="secondary" onClick={() => confirmarCalculoPeso(false)}>Não</Button>
+              <Button type="button" variant="primary" onClick={() => confirmarCalculoPeso(true)}>Sim</Button>
             </div>
           </div>
-        </div>
-      , document.body)}
+      </Modal>
     </div>
   )
 }
