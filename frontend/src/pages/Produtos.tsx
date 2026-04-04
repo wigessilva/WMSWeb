@@ -94,12 +94,14 @@ export default function Produtos() {
   const confirmarCalculoPeso = (aceitou: boolean) => {
     if (!dadosCalculoPeso || !unidadeEditando) return;
 
+    const unidadeAtualizada = { ...unidadeEditando, ...dadosCalculoPeso.payloadAtual };
+
     setProdutoSelecionado((prev: any) => {
       if (!prev) return prev;
       const novasUnidades = prev.unidades.map((u: any) => {
         // Atualiza a unidade que o usuário editou no modal
         if (u.id === unidadeEditando.id) {
-          return { ...u, ...dadosCalculoPeso.payloadAtual };
+          return unidadeAtualizada;
         }
         // Se aceitou, atualiza automaticamente o peso das outras
         if (aceitou && u.id !== unidadeEditando.id) {
@@ -111,6 +113,7 @@ export default function Produtos() {
       return { ...prev, unidades: novasUnidades };
     });
 
+    setUnidadeSelecionada(unidadeAtualizada);
     setModalConfirmarPesoAberto(false);
     setModalEditarUnidadeAberto(false);
   };
@@ -147,17 +150,20 @@ export default function Produtos() {
     }
 
     // Aplica direto na tabela se não precisou calcular peso
+    const unidadeAtualizada = { ...unidadeEditando, ...payload };
+
     setProdutoSelecionado((prev: any) => {
       if (!prev) return prev;
       const novasUnidades = prev.unidades.map((u: any) => {
         if (u.id === unidadeEditando.id) {
-          return { ...u, ...payload };
+          return unidadeAtualizada;
         }
         return u;
       });
       return { ...prev, unidades: novasUnidades };
     });
 
+    setUnidadeSelecionada(unidadeAtualizada);
     setModalEditarUnidadeAberto(false);
   };
 
