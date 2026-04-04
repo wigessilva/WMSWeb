@@ -291,7 +291,7 @@ export default function ParametrosMestres() {
           disabled={salvando}
           className="bg-[#1a63b6] text-white px-6 py-2 rounded hover:bg-blue-800 transition-colors font-medium shadow-sm disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Salvar Alterações"}
+          {salvando ? "Salvando..." : "Salvar"}
         </button>
       </div>
 

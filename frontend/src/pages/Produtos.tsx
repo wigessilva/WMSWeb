@@ -445,6 +445,36 @@ export default function Produtos() {
                       </select>
                     </div>
                   </div>
+
+                  {/* Tabela de Unidades */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <h3 className="text-sm font-bold text-gray-700 mb-2">Unidades</h3>
+                    <div className="overflow-x-auto border border-gray-200 rounded">
+                      <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr className="text-gray-700 text-xs">
+                            <th className="px-3 py-2 font-semibold">ID</th>
+                            <th className="px-3 py-2 font-semibold">Unidade</th>
+                            <th className="px-3 py-2 font-semibold">Tipo</th>
+                            <th className="px-3 py-2 font-semibold">Fator</th>
+                            <th className="px-3 py-2 font-semibold">L</th>
+                            <th className="px-3 py-2 font-semibold">C</th>
+                            <th className="px-3 py-2 font-semibold">A</th>
+                            <th className="px-3 py-2 font-semibold">Peso Bruto</th>
+                            <th className="px-3 py-2 font-semibold">EAN/GTIN</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-gray-600 text-sm">
+                          <tr>
+                            <td colSpan={9} className="px-3 py-4 text-center text-gray-500">
+                              Nenhuma unidade cadastrada.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                 </div>
               )}
 
@@ -623,7 +653,7 @@ export default function Produtos() {
                   disabled={salvando}
                   className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors flex items-center shadow-sm disabled:opacity-50"
                 >
-                  {salvando ? "Salvando..." : "Salvar Alterações"}
+                  {salvando ? "Salvando..." : "Salvar"}
                 </button>
               </div>
             </form>

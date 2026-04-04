@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria o modal de cadastro de produtos">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria as tabelas de exceções">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" afterDir="false" />
@@ -262,7 +262,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775262142919</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="cria as tabelas de exceções">
+      <option name="closed" value="true" />
+      <created>1775266722024</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1775266722024</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -290,7 +298,8 @@
     <MESSAGE value="Adiciona os parametros às famílias" />
     <MESSAGE value="Corrige erro de conexão na página de produtos" />
     <MESSAGE value="cria o modal de cadastro de produtos" />
-    <option name="LAST_COMMIT_MESSAGE" value="cria o modal de cadastro de produtos" />
+    <MESSAGE value="cria as tabelas de exceções" />
+    <option name="LAST_COMMIT_MESSAGE" value="cria as tabelas de exceções" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
