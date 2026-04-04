@@ -92,15 +92,15 @@ export default function Filiais() {
     try {
       if (modoEdicao && filialSelecionada) {
         await filialService.atualizar(filialSelecionada.id, payload);
-        alert("Filial atualizada com sucesso!");
+        toast.success("Filial atualizada com sucesso!");
       } else {
         await filialService.criar(payload);
-        alert("Filial criada com sucesso!");
+        toast.success("Filial criada com sucesso!");
       }
       setModalAberto(false);
       carregarFiliais();
     } catch (error: any) {
-      alert(error.message || "Erro ao salvar filial");
+      toast.error(error.message || "Erro ao salvar filial");
     } finally {
       setCarregando(false);
     }
@@ -217,7 +217,7 @@ export default function Filiais() {
                 placeholder="Opcional"
               />
               <Input
-                label="URL API (Integração ERP)"
+                label="URL API"
                 value={urlApi}
                 onChange={(e) => setUrlApi(e.target.value)}
                 placeholder="Ex: http://192.168.1.100:8006"
