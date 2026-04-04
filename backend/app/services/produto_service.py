@@ -17,6 +17,15 @@ class ProdutoService:
         for chave, valor in dados_atualizar.items():
             setattr(db_produto, chave, valor)
 
+            # Validação automática de status:
+            # Se não estiver inativo, verifica se possui família e ao menos uma unidade base
+        if db_produto.status != "inativo":
+            tem_unidade_base = any(u.tipo == 'base' for u in db_produto.unidades)
+            if db_produto.familia_id and tem_unidade_base:
+                db_produto.status = "ativo"
+            else:
+                db_produto.status = "pendente"
+
         db.commit()
         db.refresh(db_produto)
         return db_produto
@@ -105,6 +114,15 @@ class ProdutoService:
         dados_atualizar = dados.model_dump(exclude_unset=True)
         for chave, valor in dados_atualizar.items():
             setattr(unidade, chave, valor)
+
+            # Revalida o status do produto pai após alterar a unidade
+        produto_pai = unidade.produto
+        if produto_pai and produto_pai.status != "inativo":
+            tem_unidade_base = any(u.tipo == 'base' for u in produto_pai.unidades)
+            if produto_pai.familia_id and tem_unidade_base:
+                produto_pai.status = "ativo"
+            else:
+                produto_pai.status = "pendente"
 
         db.commit()
         db.refresh(unidade)

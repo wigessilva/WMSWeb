@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="implementa input e botões globais no recebimento e cadastro de produtos">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/perfilService.ts" afterDir="false" />
-    </list>
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="corrige erro da página de famílias não abrir" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -326,14 +322,21 @@
       <option name="project" value="LOCAL" />
       <updated>1775314231643</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="corrige erro da página de famílias não abrir">
+      <option name="closed" value="true" />
+      <created>1775315050789</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1775315050789</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="adiciona a estrutura multifilial" />
     <MESSAGE value="adiciona a transferência entre filiais" />
     <MESSAGE value="Inicia a criação do frontend" />
     <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
@@ -358,7 +361,8 @@
     <MESSAGE value="torna o modal num componente global" />
     <MESSAGE value="implementa input e botões globais" />
     <MESSAGE value="implementa input e botões globais no recebimento e cadastro de produtos" />
-    <option name="LAST_COMMIT_MESSAGE" value="implementa input e botões globais no recebimento e cadastro de produtos" />
+    <MESSAGE value="corrige erro da página de famílias não abrir" />
+    <option name="LAST_COMMIT_MESSAGE" value="corrige erro da página de famílias não abrir" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
