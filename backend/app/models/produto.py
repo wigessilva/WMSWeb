@@ -17,6 +17,18 @@ class Produto(Base):
 
     variavel_consumo = Column("VariavelConsumo", String(20), nullable=True)
 
+    # Exceções de Regras do Produto
+    tipo_validade = Column("TipoValidade", String(20), nullable=True)
+    prazo_validade = Column("PrazoValidade", Integer, nullable=True)
+    vencimento_minimo = Column("VencimentoMinimo", Integer, nullable=True)
+    area_armazenagem_preferencial = Column("AreaArmazenagemPreferencial", String(50), nullable=True)
+    lote_obrigatorio = Column("LoteObrigatorio", Boolean, nullable=True)
+    modelo_giro = Column("ModeloGiro", String(10), nullable=True)
+    bloquear_vencido = Column("BloquearVencido", Boolean, nullable=True)
+    bloquear_sem_validade = Column("BloquearSemValidade", Boolean, nullable=True)
+    bloquear_sem_lote = Column("BloquearSemLote", Boolean, nullable=True)
+    bloquear_reprovado = Column("BloquearReprovado", Boolean, nullable=True)
+
     unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
 
     # Ciclo de Vida Comercial
@@ -25,6 +37,7 @@ class Produto(Base):
     # Controle de Qualidade (Chão de Fábrica)
     bloqueado = Column("Bloqueado", Boolean, default=False)
     motivo_bloqueio = Column("MotivoBloqueio", String(255), nullable=True)
+    codigo_fornecedor = Column("CodigoFornecedor", String(50), nullable=True)
 
     largura_mm = Column("LarguraMm", Float, nullable=True)
     comprimento_m = Column("ComprimentoM", Float, nullable=True)

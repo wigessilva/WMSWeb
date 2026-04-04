@@ -9,6 +9,16 @@ class ProdutoBase(BaseModel):
     referencia: Optional[str] = None
     familia_id: Optional[int] = None
     variavel_consumo: Optional[str] = None
+    tipo_validade: Optional[str] = None
+    prazo_validade: Optional[int] = None
+    vencimento_minimo: Optional[int] = None
+    area_armazenagem_preferencial: Optional[str] = None
+    lote_obrigatorio: Optional[bool] = None
+    modelo_giro: Optional[str] = None
+    bloquear_vencido: Optional[bool] = None
+    bloquear_sem_validade: Optional[bool] = None
+    bloquear_sem_lote: Optional[bool] = None
+    bloquear_reprovado: Optional[bool] = None
     unidade_medida_id: Optional[int] = None
     status: str = "pendente"
 
@@ -25,7 +35,21 @@ class ProdutoBase(BaseModel):
 # SKU, Descrição e Referência não estão aqui para garantir que sejam Read-Only
 class ProdutoEditar(BaseModel):
     familia_id: Optional[int] = None
+    status: Optional[str] = None
+    bloqueado: Optional[bool] = None
+    motivo_bloqueio: Optional[str] = None
+    codigo_fornecedor: Optional[str] = None
     variavel_consumo: Optional[str] = None
+    tipo_validade: Optional[str] = None
+    prazo_validade: Optional[int] = None
+    vencimento_minimo: Optional[int] = None
+    area_armazenagem_preferencial: Optional[str] = None
+    lote_obrigatorio: Optional[bool] = None
+    modelo_giro: Optional[str] = None
+    bloquear_vencido: Optional[bool] = None
+    bloquear_sem_validade: Optional[bool] = None
+    bloquear_sem_lote: Optional[bool] = None
+    bloquear_reprovado: Optional[bool] = None
     unidade_medida_id: Optional[int] = None
     status: Optional[str] = None
 

@@ -23,5 +23,15 @@ export const produtoService = {
     });
     if (!response.ok) throw new Error('Erro ao sincronizar produtos');
     return response.json();
+  },
+
+  editar: async (id: number, produto: Partial<Produto>): Promise<Produto> => {
+    const response = await fetch(`${getBaseUrl()}/produtos/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(produto)
+    });
+    if (!response.ok) throw new Error('Erro ao atualizar produto');
+    return response.json();
   }
 };
