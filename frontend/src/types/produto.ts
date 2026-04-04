@@ -1,3 +1,21 @@
+export interface UnidadeProduto {
+  id: number;
+  tipo: string;
+  unidade_medida_id: number;
+  fator_conversao: number;
+  peso_bruto: number | null;
+  largura: number | null;
+  largura_unidade?: string;
+  comprimento: number | null;
+  comprimento_unidade?: string;
+  altura: number | null;
+  altura_unidade?: string;
+  ean: string | null;
+  unidade_medida_relacao?: {
+    sigla: string;
+  };
+}
+
 export interface Produto {
   id: number;
   sku: string;
@@ -27,4 +45,5 @@ export interface Produto {
   motivo_bloqueio: string | null;
   criado_em: string;
   atualizado_em: string;
+  unidades?: UnidadeProduto[];
 }

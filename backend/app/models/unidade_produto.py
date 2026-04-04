@@ -23,8 +23,12 @@ class UnidadeProduto(Base):
     # Medidas e Peso
     peso_bruto = Column("PesoBruto", Float, nullable=True)
     largura = Column("Largura", Float, nullable=True)
+    largura_unidade = Column("LarguraUnidade", String(5), default="mm")
     comprimento = Column("Comprimento", Float, nullable=True)
+    comprimento_unidade = Column("ComprimentoUnidade", String(5), default="mm")
     altura = Column("Altura", Float, nullable=True)
+    altura_unidade = Column("AlturaUnidade", String(5), default="mm")
+    ean = Column("Ean", String(50), nullable=True)
 
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
     atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)

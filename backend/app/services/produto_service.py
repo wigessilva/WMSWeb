@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from ..models.produto import Produto
 from ..models.unidade_produto import UnidadeProduto
 from ..schemas.produto import ProdutoEditar, ProdutoAtivar
+from ..schemas.unidade_produto import UnidadeProdutoEditar
 
 
 class ProdutoService:
@@ -94,3 +95,17 @@ class ProdutoService:
         db.commit()
         db.refresh(produto)
         return produto
+
+    @staticmethod
+    def editar_unidade(db: Session, unidade_id: int, dados: UnidadeProdutoEditar):
+        unidade = db.query(UnidadeProduto).filter(UnidadeProduto.id == unidade_id).first()
+        if not unidade:
+            return None
+
+        dados_atualizar = dados.model_dump(exclude_unset=True)
+        for chave, valor in dados_atualizar.items():
+            setattr(unidade, chave, valor)
+
+        db.commit()
+        db.refresh(unidade)
+        return unidade

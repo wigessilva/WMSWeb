@@ -3,8 +3,29 @@ import { toast } from 'react-hot-toast'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
+import { unidadeMedidaService } from '../services/unidadeMedidaService'
 import type { Produto } from '../types/produto'
 import type { Familia } from '../types/familia'
+import type { UnidadeMedida } from '../types/unidadeMedida'
+
+const validarEAN = (ean: string) => {
+  if (!ean) return true; // Se estiver vazio, passa (pois é opcional)
+  const limpo = ean.replace(/\D/g, ''); // Remove o que não for número
+
+  // EANs padrão costumam ter 8, 12, 13 ou 14 dígitos
+  if (![8, 12, 13, 14].includes(limpo.length)) return false;
+
+  let soma = 0;
+  let multiplicador = 3;
+  // O cálculo do dígito verificador intercala multiplicações por 3 e 1 de trás pra frente
+  for (let i = limpo.length - 2; i >= 0; i--) {
+    soma += parseInt(limpo[i]) * multiplicador;
+    multiplicador = multiplicador === 3 ? 1 : 3;
+  }
+
+  const digitoEsperado = (10 - (soma % 10)) % 10;
+  return digitoEsperado === parseInt(limpo[limpo.length - 1]);
+};
 
 export default function Produtos() {
   const [produtos, setProdutos] = useState<Produto[]>([])
@@ -19,6 +40,7 @@ export default function Produtos() {
   const [salvando, setSalvando] = useState(false)
   const [familias, setFamilias] = useState<Familia[]>([])
   const [parametrosGlobais, setParametrosGlobais] = useState<any>(null)
+  const [unidadesMedida, setUnidadesMedida] = useState<UnidadeMedida[]>([])
 
   // Estados dos Cadeados (Locks)
   const [lockVariavel, setLockVariavel] = useState(true)
@@ -35,6 +57,108 @@ export default function Produtos() {
   const [codigoFornecedor, setCodigoFornecedor] = useState("")
   const [modalMotivoAberto, setModalMotivoAberto] = useState(false)
   const [motivoBloqueio, setMotivoBloqueio] = useState("")
+
+  // Estados de Edição de Unidade
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState<any>(null)
+  const [modalEditarUnidadeAberto, setModalEditarUnidadeAberto] = useState(false)
+  const [unidadeEditando, setUnidadeEditando] = useState<any>(null)
+  const [tipoUnidade, setTipoUnidade] = useState("produto")
+  const [largura, setLargura] = useState("")
+  const [unidadeLargura, setUnidadeLargura] = useState("mm")
+  const [comprimento, setComprimento] = useState("")
+  const [unidadeComprimento, setUnidadeComprimento] = useState("mm")
+  const [altura, setAltura] = useState("")
+  const [unidadeAltura, setUnidadeAltura] = useState("mm")
+  const [pesoBruto, setPesoBruto] = useState("")
+  const [eanGtin, setEanGtin] = useState("")
+
+  // Estados do Modal de Confirmação de Peso
+  const [modalConfirmarPesoAberto, setModalConfirmarPesoAberto] = useState(false)
+  const [dadosCalculoPeso, setDadosCalculoPeso] = useState<{ pesoBase: number, outrasUnidades: any[], payloadAtual: any } | null>(null)
+
+  const abrirModalEditarUnidade = (und: any) => {
+    setUnidadeEditando(und)
+    setTipoUnidade(und.tipo || "produto")
+    setLargura(und.largura?.toString() || "")
+    setUnidadeLargura(und.largura_unidade || "mm")
+    setComprimento(und.comprimento?.toString() || "")
+    setUnidadeComprimento(und.comprimento_unidade || "mm")
+    setAltura(und.altura?.toString() || "")
+    setUnidadeAltura(und.altura_unidade || "mm")
+    setPesoBruto(und.peso_bruto?.toString() || "")
+    setEanGtin(und.ean || "")
+    setModalEditarUnidadeAberto(true)
+  }
+
+  const confirmarCalculoPeso = (aceitou: boolean) => {
+    if (!dadosCalculoPeso || !unidadeEditando) return;
+
+    setProdutoSelecionado((prev: any) => {
+      if (!prev) return prev;
+      const novasUnidades = prev.unidades.map((u: any) => {
+        // Atualiza a unidade que o usuário editou no modal
+        if (u.id === unidadeEditando.id) {
+          return { ...u, ...dadosCalculoPeso.payloadAtual };
+        }
+        // Se aceitou, atualiza automaticamente o peso das outras
+        if (aceitou && u.id !== unidadeEditando.id) {
+          const novoPeso = dadosCalculoPeso.pesoBase * u.fator_conversao;
+          return { ...u, peso_bruto: Number(novoPeso.toFixed(3)) };
+        }
+        return u;
+      });
+      return { ...prev, unidades: novasUnidades };
+    });
+
+    setModalConfirmarPesoAberto(false);
+    setModalEditarUnidadeAberto(false);
+  };
+
+  const handleAplicarUnidade = () => {
+    if (!unidadeEditando) return;
+
+    if (eanGtin && !validarEAN(eanGtin)) {
+      toast.error("O EAN/GTIN inserido é inválido. Verifique a digitação.");
+      return;
+    }
+
+    const pesoAtual = pesoBruto ? Number(pesoBruto) : null;
+
+    const payload = {
+      tipo: tipoUnidade,
+      largura: largura ? Number(largura) : null,
+      largura_unidade: unidadeLargura,
+      comprimento: comprimento ? Number(comprimento) : null,
+      comprimento_unidade: unidadeComprimento,
+      altura: altura ? Number(altura) : null,
+      altura_unidade: unidadeAltura,
+      peso_bruto: pesoAtual,
+      ean: eanGtin || null
+    };
+
+    const outrasUnidades = produtoSelecionado?.unidades?.filter((u: any) => u.id !== unidadeEditando.id) || [];
+
+    if (pesoAtual && outrasUnidades.length > 0 && pesoAtual !== unidadeEditando.peso_bruto) {
+      const pesoBase = pesoAtual / unidadeEditando.fator_conversao;
+      setDadosCalculoPeso({ pesoBase, outrasUnidades, payloadAtual: payload });
+      setModalConfirmarPesoAberto(true);
+      return;
+    }
+
+    // Aplica direto na tabela se não precisou calcular peso
+    setProdutoSelecionado((prev: any) => {
+      if (!prev) return prev;
+      const novasUnidades = prev.unidades.map((u: any) => {
+        if (u.id === unidadeEditando.id) {
+          return { ...u, ...payload };
+        }
+        return u;
+      });
+      return { ...prev, unidades: novasUnidades };
+    });
+
+    setModalEditarUnidadeAberto(false);
+  };
 
   // Estados dos Parâmetros
   const [variavelConsumo, setVariavelConsumo] = useState("unidade")
@@ -69,6 +193,8 @@ export default function Produtos() {
       setFamilias(fams)
       const globais = await parametrosMestresService.obter()
       setParametrosGlobais(globais)
+      const unds = await unidadeMedidaService.listar()
+      setUnidadesMedida(unds)
     } catch (error) {
       console.error("Erro ao carregar dependências:", error)
     }
@@ -243,7 +369,25 @@ export default function Produtos() {
       };
 
       await produtoService.editar(produtoSelecionado.id, payload);
-      toast.success("Produto atualizado!");
+
+      // Salva em lote todas as unidades que foram "aplicadas" na tabela
+      if (produtoSelecionado.unidades) {
+        for (const und of produtoSelecionado.unidades) {
+          await produtoService.editarUnidade(und.id, {
+            tipo: und.tipo,
+            largura: und.largura,
+            largura_unidade: und.largura_unidade,
+            comprimento: und.comprimento,
+            comprimento_unidade: und.comprimento_unidade,
+            altura: und.altura,
+            altura_unidade: und.altura_unidade,
+            peso_bruto: und.peso_bruto,
+            ean: und.ean
+          });
+        }
+      }
+
+      toast.success("Produto e unidades atualizados!");
       setModalEditarAberto(false);
       carregarProdutos();
     } catch (error) {
@@ -448,7 +592,22 @@ export default function Produtos() {
 
                   {/* Tabela de Unidades */}
                   <div className="pt-4 border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-2">Unidades</h3>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-bold text-gray-700">Unidades</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!unidadeSelecionada) {
+                            toast.error("Selecione uma unidade na tabela para editar.");
+                            return;
+                          }
+                          abrirModalEditarUnidade(unidadeSelecionada);
+                        }}
+                        className="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50 transition-colors text-xs font-medium"
+                      >
+                        Editar
+                      </button>
+                    </div>
                     <div className="overflow-x-auto border border-gray-200 rounded">
                       <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead className="bg-gray-50 border-b border-gray-200">
@@ -465,11 +624,35 @@ export default function Produtos() {
                           </tr>
                         </thead>
                         <tbody className="text-gray-600 text-sm">
-                          <tr>
-                            <td colSpan={9} className="px-3 py-4 text-center text-gray-500">
-                              Nenhuma unidade cadastrada.
-                            </td>
-                          </tr>
+                          {!produtoSelecionado.unidades || produtoSelecionado.unidades.length === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="px-3 py-4 text-center text-gray-500">
+                                Nenhuma unidade cadastrada.
+                              </td>
+                            </tr>
+                          ) : (
+                            produtoSelecionado.unidades.map((und, index) => (
+                              <tr
+                                key={und.id}
+                                onClick={() => setUnidadeSelecionada(und)}
+                                className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
+                                  unidadeSelecionada?.id === und.id ? "bg-blue-100" : ""
+                                }`}
+                              >
+                                <td className="px-3 py-2 text-gray-500 font-medium">{index + 1}</td>
+                                <td className="px-3 py-2 font-bold text-blue-800">
+                                  {und.unidade_medida_relacao?.sigla || und.unidade_medida_id}
+                                </td>
+                                <td className="px-3 py-2 uppercase text-xs font-semibold">{und.tipo}</td>
+                                <td className="px-3 py-2">{und.fator_conversao}</td>
+                                <td className="px-3 py-2">{und.largura ? `${und.largura}${und.largura_unidade || 'mm'}` : '-'}</td>
+                                <td className="px-3 py-2">{und.comprimento ? `${und.comprimento}${und.comprimento_unidade || 'mm'}` : '-'}</td>
+                                <td className="px-3 py-2">{und.altura ? `${und.altura}${und.altura_unidade || 'mm'}` : '-'}</td>
+                                <td className="px-3 py-2">{und.peso_bruto || '-'}</td>
+                                <td className="px-3 py-2">{und.ean || '-'}</td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -693,6 +876,130 @@ export default function Produtos() {
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-800 transition-colors"
               >
                 Confirmar Bloqueio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Unidade */}
+      {modalEditarUnidadeAberto && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Editar Unidade</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Unidade</label>
+                <select
+                  value={tipoUnidade}
+                  onChange={(e) => setTipoUnidade(e.target.value)}
+                  disabled={unidadeEditando?.tipo === 'base'}
+                  className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${
+                    unidadeEditando?.tipo === 'base' ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : 'border-gray-300 bg-white'
+                  }`}
+                >
+                  <option value="base">Base</option>
+                  <option value="produto">Produto</option>
+                  <option value="recipiente">Recipiente</option>
+                </select>
+                {unidadeEditando?.tipo === 'base' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Largura</label>
+                  <div className="flex">
+                    <input type="number" value={largura} onChange={(e) => setLargura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                    <select value={unidadeLargura} onChange={(e) => setUnidadeLargura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                      <option value="mm">mm</option>
+                      <option value="cm">cm</option>
+                      <option value="m">m</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento</label>
+                  <div className="flex">
+                    <input type="number" value={comprimento} onChange={(e) => setComprimento(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                    <select value={unidadeComprimento} onChange={(e) => setUnidadeComprimento(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                      <option value="mm">mm</option>
+                      <option value="cm">cm</option>
+                      <option value="m">m</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Altura</label>
+                  <div className="flex">
+                    <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                    <select value={unidadeAltura} onChange={(e) => setUnidadeAltura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                      <option value="mm">mm</option>
+                      <option value="cm">cm</option>
+                      <option value="m">m</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Peso Bruto</label>
+                  <input type="number" value={pesoBruto} onChange={(e) => setPesoBruto(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">EAN/GTIN</label>
+                <input type="text" value={eanGtin} onChange={(e) => setEanGtin(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setModalEditarUnidadeAberto(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleAplicarUnidade}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Cálculo de Peso */}
+      {modalConfirmarPesoAberto && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">Atualizar pesos?</h3>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              Você alterou o peso bruto desta unidade. Deseja que o sistema calcule e atualize <strong>automaticamente</strong> o peso das outras embalagens deste produto?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => confirmarCalculoPeso(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              >
+                Não, manter como está
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmarCalculoPeso(true)}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors"
+              >
+                Sim, calcular
               </button>
             </div>
           </div>

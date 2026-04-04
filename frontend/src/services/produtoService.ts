@@ -33,5 +33,15 @@ export const produtoService = {
     });
     if (!response.ok) throw new Error('Erro ao atualizar produto');
     return response.json();
+  },
+
+  editarUnidade: async (unidadeId: number, dados: any) => {
+    const response = await fetch(`${getBaseUrl()}/produtos/unidade/${unidadeId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(dados)
+    });
+    if (!response.ok) throw new Error('Erro ao atualizar a unidade');
+    return response.json();
   }
 };

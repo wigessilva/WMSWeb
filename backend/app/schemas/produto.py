@@ -70,6 +70,7 @@ class ProdutoSchema(ProdutoBase):
     rowversion: int
     bloqueado: bool
     motivo_bloqueio: Optional[str] = None
+    unidades: List[UnidadeProdutoSchema] = []
 
     class Config:
         from_attributes = True # Permite que o Pydantic leia modelos do SQLAlchemy

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models.produto import Produto
 from app.models.unidade_medida import UnidadeMedida
+from app.models.unidade_produto import UnidadeProduto
 
 
 class ServicoSincronizacaoERP:
@@ -48,6 +49,74 @@ class ServicoSincronizacaoERP:
             "mensagem": "Sincronização concluída com sucesso.",
             "adicionados": produtos_adicionados,
             "atualizados": produtos_atualizados
+        }
+
+    @staticmethod
+    def sincronizar_produtos_unidades(db_wms: Session, db_erp: Session):
+        # Ordenamos por Codigo e Fator ASC para garantir que a unidade base (fator 1.0) seja lida primeiro
+        query_erp = text("SELECT Codigo, Sigla, Fator FROM ProdutosUnidades ORDER BY Codigo, Fator ASC")
+        resultados_erp = db_erp.execute(query_erp).fetchall()
+
+        unidades_adicionadas = 0
+        unidades_atualizadas = 0
+
+        # Rastreia quais produtos já tiveram sua unidade base (a primeira) processada
+        produtos_processados = set()
+
+        for linha in resultados_erp:
+            codigo_erp = str(linha.Codigo)
+            sigla_erp = str(linha.Sigla).upper()
+            fator_erp = float(linha.Fator)
+
+            produto = db_wms.query(Produto).filter(Produto.sku == codigo_erp).first()
+            if not produto:
+                continue
+
+            unidade_medida = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == sigla_erp).first()
+            if not unidade_medida:
+                continue
+
+            # A primeira unidade na ordem do ERP é a base
+            if codigo_erp not in produtos_processados:
+                tipo_unidade = "base"
+                fator_erp = 1.0  # Força o fator 1.0
+                produtos_processados.add(codigo_erp)
+            else:
+                tipo_unidade = "produto"
+
+            unidade_produto = db_wms.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == produto.id,
+                UnidadeProduto.unidade_medida_id == unidade_medida.id
+            ).first()
+
+            if not unidade_produto:
+                nova_unidade_produto = UnidadeProduto(
+                    produto_id=produto.id,
+                    tipo=tipo_unidade,
+                    unidade_medida_id=unidade_medida.id,
+                    fator_conversao=fator_erp
+                )
+                db_wms.add(nova_unidade_produto)
+                unidades_adicionadas += 1
+            else:
+                atualizou = False
+                if unidade_produto.fator_conversao != fator_erp:
+                    unidade_produto.fator_conversao = fator_erp
+                    atualizou = True
+
+                # Se for a primeira unidade do ERP, garante que o tipo no WMS seja 'base'
+                if tipo_unidade == "base" and unidade_produto.tipo != "base":
+                    unidade_produto.tipo = "base"
+                    atualizou = True
+
+                if atualizou:
+                    unidades_atualizadas += 1
+
+        db_wms.commit()
+
+        return {
+            "adicionadas": unidades_adicionadas,
+            "atualizadas": unidades_atualizadas
         }
 
     @staticmethod
