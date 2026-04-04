@@ -66,18 +66,24 @@ finally:
 async def lifespan(app: FastAPI):
     # --- AO LIGAR ---
     robo_task = asyncio.create_task(iniciar_robo_vigia())
-    iniciar_scheduler()
+    scheduler = iniciar_scheduler()  # <--- Guardamos a referência aqui
     print("🚀 Servidor WMS e tarefas de background iniciadas.")
 
     yield
 
     # --- AO DESLIGAR ---
-    print("Shutting down: Encerrando processos de background...")
+    print("Shutting down: A encerrar processos de background...")
+
+    # 1. Desliga o Agendador ERP
+    scheduler.shutdown(wait=False)
+
+    # 2. Cancela o Robô XML
     robo_task.cancel()
     try:
         await robo_task
     except asyncio.CancelledError:
         pass
+
     print("Cleanup: Todos os processos encerrados de forma limpa.")
 
 app = FastAPI(

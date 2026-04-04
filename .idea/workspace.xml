@@ -4,30 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="implementa o toggle switch global">
-      <change afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/vinculo_fornecedor_router.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/schemas/vinculo_fornecedor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/app/services/vinculo_fornecedor_service.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/services/vinculoFornecedorService.ts" afterDir="false" />
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="institui o lifespan e o tratamento de sinais no robô vigia">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5001_mastercorp_sucesso.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5002_avery_preco_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5003_3m_qtd_erro.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5004_adere_unidade_diff.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5005_tintas_sem_oc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_5006_avery.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_teste_amostra.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/XML/Processados/nfe_teste_bonificacao.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/historico_xml.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/historico_xml.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/recebimento.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/recebimento.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/recebimento.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/recebimento.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/recebimento_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/scheduler_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/scheduler_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -370,14 +348,21 @@
       <option name="project" value="LOCAL" />
       <updated>1775322321963</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="institui o lifespan e o tratamento de sinais no robô vigia">
+      <option name="closed" value="true" />
+      <created>1775333430824</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1775333430824</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
     <MESSAGE value="adiciona o botão &quot;Ações&quot; no recebimento" />
     <MESSAGE value="cria o histórico do xml e lê as ordens de compra" />
     <MESSAGE value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
@@ -402,7 +387,8 @@
     <MESSAGE value="corrige erro da página de famílias não abrir" />
     <MESSAGE value="corrige status do produto eternamente em &quot;pendente&quot;" />
     <MESSAGE value="implementa o toggle switch global" />
-    <option name="LAST_COMMIT_MESSAGE" value="implementa o toggle switch global" />
+    <MESSAGE value="institui o lifespan e o tratamento de sinais no robô vigia" />
+    <option name="LAST_COMMIT_MESSAGE" value="institui o lifespan e o tratamento de sinais no robô vigia" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

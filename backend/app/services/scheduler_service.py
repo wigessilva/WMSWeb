@@ -42,7 +42,6 @@ def rotina_sincronizacao():
 def iniciar_scheduler():
     scheduler = BackgroundScheduler()
 
-    # O "next_run_time=datetime.now()" obriga a rotina a rodar no exato milissegundo que o servidor ligar
     scheduler.add_job(
         rotina_sincronizacao,
         trigger=IntervalTrigger(minutes=30),
@@ -53,3 +52,4 @@ def iniciar_scheduler():
 
     scheduler.start()
     logger.info("⏰ Relógio do WMS iniciado. Rotinas em segundo plano ativadas.")
+    return scheduler
