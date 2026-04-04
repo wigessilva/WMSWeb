@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../components/Modal';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { ActionToolbar } from '../components/ActionToolbar';
 import { usuarioService } from '../services/usuarioService';
 import { perfilService } from '../services/perfilService';
 import type { Usuario } from '../types/usuario';
@@ -15,7 +18,6 @@ export default function Usuarios() {
   // Novos controles da tela
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
   const [termoBusca, setTermoBusca] = useState('');
-  const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
 
   // Campos do formulário
@@ -60,7 +62,6 @@ export default function Usuarios() {
     setSenhaAutorizacao('');
     setErros({ nome: '', login: '', senha: '', perfilId: '', senhaAutorizacao: '' });
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
@@ -76,7 +77,6 @@ export default function Usuarios() {
     setSenhaAutorizacao('');
     setErros({ nome: '', login: '', senha: '', perfilId: '', senhaAutorizacao: '' });
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const carregarDados = async () => {
@@ -165,54 +165,29 @@ export default function Usuarios() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-
-          {/* CAMPO DE BUSCA ESQUERDA */}
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => setTermoBusca(e.target.value)}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          {/* BOTÃO AÇÕES DIREITA */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={abrirModalCriar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Adicionar</button>
-                <button onClick={abrirModalEditar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar</button>
-                <button
-                  onClick={() => {
-                    if (!usuarioSelecionado) {
-                      toast.error("Selecione um usuário");
-                      return;
-                    }
-                    if (!usuarioSelecionado.ativo) {
-                      toast.error("Este usuário já se encontra inativo");
-                      setDropdownAberto(false);
-                      return;
-                    }
-                    inativarUsuario(usuarioSelecionado.id, usuarioSelecionado.nome);
-                    setDropdownAberto(false);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 font-medium"
-                >
-                  Inativar
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={setTermoBusca}
+          acoes={[
+            { label: "Adicionar", onClick: abrirModalCriar },
+            { label: "Editar", onClick: abrirModalEditar },
+            {
+              label: "Inativar",
+              isDanger: true,
+              onClick: () => {
+                if (!usuarioSelecionado) {
+                  toast.error("Selecione um usuário");
+                  return;
+                }
+                if (!usuarioSelecionado.ativo) {
+                  toast.error("Este usuário já se encontra inativo");
+                  return;
+                }
+                inativarUsuario(usuarioSelecionado.id, usuarioSelecionado.nome);
+              }
+            }
+          ]}
+        />
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -265,50 +240,38 @@ export default function Usuarios() {
               <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
 
-            {/* O SEU CÓDIGO DO FORMULÁRIO FICA AQUI DENTRO (não mudei as divs de inputs para economizar espaço de visualização) */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={(e) => {
-                    setNome(e.target.value);
-                    if (e.target.value.trim()) setErros({...erros, nome: ''});
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.nome ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                />
-                {erros.nome && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.nome}</span>}
-              </div>
+              <Input
+                label="Nome"
+                value={nome}
+                onChange={(e) => {
+                  setNome(e.target.value);
+                  if (e.target.value.trim()) setErros({...erros, nome: ''});
+                }}
+                error={erros.nome}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Login</label>
-                  <input
-                    type="text"
-                    value={login}
-                    onChange={(e) => {
-                      setLogin(e.target.value);
-                      if (e.target.value.trim()) setErros({...erros, login: ''});
-                    }}
-                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.login ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                  />
-                  {erros.login && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.login}</span>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                  <input
-                    type="password"
-                    maxLength={6}
-                    value={senha}
-                    onChange={(e) => {
-                      setSenha(e.target.value.replace(/\D/g, ''));
-                      setErros({...erros, senha: ''});
-                    }}
-                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.senha ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                  />
-                  {erros.senha && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.senha}</span>}
-                </div>
+                <Input
+                  label="Login"
+                  value={login}
+                  onChange={(e) => {
+                    setLogin(e.target.value);
+                    if (e.target.value.trim()) setErros({...erros, login: ''});
+                  }}
+                  error={erros.login}
+                />
+                <Input
+                  label="Senha"
+                  type="password"
+                  maxLength={6}
+                  value={senha}
+                  onChange={(e) => {
+                    setSenha(e.target.value.replace(/\D/g, ''));
+                    setErros({...erros, senha: ''});
+                  }}
+                  error={erros.senha}
+                />
               </div>
 
               <div>
@@ -327,39 +290,30 @@ export default function Usuarios() {
                   ))}
                 </select>
                 {erros.perfilId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.perfilId}</span>}
+              </div>
 
               {modoEdicao && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
-                  <label className="block text-sm font-medium text-red-800 mb-1">
-                    Senha atual
-                  </label>
-                  <input
+                  <Input
+                    label="Senha atual"
                     type="password"
                     maxLength={6}
                     value={senhaAutorizacao}
+                    placeholder="Digite a sua senha para confirmar"
                     onChange={(e) => {
                       setSenhaAutorizacao(e.target.value.replace(/\D/g, ''));
                       setErros({...erros, senhaAutorizacao: ''});
                     }}
-                    placeholder="Digite a sua senha para confirmar"
-                    className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.senhaAutorizacao ? 'border-red-500 focus:ring-red-500' : 'border-red-200 focus:ring-red-500'}`}
+                    error={erros.senhaAutorizacao}
                   />
-                  {erros.senhaAutorizacao && <span className="text-xs text-red-600 font-bold mt-1 inline-block">{erros.senhaAutorizacao}</span>}
                   {!erros.senhaAutorizacao && <p className="text-xs text-red-600 mt-1">Confirme que é você para salvar as alterações</p>}
                 </div>
               )}
-              </div>
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button onClick={() => setModalAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button
-                onClick={salvarUsuario}
-                disabled={carregando}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] hover:bg-blue-800 rounded transition-colors disabled:opacity-50"
-              >
-                {carregando ? 'A guardar...' : 'Salvar'}
-              </button>
+              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} loadingText="Salvando..." onClick={salvarUsuario}>Salvar</Button>
             </div>
           </div>
       </Modal>

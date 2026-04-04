@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Button } from '../components/Button';
 import { unidadeMedidaService } from '../services/unidadeMedidaService';
 import type { UnidadeMedida } from '../types/unidadeMedida';
 import toast from 'react-hot-toast';
@@ -77,13 +78,14 @@ export default function UnidadesMedida() {
           </div>
 
           <div>
-            <button
+            <Button
+              variant="primary"
               onClick={sincronizarComERP}
-              disabled={carregando}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm disabled:opacity-50"
+              loading={carregando}
+              loadingText="Sincronizando..."
             >
-              {carregando ? 'Sincronizando...' : '↻ Sincronizar'}
-            </button>
+              ↻ Sincronizar
+            </Button>
           </div>
         </div>
 

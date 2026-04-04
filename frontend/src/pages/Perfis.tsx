@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../components/Modal';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { ActionToolbar } from '../components/ActionToolbar';
 import { perfilService } from '../services/perfilService';
 import type { Perfil } from '../types/perfil';
 import toast from 'react-hot-toast';
@@ -14,7 +17,6 @@ export default function Perfis() {
 
   // Novos estados para busca, dropdown, seleção e edição
   const [termoBusca, setTermoBusca] = useState('');
-  const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState<Perfil | null>(null);
 
@@ -34,7 +36,6 @@ export default function Perfis() {
     setDescricao('');
     setErroNome('');
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
@@ -47,7 +48,6 @@ export default function Perfis() {
     setDescricao(perfilSelecionado.descricao || '');
     setErroNome('');
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const carregarPerfis = async () => {
@@ -107,49 +107,25 @@ export default function Perfis() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-
-          {/* CAMPO DE BUSCA ESQUERDA */}
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => setTermoBusca(e.target.value)}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          {/* BOTÃO AÇÕES DIREITA */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={abrirModalCriar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Adicionar</button>
-                <button onClick={abrirModalEditar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar</button>
-                <button
-                  onClick={() => {
-                    if (!perfilSelecionado) {
-                      alert("Selecione um perfil");
-                      return;
-                    }
-                    excluirPerfil(perfilSelecionado.id, perfilSelecionado.nome);
-                    setDropdownAberto(false);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium"
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={setTermoBusca}
+          acoes={[
+            { label: "Adicionar", onClick: abrirModalCriar },
+            { label: "Editar", onClick: abrirModalEditar },
+            {
+              label: "Excluir",
+              isDanger: true,
+              onClick: () => {
+                if (!perfilSelecionado) {
+                  toast.error("Selecione um perfil");
+                  return;
+                }
+                excluirPerfil(perfilSelecionado.id, perfilSelecionado.nome);
+              }
+            }
+          ]}
+        />
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -193,25 +169,15 @@ export default function Perfis() {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={(e) => {
-                    setNome(e.target.value);
-                    if (e.target.value.trim()) setErroNome('');
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
-                    erroNome
-                      ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                      : 'border-gray-300 focus:ring-[#1a63b6]'
-                  }`}
-                />
-                {erroNome && (
-                  <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erroNome}</span>
-                )}
-              </div>
+              <Input
+                label="Nome"
+                value={nome}
+                onChange={(e) => {
+                  setNome(e.target.value);
+                  if (e.target.value.trim()) setErroNome('');
+                }}
+                error={erroNome}
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                 <textarea
@@ -224,14 +190,8 @@ export default function Perfis() {
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button onClick={() => setModalAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button
-                onClick={salvarPerfil}
-                disabled={carregando}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] hover:bg-blue-800 rounded transition-colors disabled:opacity-50"
-              >
-                {carregando ? 'Salvando...' : 'Salvar'}
-              </button>
+              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} onClick={salvarPerfil}>Salvar</Button>
             </div>
           </div>
       </Modal>

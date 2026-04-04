@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
+import { Button } from '../components/Button'
+import { Input } from '../components/Input'
+import { ActionToolbar } from '../components/ActionToolbar'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
 import type { Familia } from '../types/familia'
@@ -10,7 +13,6 @@ export default function Familias() {
   const [familiaSelecionada, setFamiliaSelecionada] = useState<Familia | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [termoBusca, setTermoBusca] = useState("")
-  const [dropdownAberto, setDropdownAberto] = useState(false)
 
   const [modalCriarAberto, setModalCriarAberto] = useState(false)
   const [modoEdicao, setModoEdicao] = useState(false)
@@ -169,7 +171,6 @@ export default function Familias() {
         setBloquearReprovado(parametrosGlobais?.bloquear_reprovado ?? false);
     }
 
-    setDropdownAberto(false);
     setModalCriarAberto(true);
   }
 
@@ -251,51 +252,34 @@ export default function Familias() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => {
-                setTermoBusca(e.target.value);
-                carregarFamilias(e.target.value);
-              }}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-48 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={() => { setDropdownAberto(false); resetarFormulario(); setModalCriarAberto(true); }} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Criar</button>
-                <button
-                  onClick={abrirModalEditar}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => {
-                    if (!familiaSelecionada) { toast.error("Selecione uma família."); return; }
-                    setDropdownAberto(false);
-                    handleExcluir();
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={(termo) => {
+            setTermoBusca(termo);
+            carregarFamilias(termo);
+          }}
+          acoes={[
+            {
+              label: "Criar",
+              onClick: () => {
+                resetarFormulario();
+                setModalCriarAberto(true);
+              }
+            },
+            { label: "Editar", onClick: abrirModalEditar },
+            {
+              label: "Excluir",
+              isDanger: true,
+              onClick: () => {
+                if (!familiaSelecionada) {
+                  toast.error("Selecione uma família.");
+                  return;
+                }
+                handleExcluir();
+              }
+            }
+          ]}
+        />
 
         <div className="overflow-y-auto max-h-[600px] border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -335,25 +319,17 @@ export default function Familias() {
             <form onSubmit={handleSalvar} className="space-y-6">
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
-                  <input
-                    type="text"
-                    value={novoNome}
-                    onChange={(e) => setNovoNome(e.target.value)}
-                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                  <input
-                    type="text"
-                    value={novaDescricao}
-                    onChange={(e) => setNovaDescricao(e.target.value)}
-                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                  />
-                </div>
+                <Input
+                  label="Nome"
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  autoFocus
+                />
+                <Input
+                  label="Descrição"
+                  value={novaDescricao}
+                  onChange={(e) => setNovaDescricao(e.target.value)}
+                />
               </div>
 
               <div className="border border-gray-200 rounded-md bg-gray-50 p-4 space-y-4">
@@ -498,24 +474,20 @@ export default function Familias() {
               </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  disabled={salvando}
                   onClick={() => {
                     setModalCriarAberto(false);
                     resetarFormulario();
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-                  disabled={salvando}
                 >
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvando}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors disabled:opacity-50"
-                >
-                  {salvando ? "Salvando..." : "Salvar"}
-                </button>
+                </Button>
+                <Button type="submit" variant="primary" loading={salvando}>
+                  Salvar
+                </Button>
               </div>
             </form>
           </div>

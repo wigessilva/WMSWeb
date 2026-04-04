@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../components/Modal';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { ActionToolbar } from '../components/ActionToolbar';
 import { filialService } from '../services/filialService';
 import type { Filial } from '../types/filial';
 import toast from 'react-hot-toast';
@@ -19,7 +22,6 @@ export default function Filiais() {
 
   // Controles de tela
   const [termoBusca, setTermoBusca] = useState('');
-  const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filialSelecionada, setFilialSelecionada] = useState<Filial | null>(null);
 
@@ -54,7 +56,6 @@ export default function Filiais() {
     setIsMatriz(false);
     setAtivo(true);
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
@@ -70,7 +71,6 @@ export default function Filiais() {
     setIsMatriz(filialSelecionada.is_matriz);
     setAtivo(filialSelecionada.ativo);
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const salvarFilial = async () => {
@@ -121,47 +121,25 @@ export default function Filiais() {
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => setTermoBusca(e.target.value)}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={abrirModalCriar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Adicionar</button>
-                <button onClick={abrirModalEditar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar</button>
-                <button
-                  onClick={() => {
-                    if (!filialSelecionada) {
-                      toast.error("Selecione uma filial");
-                      return;
-                    }
-                    excluirFilial(filialSelecionada.id, filialSelecionada.nome);
-                    setDropdownAberto(false);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium"
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={setTermoBusca}
+          acoes={[
+            { label: "Adicionar", onClick: abrirModalCriar },
+            { label: "Editar", onClick: abrirModalEditar },
+            {
+              label: "Excluir",
+              isDanger: true,
+              onClick: () => {
+                if (!filialSelecionada) {
+                  toast.error("Selecione uma filial");
+                  return;
+                }
+                excluirFilial(filialSelecionada.id, filialSelecionada.nome);
+              }
+            }
+          ]}
+        />
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -223,80 +201,43 @@ export default function Filiais() {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={(e) => {
-                    setNome(e.target.value);
-                    if (e.target.value.trim()) setErroNome('');
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
-                    erroNome
-                      ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                      : 'border-gray-300 focus:ring-[#1a63b6]'
-                  }`}
-                />
-                {erroNome && (
-                  <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erroNome}</span>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
-                <input
-                  type="text"
-                  value={cnpj}
-                  onChange={(e) => setCnpj(e.target.value)}
-                  placeholder="Opcional"
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL API (Integração ERP)</label>
-                <input
-                  type="text"
-                  value={urlApi}
-                  onChange={(e) => setUrlApi(e.target.value)}
-                  placeholder="Ex: http://192.168.1.100:8006"
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                />
-              </div>
+              <Input
+                label="Nome"
+                value={nome}
+                onChange={(e) => {
+                  setNome(e.target.value);
+                  if (e.target.value.trim()) setErroNome('');
+                }}
+                error={erroNome}
+              />
+              <Input
+                label="CNPJ"
+                value={cnpj}
+                onChange={(e) => setCnpj(e.target.value)}
+                placeholder="Opcional"
+              />
+              <Input
+                label="URL API (Integração ERP)"
+                value={urlApi}
+                onChange={(e) => setUrlApi(e.target.value)}
+                placeholder="Ex: http://192.168.1.100:8006"
+              />
 
               <div className="flex items-center justify-between mt-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isMatriz}
-                    onChange={(e) => setIsMatriz(e.target.checked)}
-                    className="form-checkbox h-4 w-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]"
-                  />
+                  <input type="checkbox" checked={isMatriz} onChange={(e) => setIsMatriz(e.target.checked)} className="form-checkbox h-4 w-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]" />
                   <span className="text-sm font-medium text-gray-700">É Matriz?</span>
                 </label>
-
                 <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={ativo}
-                    onChange={(e) => setAtivo(e.target.checked)}
-                    className="form-checkbox h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-600"
-                  />
+                  <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="form-checkbox h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-600" />
                   <span className="text-sm font-medium text-gray-700">Ativo</span>
                 </label>
               </div>
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button onClick={() => setModalAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button
-                onClick={salvarFilial}
-                disabled={carregando}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] hover:bg-blue-800 rounded transition-colors disabled:opacity-50"
-              >
-                {carregando ? 'Salvando...' : 'Salvar'}
-              </button>
+              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} onClick={salvarFilial}>Salvar</Button>
             </div>
           </div>
       </Modal>

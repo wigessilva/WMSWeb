@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../components/Modal';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { ActionToolbar } from '../components/ActionToolbar';
 import { vinculoUnidadeService } from '../services/vinculoUnidadeService';
 import { unidadeMedidaService } from '../services/unidadeMedidaService';
 import type { VinculoUnidade } from '../types/vinculoUnidade';
@@ -14,7 +17,6 @@ export default function VinculosUnidades() {
   // Controles de tela
   const [termoBusca, setTermoBusca] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
-  const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [vinculoSelecionado, setVinculoSelecionado] = useState<VinculoUnidade | null>(null);
 
@@ -63,7 +65,6 @@ export default function VinculosUnidades() {
     setUnidadeMedidaId('');
     setErros({ unidadeExterna: '', unidadeMedidaId: '' });
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const abrirModalEditar = () => {
@@ -76,7 +77,6 @@ export default function VinculosUnidades() {
     setUnidadeMedidaId(vinculoSelecionado.unidade_medida_id);
     setErros({ unidadeExterna: '', unidadeMedidaId: '' });
     setModalAberto(true);
-    setDropdownAberto(false);
   };
 
   const salvarVinculo = async () => {
@@ -128,47 +128,25 @@ export default function VinculosUnidades() {
     <div className="space-y-4">
       {/* O CARD DIRETO, SEM TÍTULO DE PÁGINA */}
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-3">
-
-          <div className="flex w-1/6 min-w-[125px]">
-            <input
-              type="text"
-              placeholder="Buscar"
-              value={termoBusca}
-              onChange={(e) => setTermoBusca(e.target.value)}
-              className="w-full border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-            />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setDropdownAberto(!dropdownAberto)}
-              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-            >
-              Ações <span className="ml-2 text-xs">▼</span>
-            </button>
-
-            {dropdownAberto && (
-              <div className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-                <button onClick={abrirModalCriar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Adicionar</button>
-                <button onClick={abrirModalEditar} className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100">Editar</button>
-                <button
-                  onClick={() => {
-                    if (!vinculoSelecionado) {
-                      toast.error("Selecione um vínculo");
-                      return;
-                    }
-                    excluirVinculo(vinculoSelecionado.id, vinculoSelecionado.unidade_externa, getSiglaUnidade(vinculoSelecionado.unidade_medida_id));
-                    setDropdownAberto(false);
-                  }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium"
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionToolbar
+          termoBusca={termoBusca}
+          onBuscaChange={setTermoBusca}
+          acoes={[
+            { label: "Adicionar", onClick: abrirModalCriar },
+            { label: "Editar", onClick: abrirModalEditar },
+            {
+              label: "Excluir",
+              isDanger: true,
+              onClick: () => {
+                if (!vinculoSelecionado) {
+                  toast.error("Selecione um vínculo");
+                  return;
+                }
+                excluirVinculo(vinculoSelecionado.id, vinculoSelecionado.unidade_externa, getSiglaUnidade(vinculoSelecionado.unidade_medida_id));
+              }
+            }
+          ]}
+        />
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -212,19 +190,15 @@ export default function VinculosUnidades() {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Externa (Ex: ROL)</label>
-                <input
-                  type="text"
-                  value={unidadeExterna}
-                  onChange={(e) => {
-                    setUnidadeExterna(e.target.value.toUpperCase());
-                    if (e.target.value.trim()) setErros({...erros, unidadeExterna: ''});
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${erros.unidadeExterna ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                />
-                {erros.unidadeExterna && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.unidadeExterna}</span>}
-              </div>
+              <Input
+                label="Unidade Externa (Ex: ROL)"
+                value={unidadeExterna}
+                onChange={(e) => {
+                  setUnidadeExterna(e.target.value.toUpperCase());
+                  if (e.target.value.trim()) setErros({...erros, unidadeExterna: ''});
+                }}
+                error={erros.unidadeExterna}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna (Ex: RL)</label>
@@ -238,7 +212,7 @@ export default function VinculosUnidades() {
                 >
                   <option value="" disabled>Selecione...</option>
                   {unidades.map((u) => (
-                    <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
+                     <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
                   ))}
                 </select>
                 {erros.unidadeMedidaId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.unidadeMedidaId}</span>}
@@ -246,14 +220,8 @@ export default function VinculosUnidades() {
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button onClick={() => setModalAberto(false)} className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Cancelar</button>
-              <button
-                onClick={salvarVinculo}
-                disabled={carregando}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] hover:bg-blue-800 rounded transition-colors disabled:opacity-50"
-              >
-                {carregando ? 'Salvando...' : 'Salvar'}
-              </button>
+              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} onClick={salvarVinculo}>Salvar</Button>
             </div>
           </div>
       </Modal>
