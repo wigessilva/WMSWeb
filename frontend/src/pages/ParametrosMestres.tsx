@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { Modal } from '../components/Modal'
 import { parametrosMestresService } from '../services/parametrosMestresService'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
@@ -410,8 +411,7 @@ export default function ParametrosMestres() {
       </div>
 
       {/* Modal de Exceções */}
-      {modalExcecoesAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <Modal isOpen={modalExcecoesAberto}>
           <div className="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl max-h-[95vh] flex flex-col">
 
             {/* Fechar */}
@@ -467,8 +467,7 @@ export default function ParametrosMestres() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
     </div>
   )

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { Modal } from '../components/Modal'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
 import type { Familia } from '../types/familia'
@@ -328,8 +329,7 @@ export default function Familias() {
         </div>
       </div>
 
-      {modalCriarAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalCriarAberto}>
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-800 mb-4">{modoEdicao ? 'Editar Família' : 'Criar Família'}</h2>
             <form onSubmit={handleSalvar} className="space-y-6">
@@ -519,8 +519,7 @@ export default function Familias() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
     </div>
   )

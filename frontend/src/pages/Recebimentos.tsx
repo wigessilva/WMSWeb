@@ -3,6 +3,7 @@ import { recebimentoService } from '../services/recebimentoService'
 import { configuracaoService } from '../services/configuracaoService'
 import { unidadeMedidaService } from '../services/unidadeMedidaService'
 import { vinculoUnidadeService } from '../services/vinculoUnidadeService'
+import { Modal } from '../components/Modal'
 import type { VinculoUnidade } from '../types/vinculoUnidade'
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
@@ -332,8 +333,7 @@ export default function Recebimentos() {
       </div>
 
       {/* Modais Antigos */}
-      {modalConfigAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalConfigAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML</h3>
@@ -348,11 +348,9 @@ export default function Recebimentos() {
               <button onClick={guardarConfiguracao} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors">Salvar</button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
-      {modalOCAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalOCAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-wms-sidebar">Editar Ordem de Compra</h3>
@@ -367,12 +365,10 @@ export default function Recebimentos() {
               <button onClick={salvarOC} disabled={carregando} className="px-4 py-2 text-sm font-medium text-white bg-wms-sidebar hover:bg-blue-800 rounded transition-colors disabled:opacity-50">{carregando ? 'Buscando...' : 'Buscar e Vincular'}</button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Novo Modal de Vincular Unidade */}
-      {modalUnidadeAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalUnidadeAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-wms-sidebar">Vincular Unidade</h3>
@@ -410,8 +406,7 @@ export default function Recebimentos() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Modal } from '../components/Modal';
 import { usuarioService } from '../services/usuarioService';
 import { perfilService } from '../services/perfilService';
 import type { Usuario } from '../types/usuario';
@@ -257,14 +258,14 @@ export default function Usuarios() {
         </div>
       </div>
 
-      {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Usuário' : 'Criar Usuário'}</h3>
               <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
 
+            {/* O SEU CÓDIGO DO FORMULÁRIO FICA AQUI DENTRO (não mudei as divs de inputs para economizar espaço de visualização) */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
@@ -361,8 +362,7 @@ export default function Usuarios() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

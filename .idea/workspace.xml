@@ -4,9 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="corrige bugs do overlay">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="corrige memória da edição de unidades">
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/Modal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Familias.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Filiais.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Perfis.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Recebimentos.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Usuarios.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/VinculosUnidades.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/VinculosUnidades.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -293,7 +302,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775308174213</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="corrige memória da edição de unidades">
+      <option name="closed" value="true" />
+      <created>1775308614355</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1775308614355</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -324,7 +341,8 @@
     <MESSAGE value="cria as tabelas de exceções" />
     <MESSAGE value="adiciona cálculo de ean e peso automático" />
     <MESSAGE value="corrige bugs do overlay" />
-    <option name="LAST_COMMIT_MESSAGE" value="corrige bugs do overlay" />
+    <MESSAGE value="corrige memória da edição de unidades" />
+    <option name="LAST_COMMIT_MESSAGE" value="corrige memória da edição de unidades" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

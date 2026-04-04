@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Modal } from '../components/Modal';
 import { vinculoUnidadeService } from '../services/vinculoUnidadeService';
 import { unidadeMedidaService } from '../services/unidadeMedidaService';
 import type { VinculoUnidade } from '../types/vinculoUnidade';
@@ -203,8 +204,7 @@ export default function VinculosUnidades() {
         </div>
       </div>
 
-      {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Vínculo' : 'Criar Vínculo'}</h3>
@@ -256,8 +256,7 @@ export default function VinculosUnidades() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

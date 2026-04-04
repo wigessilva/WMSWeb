@@ -394,7 +394,7 @@ export default function Produtos() {
         }
       }
 
-      toast.success("Produto e unidades atualizados!");
+      toast.success("Produto atualizado!");
       setModalEditarAberto(false);
       carregarProdutos();
     } catch (error) {

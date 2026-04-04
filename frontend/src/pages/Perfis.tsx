@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Modal } from '../components/Modal';
 import { perfilService } from '../services/perfilService';
 import type { Perfil } from '../types/perfil';
 import toast from 'react-hot-toast';
@@ -184,8 +185,7 @@ export default function Perfis() {
         </div>
       </div>
 
-      {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Modal isOpen={modalAberto}>
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Perfil' : 'Criar Perfil'}</h3>
@@ -234,8 +234,7 @@ export default function Perfis() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

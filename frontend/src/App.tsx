@@ -15,6 +15,7 @@ import Familias from './pages/Familias'
 import ParametrosMestres from './pages/ParametrosMestres'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
+import { Modal } from './components/Modal'
 
 export default function App() {
   // Tenta recuperar o usuário da sessão caso ele faça F5 (recarregar a página)
@@ -201,8 +202,7 @@ export default function App() {
             <Route path="/parametros" element={<ParametrosMestres />} />
           </Routes>
 
-          {modalLogoutAberto && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Modal isOpen={modalLogoutAberto} zIndexClass="z-[9999]">
               <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full text-center">
                 <h3 className="text-lg font-bold text-gray-800 mb-2">Encerrar Sessão</h3>
                 <p className="text-gray-600 text-sm mb-6">Tem certeza que deseja sair do sistema?</p>
@@ -224,8 +224,7 @@ export default function App() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+          </Modal>
 
         </main>
       </div>
