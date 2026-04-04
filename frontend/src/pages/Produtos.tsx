@@ -639,7 +639,6 @@ export default function Produtos() {
             <textarea
               value={motivoBloqueio}
               onChange={(e) => setMotivoBloqueio(e.target.value)}
-              placeholder="Digite o motivo técnico ou operacional para bloquear este produto no WMS..."
               className="w-full border border-gray-300 p-3 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px] mb-4"
               autoFocus
             />

@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="Corrige erro de conexão na página de produtos">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria o modal de cadastro de produtos">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/produto.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ParametrosMestres.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/produtoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/produtoService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/types/produto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/produto.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -257,7 +254,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775258165593</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="cria o modal de cadastro de produtos">
+      <option name="closed" value="true" />
+      <created>1775262142919</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1775262142919</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -284,7 +289,8 @@
     <MESSAGE value="cria a tela de unidades de medida" />
     <MESSAGE value="Adiciona os parametros às famílias" />
     <MESSAGE value="Corrige erro de conexão na página de produtos" />
-    <option name="LAST_COMMIT_MESSAGE" value="Corrige erro de conexão na página de produtos" />
+    <MESSAGE value="cria o modal de cadastro de produtos" />
+    <option name="LAST_COMMIT_MESSAGE" value="cria o modal de cadastro de produtos" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
