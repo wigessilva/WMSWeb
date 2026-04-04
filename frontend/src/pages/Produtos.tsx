@@ -484,6 +484,7 @@ export default function Produtos() {
         zIndexClass="z-[1000]"
         fundoTransparente={modalMotivoAberto || modalEditarUnidadeAberto || modalConfirmarPesoAberto}
       >
+        {produtoSelecionado && (
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
             {/* Abas */}
             <div className="flex border-b border-gray-200 mb-4">
@@ -811,6 +812,7 @@ export default function Produtos() {
               </div>
             </form>
           </div>
+        )}
       </Modal>
 
       {/* Modal de Motivo de Bloqueio */}

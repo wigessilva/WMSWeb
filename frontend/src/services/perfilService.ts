@@ -26,6 +26,19 @@ export const perfilService = {
     return response.json();
   },
 
+  atualizar: async (id: number, perfil: PerfilCriar): Promise<Perfil> => {
+    const response = await fetch(`${getBaseUrl()}/perfis/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(perfil),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao atualizar perfil');
+    }
+    return response.json();
+  },
+
   excluir: async (id: number): Promise<void> => {
     const response = await fetch(`${getBaseUrl()}/perfis/${id}`, {
       method: 'DELETE',
