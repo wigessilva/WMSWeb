@@ -4,6 +4,7 @@ import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
+import { ToggleSwitch } from '../components/ToggleSwitch'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
@@ -187,7 +188,16 @@ export default function Produtos() {
       setCarregando(true)
       const dados = await produtoService.listar(termo)
       setProdutos(dados)
-      if (termo !== undefined) setProdutoSelecionado(null)
+
+      if (termo !== undefined) {
+        setProdutoSelecionado(null)
+      } else {
+        // Atualiza o produto selecionado com os dados frescos do banco para não manter estado velho
+        setProdutoSelecionado(prev => {
+          if (!prev) return null;
+          return dados.find((p: Produto) => p.id === prev.id) || prev;
+        })
+      }
     } catch (error) {
       console.error("Erro ao carregar produtos:", error)
       toast.error("Erro ao carregar os produtos. Verifique a conexão com o servidor.")
@@ -463,12 +473,17 @@ export default function Produtos() {
                     <td className="px-3 py-1.5 font-bold text-blue-900">{prod.sku}</td>
                     <td className="px-3 py-1.5">{prod.descricao}</td>
                     <td className="px-3 py-1.5">{prod.referencia || "-"}</td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-1.5 flex items-center space-x-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                         prod.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                       }`}>
                         {prod.status.toUpperCase()}
                       </span>
+                      {prod.bloqueado && (
+                        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">
+                          BLOQUEADO
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -506,29 +521,39 @@ export default function Produtos() {
             <form onSubmit={handleSalvarParametros} className="space-y-6">
               {abaAtiva === 'cadastro' && (
                 <div className="space-y-5">
-                  {/* Botões de Ação */}
-                  <div className="flex space-x-3 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (produtoBloqueado) {
-                          setProdutoBloqueado(false);
-                          setMotivoBloqueio("");
-                        } else {
-                          setModalMotivoAberto(true);
-                        }
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded transition-colors flex-1 border ${produtoBloqueado ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                    >
-                      {produtoBloqueado ? "Desbloquear" : "Bloquear"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStatusProduto(statusProduto === 'ativo' ? 'inativo' : 'ativo')}
-                      className={`px-4 py-2 text-sm font-medium rounded transition-colors flex-1 border ${statusProduto === 'inativo' ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                    >
-                      {statusProduto === 'inativo' ? "Ativar" : "Inativar"}
-                    </button>
+                  {/* Controles de Status e Bloqueio */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+
+                    {/* Toggle Status */}
+                    <div className="flex items-center justify-between flex-1 w-full">
+                      <span className="text-sm font-medium text-gray-700 mr-3">Status</span>
+                      <ToggleSwitch
+                        checked={statusProduto === 'ativo'}
+                        onChange={(checked) => setStatusProduto(checked ? 'ativo' : 'inativo')}
+                      />
+                    </div>
+
+                    {/* Divisor em telas maiores */}
+                    <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
+
+                    {/* Botão Bloqueio */}
+                    <div className="flex-1 w-full">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (produtoBloqueado) {
+                            setProdutoBloqueado(false);
+                            setMotivoBloqueio("");
+                          } else {
+                            setModalMotivoAberto(true);
+                          }
+                        }}
+                        className={`w-full px-4 py-2 text-sm font-medium rounded transition-colors border ${produtoBloqueado ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {produtoBloqueado ? "Desbloquear Produto" : "Bloquear Produto"}
+                      </button>
+                    </div>
+
                   </div>
 
                   {/* Identificação (Readonly) */}
