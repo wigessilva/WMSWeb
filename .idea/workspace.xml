@@ -4,17 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="cria as tabelas de exceções">
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="adiciona cálculo de ean e peso automático">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/endpoints/produto_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/endpoints/produto_router.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/unidade_produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/schemas/unidade_produto.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/unidade_produto.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/erp_sync_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/erp_sync_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/services/produto_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/produto_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Produtos.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/produtoService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/produtoService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/types/produto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/produto.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -285,7 +277,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775268995430</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="adiciona cálculo de ean e peso automático">
+      <option name="closed" value="true" />
+      <created>1775306834038</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1775306834038</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -314,7 +314,8 @@
     <MESSAGE value="Corrige erro de conexão na página de produtos" />
     <MESSAGE value="cria o modal de cadastro de produtos" />
     <MESSAGE value="cria as tabelas de exceções" />
-    <option name="LAST_COMMIT_MESSAGE" value="cria as tabelas de exceções" />
+    <MESSAGE value="adiciona cálculo de ean e peso automático" />
+    <option name="LAST_COMMIT_MESSAGE" value="adiciona cálculo de ean e peso automático" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

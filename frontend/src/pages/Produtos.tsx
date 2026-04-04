@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { toast } from 'react-hot-toast'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
@@ -497,11 +498,9 @@ export default function Produtos() {
       </div>
 
       {/* Modal de Edição */}
-      {modalEditarAberto && produtoSelecionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      {modalEditarAberto && produtoSelecionado && createPortal(
+        <div className={`fixed inset-0 z-[1000] flex items-center justify-center p-4 ${modalMotivoAberto || modalEditarUnidadeAberto || modalConfirmarPesoAberto ? 'bg-transparent' : 'bg-black bg-opacity-50'}`}>
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Editar Produto: {produtoSelecionado.sku}</h2>
-
             {/* Abas */}
             <div className="flex border-b border-gray-200 mb-4">
               <button
@@ -842,11 +841,11 @@ export default function Produtos() {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Modal de Motivo de Bloqueio */}
-      {modalMotivoAberto && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      {modalMotivoAberto && createPortal(
+        <div className="fixed inset-0 z-[1010] flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Motivo do Bloqueio</h3>
             <textarea
@@ -880,11 +879,11 @@ export default function Produtos() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Modal de Edição de Unidade */}
-      {modalEditarUnidadeAberto && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      {modalEditarUnidadeAberto && createPortal(
+        <div className={`fixed inset-0 z-[1010] flex items-center justify-center p-4 ${modalConfirmarPesoAberto ? 'bg-transparent' : 'bg-black bg-opacity-50'}`}>
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Editar Unidade</h3>
 
@@ -976,15 +975,15 @@ export default function Produtos() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Modal de Confirmação de Cálculo de Peso */}
-      {modalConfirmarPesoAberto && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      {modalConfirmarPesoAberto && createPortal(
+        <div className="fixed inset-0 z-[1020] flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-3">Atualizar pesos?</h3>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Você alterou o peso bruto desta unidade. Deseja que o sistema calcule e atualize <strong>automaticamente</strong> o peso das outras embalagens deste produto?
+              Deseja que o sistema calcule <strong>automaticamente</strong> o peso das outras embalagens?
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -992,19 +991,19 @@ export default function Produtos() {
                 onClick={() => confirmarCalculoPeso(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
               >
-                Não, manter como está
+                Não
               </button>
               <button
                 type="button"
                 onClick={() => confirmarCalculoPeso(true)}
                 className="px-4 py-2 text-sm font-medium text-white bg-[#1a63b6] rounded hover:bg-blue-800 transition-colors"
               >
-                Sim, calcular
+                Sim
               </button>
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   )
 }
