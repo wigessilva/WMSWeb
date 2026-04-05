@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,14 +61,25 @@ try:
 finally:
     db.close()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # O que roda QUANDO O SERVIDOR LIGA (agrupamos tudo aqui)
     robo_task = asyncio.create_task(iniciar_robo_vigia())
-    iniciar_scheduler()
+    scheduler = iniciar_scheduler()
     yield
     # O que roda QUANDO O SERVIDOR DESLIGA
+    logging.info("A iniciar o encerramento seguro dos serviços em segundo plano...")
+
+    if scheduler and scheduler.running:
+        scheduler.shutdown(wait=False)
+        logging.info("Scheduler encerrado.")
+
     robo_task.cancel()
+    try:
+        await robo_task
+    except asyncio.CancelledError:
+        logging.info("Robô Vigia encerrado com sucesso.")
 
 app = FastAPI(
     title="WMS API",
