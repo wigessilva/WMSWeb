@@ -68,46 +68,50 @@ def extrair_dados_nfe(caminho_arquivo):
 async def iniciar_robo_vigia():
     print("🤖 Robô Vigia iniciado. A aguardar configuração na base de dados...")
 
-    while True:
-        db = SessionLocal()
-        db_erp = SessionLocalERP()  # Instancia a conexão com o ERP
-        try:
-            # Pede à base de dados o caminho que o usuário guardou no ecrã
-            config = db.query(ConfiguracaoIntegracao).filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
+    try:
+        while True:
+            db = SessionLocal()
+            db_erp = SessionLocalERP()  # Instancia a conexão com o ERP
+            try:
+                # Pede à base de dados o caminho que o usuário guardou no ecrã
+                config = db.query(ConfiguracaoIntegracao).filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
 
-            # Só trabalha se o robô estiver ativo e tiver um caminho preenchido
-            if config and config.ativo and config.caminho_diretorio:
-                pasta_base = config.caminho_diretorio
+                # Só trabalha se o robô estiver ativo e tiver um caminho preenchido
+                if config and config.ativo and config.caminho_diretorio:
+                    pasta_base = config.caminho_diretorio
 
-                if os.path.exists(pasta_base):
-                    pasta_processados = os.path.join(pasta_base, "Processados")
-                    pasta_erro = os.path.join(pasta_base, "Com_Erro")
+                    if os.path.exists(pasta_base):
+                        pasta_processados = os.path.join(pasta_base, "Processados")
+                        pasta_erro = os.path.join(pasta_base, "Com_Erro")
 
-                    os.makedirs(pasta_processados, exist_ok=True)
-                    os.makedirs(pasta_erro, exist_ok=True)
+                        os.makedirs(pasta_processados, exist_ok=True)
+                        os.makedirs(pasta_erro, exist_ok=True)
 
-                    arquivos = [f for f in os.listdir(pasta_base) if f.lower().endswith('.xml')]
+                        arquivos = [f for f in os.listdir(pasta_base) if f.lower().endswith('.xml')]
 
-                    for arquivo in arquivos:
-                        caminho_completo = os.path.join(pasta_base, arquivo)
-                        print(f"📄 Robô a processar XML: {arquivo}...")
+                        for arquivo in arquivos:
+                            caminho_completo = os.path.join(pasta_base, arquivo)
+                            print(f"📄 Robô a processar XML: {arquivo}...")
 
-                        try:
-                            dados, cnpj_forn = extrair_dados_nfe(caminho_completo)
+                            try:
+                                dados, cnpj_forn = extrair_dados_nfe(caminho_completo)
 
-                            # Adicionamos o db_erp aqui na chamada do serviço
-                            RecebimentoService.importar_xml(db=db, db_erp=db_erp, dados=dados,
-                                                            cnpj_fornecedor=cnpj_forn)
+                                # Adicionamos o db_erp aqui na chamada do serviço
+                                RecebimentoService.importar_xml(db=db, db_erp=db_erp, dados=dados,
+                                                                cnpj_fornecedor=cnpj_forn)
 
-                            shutil.move(caminho_completo, os.path.join(pasta_processados, arquivo))
-                            print(f"✅ Sucesso! {arquivo} importado e movido.")
-                        except Exception as e:
-                            print(f"❌ Erro ao processar {arquivo}: {str(e)}")
-                            shutil.move(caminho_completo, os.path.join(pasta_erro, arquivo))
-        except Exception as e:
-            print(f"⚠️ Erro no loop principal do Robô: {e}")
-        finally:
-            db.close()
-            db_erp.close()  # Fecha a conexão do ERP para não prender recursos
+                                shutil.move(caminho_completo, os.path.join(pasta_processados, arquivo))
+                                print(f"✅ Sucesso! {arquivo} importado e movido.")
+                            except Exception as e:
+                                print(f"❌ Erro ao processar {arquivo}: {str(e)}")
+                                shutil.move(caminho_completo, os.path.join(pasta_erro, arquivo))
+            except Exception as e:
+                print(f"⚠️ Erro no loop principal do Robô: {e}")
+            finally:
+                db.close()
+                db_erp.close()  # Fecha a conexão do ERP para não prender recursos
 
-        await asyncio.sleep(10)
+            await asyncio.sleep(10)
+    except asyncio.CancelledError:
+        print("🛑 Sinal de encerramento recebido. Desligando o Robô Vigia de forma segura...")
+        raise

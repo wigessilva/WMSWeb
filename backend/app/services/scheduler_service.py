@@ -40,3 +40,4 @@ def iniciar_scheduler():
 
     scheduler.start()
     logger.info("Relógio do WMS iniciado. Rotinas em segundo plano ativadas.")
+    return scheduler  # Retorna a instância para permitir o encerramento via lifespan
