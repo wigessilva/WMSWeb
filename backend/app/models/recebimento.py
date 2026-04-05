@@ -10,7 +10,7 @@ class Recebimento(Base):
     # Este ID é o seu Romaneio (auto-incremento 1, 2, 3...)
     id = Column("Id", Integer, primary_key=True, index=True)
     nfe = Column("NFe", String(50), nullable=False)
-    oc = Column("OC", String(50), nullable=True)
+    oc = Column("OC", String(100), nullable=True)
     fornecedor = Column("Fornecedor", String(150), nullable=False)
     conferente = Column("Conferente", String(100), nullable=True)
 
@@ -42,6 +42,9 @@ class RecebimentoItem(Base):
 
     # O SKU nasce nulo e aguarda o vínculo (De/Para) do usuário
     sku = Column("Sku", Integer, ForeignKey("Produtos.Id"), nullable=True)
+
+    # Código original do produto como vem no XML (tag cProd)
+    codigo_fornecedor = Column("CodigoFornecedor", String(100), nullable=True)
 
     descricao = Column("Descricao", String(255), nullable=False)
     qtd_nota = Column("QtdNota", Float, nullable=False)

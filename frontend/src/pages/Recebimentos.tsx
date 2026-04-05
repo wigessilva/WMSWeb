@@ -3,6 +3,8 @@ import { recebimentoService } from '../services/recebimentoService'
 import { configuracaoService } from '../services/configuracaoService'
 import { unidadeMedidaService } from '../services/unidadeMedidaService'
 import { vinculoUnidadeService } from '../services/vinculoUnidadeService'
+import { vinculoFornecedorService } from '../services/vinculoFornecedorService'
+import { produtoService } from '../services/produtoService'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
@@ -30,6 +32,12 @@ export default function Recebimentos() {
   const [unidadesInternas, setUnidadesInternas] = useState<UnidadeMedida[]>([])
   const [vinculosUnidades, setVinculosUnidades] = useState<VinculoUnidade[]>([])
 
+  // Novos estados para Vincular SKU
+  const [modalSKUAberto, setModalSKUAberto] = useState(false)
+  const [itemParaVincular, setItemParaVincular] = useState<any>(null)
+  const [produtoVinculoId, setProdutoVinculoId] = useState<number | "">("")
+  const [produtosCadastrados, setProdutosCadastrados] = useState<any[]>([])
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const carregarRecebimentos = async (termo?: string) => {
@@ -53,12 +61,79 @@ export default function Recebimentos() {
     // Carrega as unidades de medida para o Select do Modal e os vínculos globais
     unidadeMedidaService.listar().then(setUnidadesInternas).catch(console.error)
     vinculoUnidadeService.listar().then(setVinculosUnidades).catch(console.error)
+
+    // Carrega a lista de produtos WMS para a combobox do modal
+    produtoService.listar().then(setProdutosCadastrados).catch(console.error)
   }, [])
+
+  const handleAbrirVincularSKU = async () => {
+    if (!recebimentoSelecionado) {
+      toast.error("Selecione um romaneio na tabela.");
+      return;
+    }
+
+    // Pega o primeiro item que ainda não tem SKU (ou seja, ainda não foi vinculado)
+    const itemSemSku = recebimentoSelecionado.itens.find((i: any) => !i.sku);
+    if (!itemSemSku) {
+      toast.error("Todos os itens deste romaneio já possuem SKU vinculado.");
+      return;
+    }
+
+    setItemParaVincular(itemSemSku);
+    setProdutoVinculoId("");
+    setModalSKUAberto(true);
+
+    // Aciona a nossa heurística no back-end
+    try {
+      const sugestao = await vinculoFornecedorService.sugerir({
+        cnpj_fornecedor: recebimentoSelecionado.fornecedor,
+        codigo_fornecedor: itemSemSku.codigo_fornecedor || itemSemSku.descricao,
+        unidade_nota: itemSemSku.und,
+        quantidade_nota: itemSemSku.qtd_nota,
+        preco_unitario_nota: itemSemSku.preco_unitario || 0,
+        xped: recebimentoSelecionado.oc
+      });
+
+      if (sugestao && sugestao.produto_id_sugerido) {
+        setProdutoVinculoId(sugestao.produto_id_sugerido);
+        toast.success("O sistema encontrou uma sugestão na Ordem de Compra!");
+      }
+    } catch (error) {
+      console.error("Erro na heurística de sugestão:", error);
+    }
+  }
+
+  const salvarVinculoSKU = async () => {
+    if (!recebimentoSelecionado || !itemParaVincular || !produtoVinculoId) {
+      toast.error("Selecione um produto da lista.");
+      return;
+    }
+
+    setCarregando(true);
+    try {
+      await vinculoFornecedorService.salvar({
+        produto_id: Number(produtoVinculoId),
+        codigo_fornecedor: itemParaVincular.codigo_fornecedor || itemParaVincular.descricao,
+        cnpj_fornecedor: recebimentoSelecionado.fornecedor
+      });
+
+      toast.success("Vínculo de SKU salvo com sucesso!");
+      setModalSKUAberto(false);
+
+      // Atualiza a tabela para refletir a mudança
+      await carregarRecebimentos();
+    } catch (error) {
+      console.error("Erro ao salvar vínculo:", error);
+      toast.error("Erro ao salvar o vínculo. Verifique a conexão.");
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   const guardarConfiguracao = async () => {
     try {
       await configuracaoService.updateRoboConfig(caminhoPasta)
-      toast.success("Configuração guardada com sucesso! O robô já sabe onde procurar.")
+      toast.success("Configuração salva! O sistema varrerá a pasta em busca de notas")
       setModalConfigAberto(false)
     } catch (error) {
       console.error("Detalhes do erro:", error)
@@ -186,7 +261,7 @@ export default function Recebimentos() {
                 setModalUnidadeAberto(true);
               }
             }] : []),
-            { label: "Vincular SKU", onClick: () => {} },
+            { label: "Vincular SKU", onClick: handleAbrirVincularSKU },
             { label: "Alterar Destino", onClick: () => {} }
           ]}
         />
@@ -366,6 +441,68 @@ export default function Recebimentos() {
             <div className="flex justify-end space-x-3">
               <Button variant="secondary" onClick={() => setModalUnidadeAberto(false)}>Cancelar</Button>
               <Button variant="primary" loading={carregando} onClick={salvarVinculoUnidade}>Salvar Vínculo</Button>
+            </div>
+          </div>
+      </Modal>
+
+      <Modal isOpen={modalSKUAberto}>
+          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-lg w-full">
+            <div className="flex justify-between items-center mb-5 border-b pb-3">
+              <h3 className="text-lg font-bold text-wms-sidebar">Vincular SKU do Fornecedor</h3>
+              <button onClick={() => setModalSKUAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+
+            {itemParaVincular && (
+              <div className="space-y-4 mb-6">
+                {/* Resumo do que veio na Nota (Read-only) */}
+                <div className="bg-blue-50 p-4 rounded border border-blue-100">
+                  <h4 className="text-sm font-bold text-blue-900 mb-2">Dados do XML (Nota Fiscal)</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="block text-xs font-semibold text-gray-500">Descrição no Fornecedor</span>
+                      <span className="text-sm font-medium text-gray-800">{itemParaVincular.descricao}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs font-semibold text-gray-500">Código no Fornecedor</span>
+                      <span className="text-sm font-medium text-gray-800">{itemParaVincular.codigo_fornecedor || "Não informado"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs font-semibold text-gray-500">Quantidade</span>
+                      <span className="text-sm font-medium text-gray-800">{itemParaVincular.qtd_nota}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs font-semibold text-gray-500">Unidade (XML)</span>
+                      <span className="text-sm font-medium text-gray-800">{itemParaVincular.und}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Combobox do Produto Interno */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Produto Correspondente no WMS (SKU)</label>
+                  <select
+                    value={produtoVinculoId}
+                    onChange={(e) => setProdutoVinculoId(e.target.value)}
+                    className={`w-full border p-3 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${produtoVinculoId ? 'bg-green-50 border-green-300' : 'border-gray-300'}`}
+                  >
+                    <option value="">Selecione o produto do cadastro...</option>
+                    {produtosCadastrados.map(p => (
+                      <option key={p.id} value={p.id}>{p.sku} - {p.descricao}</option>
+                    ))}
+                  </select>
+                  {produtoVinculoId && (
+                     <p className="text-xs text-green-600 mt-2 font-medium flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        Produto selecionado. Clique em salvar para confirmar o vínculo.
+                     </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 pt-3 border-t">
+              <Button variant="secondary" onClick={() => setModalSKUAberto(false)}>Cancelar</Button>
+              <Button variant="primary" loading={carregando} onClick={salvarVinculoSKU} disabled={!produtoVinculoId}>Salvar Vínculo</Button>
             </div>
           </div>
       </Modal>

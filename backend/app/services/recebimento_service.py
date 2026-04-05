@@ -12,7 +12,7 @@ from ..enums import StatusRecebimento, StatusRecebimentoItem
 
 class RecebimentoService:
     @staticmethod
-    def importar_xml(db: Session, db_erp: Session, dados: RecebimentoCriar, cnpj_fornecedor: str):
+    def importar_xml(db: Session, db_erp: Session, dados: RecebimentoCriar, cnpj_fornecedor: str, chave_acesso: str = None, data_emissao = None):
         # Verifica se a nota já foi importada para evitar duplicidade
         recebimento_existente = db.query(Recebimento).filter(Recebimento.nfe == dados.nfe).first()
         if recebimento_existente:
@@ -37,21 +37,22 @@ class RecebimentoService:
         db.add(db_receb)
         db.flush()  # Guarda temporariamente para gerar o ID (Romaneio)
 
-        # 1.5 Salva a tag original na tabela de histórico
+        # 1.5 Salva a auditoria fiscal na tabela de histórico
         db_historico = HistoricoXML(
             nfe=dados.nfe,
-            xped_original=dados.oc,
-            conteudo_xml="Salvo para auditoria futura"
+            chave_acesso=chave_acesso,
+            cnpj_emitente=cnpj_fornecedor,
+            data_emissao=data_emissao,
+            xped_original=dados.oc
         )
         db.add(db_historico)
 
         # 2. Insere os itens e tenta fazer a tradução (De/Para) automaticamente
         for item_dados in dados.itens:
-            # Tenta descobrir o SKU interno
+            # Tenta descobrir o SKU interno cruzando o CNPJ e o Código do Fornecedor na nota
             vinculo_prod = db.query(VinculoProdutoFornecedor).filter(
                 VinculoProdutoFornecedor.cnpj_fornecedor == cnpj_fornecedor,
-                VinculoProdutoFornecedor.codigo_fornecedor == item_dados.descricao
-                # No futuro, pode ser o código exato do XML
+                VinculoProdutoFornecedor.codigo_fornecedor == item_dados.codigo_fornecedor
             ).first()
 
             # Tenta descobrir a Unidade interna
@@ -78,6 +79,7 @@ class RecebimentoService:
                 descricao=item_dados.descricao,
                 qtd_nota=item_dados.qtd_nota,
                 und=item_dados.und,
+                codigo_fornecedor=item_dados.codigo_fornecedor,
                 sku=sku_encontrado,
                 status=status_item
             )

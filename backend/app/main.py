@@ -28,7 +28,8 @@ from app.api.v1.endpoints import (
     solicitacao_transferencia_router,
     recebimento_router,
     configuracao_router,
-    vinculo_unidade_router
+    vinculo_unidade_router,
+    vinculo_fornecedor_router
 )
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
@@ -64,8 +65,9 @@ finally:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # O que roda QUANDO O SERVIDOR LIGA (agrupamos tudo aqui)
+    # --- AO LIGAR ---
     robo_task = asyncio.create_task(iniciar_robo_vigia())
+
     scheduler = iniciar_scheduler()
     yield
     # O que roda QUANDO O SERVIDOR DESLIGA
@@ -75,11 +77,31 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown(wait=False)
         logging.info("Scheduler encerrado.")
 
+
+    scheduler = iniciar_scheduler()  # <--- Guardamos a referência aqui
+    print("🚀 Servidor WMS e tarefas de background iniciadas.")
+
+    yield
+
+    # --- AO DESLIGAR ---
+    print("Shutting down: A encerrar processos de background...")
+
+    # 1. Desliga o Agendador ERP
+    scheduler.shutdown(wait=False)
+
+    # 2. Cancela o Robô XML
+
     robo_task.cancel()
     try:
         await robo_task
     except asyncio.CancelledError:
+
         logging.info("Robô Vigia encerrado com sucesso.")
+
+        pass
+
+    print("Cleanup: Todos os processos encerrados de forma limpa.")
+
 
 app = FastAPI(
     title="WMS API",
@@ -102,6 +124,7 @@ app.add_middleware(
 app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
 app.include_router(vinculo_unidade_router.router, prefix="/vinculos-unidade", tags=["Vínculos de Unidades"])
+app.include_router(vinculo_fornecedor_router.router, prefix="/vinculos-fornecedor", tags=["Vinculos Fornecedor"])
 app.include_router(parametros_mestres_router.router, prefix="/parametros-mestres", tags=["Parâmetros Mestres"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])

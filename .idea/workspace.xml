@@ -4,11 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+
     <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="institui o lifespan e o tratamento de sinais no robô vigia e no scheduler">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/services/scheduler_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/scheduler_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/xml_watcher_service.py" afterDir="false" />
+
+    <list default="true" id="c141fc3d-11fb-4b12-b4db-e36b7564450e" name="Changes" comment="institui o lifespan e o tratamento de sinais no robô vigia">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -348,14 +353,33 @@
       <option name="project" value="LOCAL" />
       <updated>1775315985061</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="implementa o toggle switch global">
+      <option name="closed" value="true" />
+      <created>1775322321963</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1775322321963</updated>
+    </task>
+    <task id="LOCAL-00033" summary="institui o lifespan e o tratamento de sinais no robô vigia">
+      <option name="closed" value="true" />
+      <created>1775333430824</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1775333430824</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
+
     <MESSAGE value="deixa a sidebar mais compacta e adiciona validação de nota já lida na função importar_xml" />
+
+
     <MESSAGE value="adiciona o botão &quot;Ações&quot; no recebimento" />
     <MESSAGE value="cria o histórico do xml e lê as ordens de compra" />
     <MESSAGE value="muda a chave seletora de filiais para ler direto do banco e altera as cores da sidebar" />
@@ -379,8 +403,14 @@
     <MESSAGE value="implementa input e botões globais no recebimento e cadastro de produtos" />
     <MESSAGE value="corrige erro da página de famílias não abrir" />
     <MESSAGE value="corrige status do produto eternamente em &quot;pendente&quot;" />
+
     <MESSAGE value="institui o lifespan e o tratamento de sinais no robô vigia e no scheduler" />
     <option name="LAST_COMMIT_MESSAGE" value="institui o lifespan e o tratamento de sinais no robô vigia e no scheduler" />
+
+    <MESSAGE value="implementa o toggle switch global" />
+    <MESSAGE value="institui o lifespan e o tratamento de sinais no robô vigia" />
+    <option name="LAST_COMMIT_MESSAGE" value="institui o lifespan e o tratamento de sinais no robô vigia" />
+
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

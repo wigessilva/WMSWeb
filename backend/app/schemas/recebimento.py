@@ -9,6 +9,7 @@ class RecebimentoItemBase(BaseModel):
     qtd_nota: float
     und: str
     sku: Optional[int] = None
+    codigo_fornecedor: Optional[str] = None
     qtd_recebida: Optional[float] = None
     lote: Optional[str] = None
     fab: Optional[datetime] = None
