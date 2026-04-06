@@ -12,6 +12,7 @@ import VinculosUnidades from './pages/VinculosUnidades'
 import Recebimentos from './pages/Recebimentos'
 import Produtos from './pages/Produtos'
 import Familias from './pages/Familias'
+import VinculosFornecedores from './pages/VinculosFornecedores'
 import ParametrosMestres from './pages/ParametrosMestres'
 import type { Usuario } from './types/usuario'
 import { Toaster, toast } from 'react-hot-toast'
@@ -194,6 +195,7 @@ export default function App() {
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/familias" element={<Familias />} />
+            <Route path="/vinculos-fornecedores" element={<VinculosFornecedores />} />
             <Route path="/perfis" element={<Perfis />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/filiais" element={<Filiais />} />
