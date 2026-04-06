@@ -50,8 +50,7 @@ class RecebimentoService:
             # Tenta descobrir o SKU interno
             vinculo_prod = db.query(VinculoProdutoFornecedor).filter(
                 VinculoProdutoFornecedor.cnpj_fornecedor == cnpj_fornecedor,
-                VinculoProdutoFornecedor.codigo_fornecedor == item_dados.descricao
-                # No futuro, pode ser o código exato do XML
+                VinculoProdutoFornecedor.codigo_fornecedor == item_dados.codigo_fornecedor
             ).first()
 
             # Tenta descobrir a Unidade interna
@@ -227,6 +226,69 @@ class RecebimentoService:
         db.commit()
 
         # Atualiza o status do pai (romaneio) para ver se sai de PENDENTE
+        return RecebimentoService.atualizar_status_pai(db, recebimento_id)
+
+    @staticmethod
+    def vincular_sku_pendente(db: Session, recebimento_id: int, item_id: int, produto_id: int, criado_por: str = None):
+        rec = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+
+        if not rec or not item:
+            raise ValueError("Recebimento ou Item não encontrado.")
+
+        historico = db.query(HistoricoXML).filter(HistoricoXML.nfe == rec.nfe).first()
+        if not historico:
+            raise ValueError("Histórico da NFe não encontrado para extrair o CNPJ do emissor.")
+        cnpj = historico.cnpj_emitente
+
+        codigo_do_forn = item.codigo_fornecedor or item.descricao
+
+        existente = db.query(VinculoProdutoFornecedor).filter(
+            VinculoProdutoFornecedor.cnpj_fornecedor == cnpj,
+            VinculoProdutoFornecedor.codigo_fornecedor == codigo_do_forn
+        ).first()
+
+        if not existente:
+            novo_vinculo = VinculoProdutoFornecedor(
+                cnpj_fornecedor=cnpj,
+                codigo_fornecedor=codigo_do_forn,
+                produto_id=produto_id,
+                criado_por=criado_por
+            )
+            db.add(novo_vinculo)
+            db.flush()
+        else:
+            existente.produto_id = produto_id
+            if criado_por:
+                existente.criado_por = criado_por
+
+        # Atualiza os itens do mesmo produto nesta nota
+        itens_pendentes = db.query(RecebimentoItem).filter(
+            RecebimentoItem.recebimento_id == recebimento_id,
+            RecebimentoItem.codigo_fornecedor == item.codigo_fornecedor,
+            RecebimentoItem.status == StatusRecebimentoItem.PENDENTE_VINCULO.value
+        ).all()
+
+        for it_pend in itens_pendentes:
+            it_pend.sku = produto_id
+            unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == it_pend.und).first()
+            vinculo_und = None
+            if not unidade_interna_direta:
+                vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == it_pend.und).first()
+            unidade_resolvida = unidade_interna_direta or vinculo_und
+            if unidade_resolvida:
+                it_pend.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+
+        # Força atualização do item clicado
+        item.sku = produto_id
+        unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == item.und).first()
+        vinculo_und = None
+        if not unidade_interna_direta:
+            vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == item.und).first()
+        if (unidade_interna_direta or vinculo_und) and item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value:
+             item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+
+        db.commit()
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
     @staticmethod

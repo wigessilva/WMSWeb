@@ -57,4 +57,17 @@ export const recebimentoService = {
     });
     return response.data;
   },
+
+  vincularSKU: async (recebimentoId: number, itemId: number, produtoId: number): Promise<Recebimento> => {
+    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const usuarioNome = userJson ? JSON.parse(userJson).nome : null;
+
+    const response = await api.post(`/${recebimentoId}/itens/${itemId}/vincular-sku`, null, {
+      params: { 
+        produto_id: produtoId,
+        ...(usuarioNome ? { criado_por: usuarioNome } : {})
+      }
+    });
+    return response.data;
+  },
 };

@@ -88,6 +88,25 @@ def vincular_unidade(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/{id}/itens/{item_id}/vincular-sku", response_model=RecebimentoSchema)
+def vincular_sku(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    produto_id: int = Query(..., description="ID do SKU selecionado"),
+    criado_por: Optional[str] = Query(None, description="Nome do usuário logado"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.vincular_sku_pendente(
+            db=db,
+            recebimento_id=id,
+            item_id=item_id,
+            produto_id=produto_id,
+            criado_por=criado_por
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/sincronizar-ocs", response_model=dict)
 def sincronizar_ocs(
     db: Session = Depends(get_db),

@@ -39,7 +39,8 @@ export default function Recebimentos() {
 
   // Estados para Async Combobox de Produtos
   const [buscaProduto, setBuscaProduto] = useState("");
-  const [produtosSugeridos, setProdutosSugeridos] = useState<{id: number, sku: string, descricao: string}[]>([]);
+  const [produtoSelecionadoId, setProdutoSelecionadoId] = useState<number | null>(null);
+  const [produtosSugeridos, setProdutosSugeridos] = useState<{ id: number, sku: string, descricao: string }[]>([]);
   const [buscandoProdutos, setBuscandoProdutos] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,8 +51,8 @@ export default function Recebimentos() {
       const dados = await recebimentoService.listar(termo)
       setRecebimentos(dados)
       if (termo !== undefined) {
-         setRecebimentoSelecionado(null)
-         setItemSelecionadoNaTabela(null)
+        setRecebimentoSelecionado(null)
+        setItemSelecionadoNaTabela(null)
       }
     } catch (error) {
       console.error("Erro ao carregar notas:", error)
@@ -137,6 +138,39 @@ export default function Recebimentos() {
     }
   }
 
+  const salvarVinculoSKU = async () => {
+    if (!recebimentoSelecionado || !itemSelecionadoParaSKU) return;
+    if (!produtoSelecionadoId) {
+      toast.error("Por favor, pesquise e selecione um produto válido da lista.");
+      return;
+    }
+
+    setCarregando(true);
+    try {
+      const recAtualizado = await recebimentoService.vincularSKU(
+        recebimentoSelecionado.id,
+        itemSelecionadoParaSKU.id,
+        produtoSelecionadoId
+      );
+
+      const novosRecebimentos = recebimentos.map(rec => rec.id === recebimentoSelecionado.id ? recAtualizado : rec);
+      setRecebimentos(novosRecebimentos);
+      setRecebimentoSelecionado(recAtualizado);
+
+      toast.success("SKU vinculado com sucesso!");
+      setModalSKUAberto(false);
+      setBuscaProduto("");
+      setProdutoSelecionadoId(null);
+      setProdutosSugeridos([]);
+      setSugestaoMensagem(null);
+    } catch (error: any) {
+      console.error("Erro ao vincular SKU:", error);
+      toast.error(error.response?.data?.detail || "Erro ao vincular o SKU. Verifique o servidor.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   const sincronizarEAtualizar = async () => {
     setCarregando(true)
     try {
@@ -154,7 +188,7 @@ export default function Recebimentos() {
   // Regras de Exibição dos Botões
   const temDireto = itemSelecionadoNaTabela ? unidadesInternas.some(u => u.sigla === itemSelecionadoNaTabela.und) : true;
   const temVinculo = itemSelecionadoNaTabela ? vinculosUnidades.some(v => v.unidade_externa === itemSelecionadoNaTabela.und) : true;
-  
+
   const precisaVincularUnidade = itemSelecionadoNaTabela && !temDireto && !temVinculo;
   const precisaVincularSKU = itemSelecionadoNaTabela && !itemSelecionadoNaTabela.sku;
 
@@ -191,24 +225,26 @@ export default function Recebimentos() {
               }
             ] : []),
             ...(precisaVincularSKU ? [
-              { 
-                label: "Vincular SKU", 
+              {
+                label: "Vincular SKU",
                 onClick: () => {
                   const item = itemSelecionadoNaTabela;
                   setItemSelecionadoParaSKU(item);
                   setModalSKUAberto(true);
-                  
+
                   setCarregandoSugestao(true);
                   setSugestaoMensagem(null);
                   fetch(`http://localhost:8000/recebimentos/${recebimentoSelecionado?.id}/itens/${item.id}/sugestao-sku`)
                     .then(res => res.json())
                     .then(data => {
                       if (data.sugestao) {
-                         const p = data.sugestao;
-                         setBuscaProduto(`${p.sku} - ${p.descricao}`);
-                         setSugestaoMensagem(data.mensagem);
+                        const p = data.sugestao;
+                        setBuscaProduto(`${p.sku} - ${p.descricao}`);
+                        setProdutoSelecionadoId(p.id);
+                        setSugestaoMensagem(data.mensagem);
                       } else {
-                         setSugestaoMensagem(data.mensagem || "Nenhuma sugestão encontrada.");
+                        setProdutoSelecionadoId(null);
+                        setSugestaoMensagem(data.mensagem || "Nenhuma sugestão encontrada.");
                       }
                     })
                     .catch(err => {
@@ -216,11 +252,11 @@ export default function Recebimentos() {
                       setSugestaoMensagem("Erro ao buscar sugestão automática.");
                     })
                     .finally(() => setCarregandoSugestao(false));
-                } 
+                }
               }
             ] : []),
             ...(itemSelecionadoNaTabela ? [
-              { label: "Alterar Destino", onClick: () => {} }
+              { label: "Alterar Destino", onClick: () => { } }
             ] : [])
           ]}
         />
@@ -251,12 +287,11 @@ export default function Recebimentos() {
                   <tr
                     key={rec.id}
                     onClick={() => {
-                        setRecebimentoSelecionado(rec);
-                        setItemSelecionadoNaTabela(null);
+                      setRecebimentoSelecionado(rec);
+                      setItemSelecionadoNaTabela(null);
                     }}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      recebimentoSelecionado?.id === rec.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${recebimentoSelecionado?.id === rec.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-3 py-1.5 font-medium">#{rec.id}</td>
                     <td className="px-3 py-1.5 font-bold text-blue-900">{rec.nfe}</td>
@@ -307,12 +342,11 @@ export default function Recebimentos() {
               </thead>
               <tbody className="text-gray-600 text-sm">
                 {recebimentoSelecionado.itens.map((item) => (
-                  <tr 
-                    key={item.id} 
+                  <tr
+                    key={item.id}
                     onClick={() => setItemSelecionadoNaTabela(item)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-yellow-50 transition-colors ${
-                      itemSelecionadoNaTabela?.id === item.id ? "bg-yellow-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-yellow-50 transition-colors ${itemSelecionadoNaTabela?.id === item.id ? "bg-yellow-100" : ""
+                      }`}
                   >
                     <td className="px-3 py-1.5 font-medium text-blue-800">{item.sku || "N/A"}</td>
                     <td className="px-3 py-1.5">{item.descricao}</td>
@@ -342,164 +376,166 @@ export default function Recebimentos() {
       </div>
 
       <Modal isOpen={modalConfigAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML</h3>
-              <button onClick={() => setModalConfigAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            </div>
-            <div className="mb-6">
-              <Input label="Caminho da Pasta de Origem" value={caminhoPasta} onChange={(e) => setCaminhoPasta(e.target.value)} />
-            </div>
-            <div className="flex justify-end space-x-3 mt-4">
-              <Button variant="secondary" onClick={() => setModalConfigAberto(false)}>Cancelar</Button>
-              <Button variant="primary" onClick={guardarConfiguracao}>Salvar</Button>
-            </div>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-wms-sidebar">Configurar Pasta XML</h3>
+            <button onClick={() => setModalConfigAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
           </div>
+          <div className="mb-6">
+            <Input label="Caminho da Pasta de Origem" value={caminhoPasta} onChange={(e) => setCaminhoPasta(e.target.value)} />
+          </div>
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button variant="secondary" onClick={() => setModalConfigAberto(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={guardarConfiguracao}>Salvar</Button>
+          </div>
+        </div>
       </Modal>
 
       <Modal isOpen={modalOCAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-wms-sidebar">Editar Ordem de Compra</h3>
-              <button onClick={() => setModalOCAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            </div>
-            <div className="mb-6">
-              <Input label="Número da OC no ERP" value={ocDigitada} onChange={(e) => setOcDigitada(e.target.value)} />
-            </div>
-            <div className="flex justify-end space-x-3 mt-4">
-              <Button variant="secondary" onClick={() => setModalOCAberto(false)}>Cancelar</Button>
-              <Button variant="primary" loading={carregando} loadingText="Buscando..." onClick={salvarOC}>Buscar e Vincular</Button>
-            </div>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-wms-sidebar">Editar Ordem de Compra</h3>
+            <button onClick={() => setModalOCAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
           </div>
+          <div className="mb-6">
+            <Input label="Número da OC no ERP" value={ocDigitada} onChange={(e) => setOcDigitada(e.target.value)} />
+          </div>
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button variant="secondary" onClick={() => setModalOCAberto(false)}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} loadingText="Buscando..." onClick={salvarOC}>Buscar e Vincular</Button>
+          </div>
+        </div>
       </Modal>
 
       <Modal isOpen={modalUnidadeAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-wms-sidebar">Vincular Unidade</h3>
-              <button onClick={() => setModalUnidadeAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-wms-sidebar">Vincular Unidade</h3>
+            <button onClick={() => setModalUnidadeAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sigla no XML</label>
+              <input
+                type="text"
+                value={unidadeExterna}
+                readOnly
+                className="w-full border border-gray-300 p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none uppercase font-semibold"
+              />
             </div>
 
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sigla no XML</label>
-                <input
-                  type="text"
-                  value={unidadeExterna}
-                  readOnly
-                  className="w-full border border-gray-300 p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none uppercase font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna</label>
-                <select
-                  value={unidadeInternaId}
-                  onChange={(e) => setUnidadeInternaId(Number(e.target.value))}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                >
-                  <option value="">Selecione...</option>
-                  {unidadesInternas.map(u => (
-                    <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <Button variant="secondary" onClick={() => setModalUnidadeAberto(false)}>Cancelar</Button>
-              <Button variant="primary" loading={carregando} onClick={salvarVinculoUnidade}>Salvar Vínculo</Button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna</label>
+              <select
+                value={unidadeInternaId}
+                onChange={(e) => setUnidadeInternaId(Number(e.target.value))}
+                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+              >
+                <option value="">Selecione...</option>
+                {unidadesInternas.map(u => (
+                  <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setModalUnidadeAberto(false)}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} onClick={salvarVinculoUnidade}>Salvar Vínculo</Button>
+          </div>
+        </div>
       </Modal>
 
       {/* MODAL VINCULAR SKU */}
       <Modal isOpen={modalSKUAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-xl w-full" style={{minHeight: "400px"}}>
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-wms-sidebar">Vincular SKU</h3>
-              <button onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); setSugestaoMensagem(null); }} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-xl w-full" style={{ minHeight: "400px" }}>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-wms-sidebar">Vincular SKU</h3>
+            <button onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutoSelecionadoId(null); setProdutosSugeridos([]); setSugestaoMensagem(null); }} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700">
+              <div className="mb-2"><span className="font-semibold text-gray-800">Nota Fiscal:</span> {recebimentoSelecionado?.nfe}</div>
+              <div className="mb-2"><span className="font-semibold text-gray-800">Código do Produto:</span> {itemSelecionadoParaSKU?.codigo_fornecedor || "N/A"}</div>
+              <div><span className="font-semibold text-gray-800">Descrição:</span> {itemSelecionadoParaSKU?.descricao || "N/A"}</div>
             </div>
 
-            <div className="space-y-4 mb-6">
-              <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700">
-                <div className="mb-2"><span className="font-semibold text-gray-800">Nota Fiscal (NFe):</span> {recebimentoSelecionado?.nfe}</div>
-                <div className="mb-2"><span className="font-semibold text-gray-800">Código do Produto (Nota):</span> {itemSelecionadoParaSKU?.codigo_fornecedor || "N/A"}</div>
-                <div><span className="font-semibold text-gray-800">Descrição (Nota):</span> {itemSelecionadoParaSKU?.descricao || "N/A"}</div>
-              </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Buscar Produto</label>
+              <input
+                type="text"
+                placeholder="Digite ao menos 3 letras para buscar..."
+                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                value={buscaProduto}
+                onChange={(e) => {
+                  const termo = e.target.value;
+                  setBuscaProduto(termo);
+                  setProdutoSelecionadoId(null);
 
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Buscar Produto (SKU Interno ou Descrição)</label>
-                <input
-                  type="text"
-                  placeholder="Digite ao menos 3 letras para buscar..."
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                  value={buscaProduto}
-                  onChange={(e) => {
-                    const termo = e.target.value;
-                    setBuscaProduto(termo);
-                    
-                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-                    
-                    if (termo.length >= 3) {
-                      setBuscandoProdutos(true);
-                      debounceTimer.current = setTimeout(async () => {
-                        try {
-                          const res = await fetch(`http://localhost:8000/produtos/?busca=${encodeURIComponent(termo)}`);
-                          if (res.ok) {
-                            const data = await res.json();
-                            setProdutosSugeridos(data);
-                          }
-                        } catch (err) {
-                           console.error("Erro ao buscar produtos", err);
-                        } finally {
-                          setBuscandoProdutos(false);
+                  if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+                  if (termo.length >= 3) {
+                    setBuscandoProdutos(true);
+                    debounceTimer.current = setTimeout(async () => {
+                      try {
+                        const res = await fetch(`http://localhost:8000/produtos/?busca=${encodeURIComponent(termo)}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          setProdutosSugeridos(data);
                         }
-                      }, 500);
-                    } else {
-                      setProdutosSugeridos([]);
-                      setBuscandoProdutos(false);
-                    }
-                  }}
-                />
-                
-                {buscandoProdutos && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg p-2 text-sm text-gray-500 text-center">
-                    Buscando...
-                  </div>
-                )}
-                
-                {!buscandoProdutos && produtosSugeridos.length > 0 && buscaProduto.length >= 3 && (
-                  <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
-                    {produtosSugeridos.map(prod => (
-                      <li 
-                        key={prod.id} 
-                        className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
-                        onClick={() => {
-                          setBuscaProduto(`${prod.sku} - ${prod.descricao}`);
-                          setProdutosSugeridos([]);
-                        }}
-                      >
-                         <span className="font-bold text-gray-800">{prod.sku}</span> - {prod.descricao}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                      } catch (err) {
+                        console.error("Erro ao buscar produtos", err);
+                      } finally {
+                        setBuscandoProdutos(false);
+                      }
+                    }, 500);
+                  } else {
+                    setProdutosSugeridos([]);
+                    setBuscandoProdutos(false);
+                  }
+                }}
+              />
 
-                {carregandoSugestao && <div className="text-sm text-gray-500 mt-2">Buscando sugestão automática...</div>}
-                {!carregandoSugestao && sugestaoMensagem && (
-                  <div className={`text-sm mt-3 p-2 rounded border font-medium ${sugestaoMensagem.includes('Sugestão:') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                    💡 {sugestaoMensagem}
-                  </div>
-                )}
-              </div>
-            </div>
+              {buscandoProdutos && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg p-2 text-sm text-gray-500 text-center">
+                  Buscando...
+                </div>
+              )}
 
-            <div className="flex justify-end space-x-3 mt-10">
-              <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); setSugestaoMensagem(null); }}>Cancelar</Button>
-              <Button variant="primary" onClick={() => setModalSKUAberto(false)}>Vincular</Button>
+              {!buscandoProdutos && produtosSugeridos.length > 0 && buscaProduto.length >= 3 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
+                  {produtosSugeridos.map(prod => (
+                    <li
+                      key={prod.id}
+                      className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                      onClick={() => {
+                        setBuscaProduto(`${prod.sku} - ${prod.descricao}`);
+                        setProdutoSelecionadoId(prod.id);
+                        setProdutosSugeridos([]);
+                      }}
+                    >
+                      <span className="font-bold text-gray-800">{prod.sku}</span> - {prod.descricao}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {carregandoSugestao && <div className="text-sm text-gray-500 mt-2">Buscando sugestão automática...</div>}
+              {!carregandoSugestao && sugestaoMensagem && (
+                <div className={`text-sm mt-3 p-2 rounded border font-medium ${sugestaoMensagem.includes('Sugestão:') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                  💡 {sugestaoMensagem}
+                </div>
+              )}
             </div>
           </div>
+
+          <div className="flex justify-end space-x-3 mt-10">
+            <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutoSelecionadoId(null); setProdutosSugeridos([]); setSugestaoMensagem(null); }}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} onClick={salvarVinculoSKU}>Vincular</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

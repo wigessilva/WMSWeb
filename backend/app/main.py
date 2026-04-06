@@ -28,7 +28,8 @@ from app.api.v1.endpoints import (
     solicitacao_transferencia_router,
     recebimento_router,
     configuracao_router,
-    vinculo_unidade_router
+    vinculo_unidade_router,
+    vinculo_fornecedor_router
 )
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
@@ -101,6 +102,7 @@ app.add_middleware(
 app.include_router(produto_router.router, prefix="/produtos", tags=["Produtos"])
 app.include_router(unidade_medida_router.router, prefix="/unidades-medida", tags=["Unidades de Medida"])
 app.include_router(vinculo_unidade_router.router, prefix="/vinculos-unidade", tags=["Vínculos de Unidades"])
+app.include_router(vinculo_fornecedor_router.router, prefix="/vinculos-fornecedores", tags=["Vínculos de Fornecedores"])
 app.include_router(parametros_mestres_router.router, prefix="/parametros-mestres", tags=["Parâmetros Mestres"])
 app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"])
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
