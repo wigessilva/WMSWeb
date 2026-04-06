@@ -22,7 +22,7 @@ class RecebimentoService:
         oc_verificada = None
         if dados.oc:
             # Procura no ERP pela coluna correta (NumeroOC)
-            query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+            query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
             resultado_erp = db_erp.execute(query_erp, {"oc": dados.oc}).first()
             if resultado_erp:
                 oc_verificada = dados.oc
@@ -158,7 +158,7 @@ class RecebimentoService:
             raise ValueError("Romaneio não encontrado.")
 
         # Vai na tabela do ERP verificar se a OC existe
-        query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+        query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
         resultado_erp = db_erp.execute(query_erp, {"oc": oc}).first()
 
         if not resultado_erp:
@@ -182,7 +182,7 @@ class RecebimentoService:
 
             if historico and historico.xped_original:
                 # Vai no ERP procurar a OC original usando a tabela de PedidosCompra
-                query_erp = text("SELECT 1 FROM PedidosCompra WHERE NumeroOC = :oc")
+                query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
                 resultado_erp = db_erp.execute(query_erp, {"oc": historico.xped_original}).first()
 
                 if resultado_erp:

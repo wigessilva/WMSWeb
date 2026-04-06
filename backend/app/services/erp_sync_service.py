@@ -9,7 +9,7 @@ class ServicoSincronizacaoERP:
     @staticmethod
     def sincronizar_produtos(db_wms: Session, db_erp: Session):
         # Substitua 'NOME_DA_TABELA_NO_ERP' pelo nome real da tabela de produtos no seu ERP
-        query_erp = text("SELECT Cod, Descricao, Ref FROM Produtos")
+        query_erp = text("SELECT Cod, Descricao, Ref FROM Produtos WITH (NOLOCK)")
 
         # Lendo os dados do ERP
         resultados_erp = db_erp.execute(query_erp).fetchall()
@@ -54,7 +54,7 @@ class ServicoSincronizacaoERP:
     @staticmethod
     def sincronizar_produtos_unidades(db_wms: Session, db_erp: Session):
         # Ordenamos por Codigo e Fator ASC para garantir que a unidade base (fator 1.0) seja lida primeiro
-        query_erp = text("SELECT Codigo, Sigla, Fator FROM ProdutosUnidades ORDER BY Codigo, Fator ASC")
+        query_erp = text("SELECT Codigo, Sigla, Fator FROM ProdutosUnidades WITH (NOLOCK) ORDER BY Codigo, Fator ASC")
         resultados_erp = db_erp.execute(query_erp).fetchall()
 
         unidades_adicionadas = 0
@@ -121,7 +121,7 @@ class ServicoSincronizacaoERP:
 
     @staticmethod
     def sincronizar_unidades_medida(db_wms: Session, db_erp: Session):
-        query_erp = text("SELECT Sigla, Descricao FROM UnidadesMedida")
+        query_erp = text("SELECT Sigla, Descricao FROM UnidadesMedida WITH (NOLOCK)")
 
         # Lendo os dados do ERP
         resultados_erp = db_erp.execute(query_erp).fetchall()

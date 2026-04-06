@@ -36,7 +36,7 @@ class ProdutoService:
 
     @staticmethod
     def listar_todos(db: Session, busca: str = None):
-        query = db.query(Produto)
+        query = db.query(Produto).with_hint(Produto, 'WITH (NOLOCK)')
         if busca:
             # Filtra por SKU ou Descrição que contenham o termo (case-insensitive)
             filtro = f"%{busca}%"

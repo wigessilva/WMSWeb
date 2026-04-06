@@ -74,7 +74,7 @@ async def iniciar_robo_vigia():
             db_erp = SessionLocalERP()  # Instancia a conexão com o ERP
             try:
                 # Pede à base de dados o caminho que o usuário guardou no ecrã
-                config = db.query(ConfiguracaoIntegracao).filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
+                config = db.query(ConfiguracaoIntegracao).with_hint(ConfiguracaoIntegracao, 'WITH (NOLOCK)').filter(ConfiguracaoIntegracao.nome_servico == "ROBO_NFE").first()
 
                 # Só trabalha se o robô estiver ativo e tiver um caminho preenchido
                 if config and config.ativo and config.caminho_diretorio:
