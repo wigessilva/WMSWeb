@@ -94,3 +94,12 @@ def sincronizar_ocs(
     db_erp: Session = Depends(get_erp_db)
 ):
     return RecebimentoService.sincronizar_ocs_pendentes(db_wms=db, db_erp=db_erp)
+
+@router.get("/{id}/itens/{item_id}/sugestao-sku")
+def sugestao_vinculo_sku(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    db: Session = Depends(get_db),
+    db_erp: Session = Depends(get_erp_db)
+):
+    return RecebimentoService.sugerir_vinculo_sku(db_wms=db, db_erp=db_erp, recebimento_id=id, item_id=item_id)

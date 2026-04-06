@@ -28,11 +28,14 @@ export default function Recebimentos() {
   const [unidadeExterna, setUnidadeExterna] = useState("")
   const [unidadeInternaId, setUnidadeInternaId] = useState<number | "">("")
   const [unidadesInternas, setUnidadesInternas] = useState<UnidadeMedida[]>([])
-  const [vinculosUnidades, setVinculosUnidades] = useState<VinculoUnidade[]>([])
+  const [vinculosUnidades, setVinculosUnidades] = useState<any[]>([])
 
   // Novos estados para Vincular SKU
   const [modalSKUAberto, setModalSKUAberto] = useState(false)
   const [itemSelecionadoParaSKU, setItemSelecionadoParaSKU] = useState<any>(null)
+  const [sugestaoMensagem, setSugestaoMensagem] = useState<string | null>(null)
+  const [carregandoSugestao, setCarregandoSugestao] = useState(false)
+  const [itemSelecionadoNaTabela, setItemSelecionadoNaTabela] = useState<any>(null)
 
   // Estados para Async Combobox de Produtos
   const [buscaProduto, setBuscaProduto] = useState("");
@@ -46,7 +49,10 @@ export default function Recebimentos() {
     try {
       const dados = await recebimentoService.listar(termo)
       setRecebimentos(dados)
-      if (termo !== undefined) setRecebimentoSelecionado(null)
+      if (termo !== undefined) {
+         setRecebimentoSelecionado(null)
+         setItemSelecionadoNaTabela(null)
+      }
     } catch (error) {
       console.error("Erro ao carregar notas:", error)
       toast.error("Erro ao carregar as notas. Verifique a conexão com o servidor")
@@ -60,7 +66,7 @@ export default function Recebimentos() {
       setCaminhoPasta(dados.caminho_diretorio || "")
     }).catch(err => console.error("Erro ao carregar configuração inicial", err))
 
-    // Carrega as unidades de medida para o Select do Modal e os vínculos globais
+    // Carrega as unidades de medida para o Select do Modal
     unidadeMedidaService.listar().then(setUnidadesInternas).catch(console.error)
     vinculoUnidadeService.listar().then(setVinculosUnidades).catch(console.error)
   }, [])
@@ -119,9 +125,6 @@ export default function Recebimentos() {
       setRecebimentos(novosRecebimentos)
       setRecebimentoSelecionado(recAtualizado)
 
-      // Atualiza a lista de vínculos silenciosamente para o botão sumir imediatamente
-      vinculoUnidadeService.listar().then(setVinculosUnidades).catch(console.error)
-
       toast.success("Unidade vinculada e itens atualizados com sucesso!")
       setModalUnidadeAberto(false)
       setUnidadeExterna("")
@@ -148,12 +151,12 @@ export default function Recebimentos() {
     }
   }
 
-  // Lógica de verificação de alta performance em memória
-  const unidadesPendentes = recebimentoSelecionado ? recebimentoSelecionado.itens.filter(item => {
-    const temDireto = unidadesInternas.some(u => u.sigla === item.und)
-    const temVinculo = vinculosUnidades.some(v => v.unidade_externa === item.und)
-    return !temDireto && !temVinculo
-  }) : []
+  // Regras de Exibição dos Botões
+  const temDireto = itemSelecionadoNaTabela ? unidadesInternas.some(u => u.sigla === itemSelecionadoNaTabela.und) : true;
+  const temVinculo = itemSelecionadoNaTabela ? vinculosUnidades.some(v => v.unidade_externa === itemSelecionadoNaTabela.und) : true;
+  
+  const precisaVincularUnidade = itemSelecionadoNaTabela && !temDireto && !temVinculo;
+  const precisaVincularSKU = itemSelecionadoNaTabela && !itemSelecionadoNaTabela.sku;
 
   return (
     <div className="space-y-4">
@@ -178,41 +181,47 @@ export default function Recebimentos() {
                 setModalOCAberto(true);
               }
             },
-            ...(!recebimentoSelecionado || unidadesPendentes.length > 0 ? [{
-              label: "Vincular Unidade",
-              onClick: () => {
-                if (!recebimentoSelecionado) {
-                  toast.error("Selecione um romaneio na tabela.");
-                  return;
+            ...(precisaVincularUnidade ? [
+              {
+                label: "Vincular Unidade",
+                onClick: () => {
+                  setUnidadeExterna(itemSelecionadoNaTabela.und);
+                  setModalUnidadeAberto(true);
                 }
-                const itemPendente = recebimentoSelecionado.itens.find(i => i.status.includes("Pendente"));
-                if (itemPendente) {
-                  setUnidadeExterna(itemPendente.und);
-                } else if (recebimentoSelecionado.itens.length > 0) {
-                  setUnidadeExterna(recebimentoSelecionado.itens[0].und);
-                } else {
-                  setUnidadeExterna("");
-                }
-                setModalUnidadeAberto(true);
               }
-            }] : []),
-            { 
-              label: "Vincular SKU", 
-              onClick: () => {
-                if (!recebimentoSelecionado) {
-                  toast.error("Selecione um romaneio na tabela.");
-                  return;
-                }
-                const item = recebimentoSelecionado.itens.length > 0 ? recebimentoSelecionado.itens[0] : null;
-                if (item) {
+            ] : []),
+            ...(precisaVincularSKU ? [
+              { 
+                label: "Vincular SKU", 
+                onClick: () => {
+                  const item = itemSelecionadoNaTabela;
                   setItemSelecionadoParaSKU(item);
                   setModalSKUAberto(true);
-                } else {
-                  toast.error("Este romaneio não possui itens.");
-                }
-              } 
-            },
-            { label: "Alterar Destino", onClick: () => {} }
+                  
+                  setCarregandoSugestao(true);
+                  setSugestaoMensagem(null);
+                  fetch(`http://localhost:8000/recebimentos/${recebimentoSelecionado?.id}/itens/${item.id}/sugestao-sku`)
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.sugestao) {
+                         const p = data.sugestao;
+                         setBuscaProduto(`${p.sku} - ${p.descricao}`);
+                         setSugestaoMensagem(data.mensagem);
+                      } else {
+                         setSugestaoMensagem(data.mensagem || "Nenhuma sugestão encontrada.");
+                      }
+                    })
+                    .catch(err => {
+                      console.error("Erro ao buscar sugestão", err);
+                      setSugestaoMensagem("Erro ao buscar sugestão automática.");
+                    })
+                    .finally(() => setCarregandoSugestao(false));
+                } 
+              }
+            ] : []),
+            ...(itemSelecionadoNaTabela ? [
+              { label: "Alterar Destino", onClick: () => {} }
+            ] : [])
           ]}
         />
 
@@ -241,7 +250,10 @@ export default function Recebimentos() {
                 recebimentos.map((rec) => (
                   <tr
                     key={rec.id}
-                    onClick={() => setRecebimentoSelecionado(rec)}
+                    onClick={() => {
+                        setRecebimentoSelecionado(rec);
+                        setItemSelecionadoNaTabela(null);
+                    }}
                     className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
                       recebimentoSelecionado?.id === rec.id ? "bg-blue-100" : ""
                     }`}
@@ -295,7 +307,13 @@ export default function Recebimentos() {
               </thead>
               <tbody className="text-gray-600 text-sm">
                 {recebimentoSelecionado.itens.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr 
+                    key={item.id} 
+                    onClick={() => setItemSelecionadoNaTabela(item)}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-yellow-50 transition-colors ${
+                      itemSelecionadoNaTabela?.id === item.id ? "bg-yellow-100" : ""
+                    }`}
+                  >
                     <td className="px-3 py-1.5 font-medium text-blue-800">{item.sku || "N/A"}</td>
                     <td className="px-3 py-1.5">{item.descricao}</td>
                     <td className="px-3 py-1.5 font-medium text-center">{item.qtd_nota}</td>
@@ -400,7 +418,7 @@ export default function Recebimentos() {
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-xl w-full" style={{minHeight: "400px"}}>
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-wms-sidebar">Vincular SKU</h3>
-              <button onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); }} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+              <button onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); setSugestaoMensagem(null); }} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
 
             <div className="space-y-4 mb-6">
@@ -467,11 +485,18 @@ export default function Recebimentos() {
                     ))}
                   </ul>
                 )}
+
+                {carregandoSugestao && <div className="text-sm text-gray-500 mt-2">Buscando sugestão automática...</div>}
+                {!carregandoSugestao && sugestaoMensagem && (
+                  <div className={`text-sm mt-3 p-2 rounded border font-medium ${sugestaoMensagem.includes('Sugestão:') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                    💡 {sugestaoMensagem}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="flex justify-end space-x-3 mt-10">
-              <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); }}>Cancelar</Button>
+              <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); setSugestaoMensagem(null); }}>Cancelar</Button>
               <Button variant="primary" onClick={() => setModalSKUAberto(false)}>Vincular</Button>
             </div>
           </div>

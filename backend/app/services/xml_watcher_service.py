@@ -42,6 +42,7 @@ def extrair_dados_nfe(caminho_arquivo):
                     codigo_fornecedor=find_tag(prod, 'cProd').text if find_tag(prod, 'cProd') is not None else None,
                     descricao=find_tag(prod, 'xProd').text if find_tag(prod, 'xProd') is not None else "Item Sem Nome",
                     qtd_nota=float(find_tag(prod, 'qCom').text) if find_tag(prod, 'qCom') is not None else 0.0,
+                    valor_unitario=float(find_tag(prod, 'vUnCom').text) if find_tag(prod, 'vUnCom') is not None else None,
                     und=find_tag(prod, 'uCom').text if find_tag(prod, 'uCom') is not None else "UN"
                 )
                 itens.append(item)

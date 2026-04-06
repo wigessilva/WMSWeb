@@ -41,7 +41,7 @@ class RecebimentoService:
         db_historico = HistoricoXML(
             nfe=dados.nfe,
             xped_original=dados.oc,
-            conteudo_xml="Salvo para auditoria futura"
+            cnpj_emitente=cnpj_fornecedor
         )
         db.add(db_historico)
 
@@ -77,7 +77,9 @@ class RecebimentoService:
                 recebimento_id=db_receb.id,
                 descricao=item_dados.descricao,
                 qtd_nota=item_dados.qtd_nota,
+                valor_unitario=item_dados.valor_unitario,
                 und=item_dados.und,
+                codigo_fornecedor=item_dados.codigo_fornecedor,
                 sku=sku_encontrado,
                 status=status_item
             )
@@ -226,3 +228,99 @@ class RecebimentoService:
 
         # Atualiza o status do pai (romaneio) para ver se sai de PENDENTE
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
+
+    @staticmethod
+    def sugerir_vinculo_sku(db_wms: Session, db_erp: Session, recebimento_id: int, item_id: int):
+        rec = db_wms.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        item = db_wms.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+
+        if not rec or not item:
+            return {"sugestao": None, "mensagem": "Recebimento ou Item não encontrado."}
+
+        # 1. Verificar se há pendência de unidade
+        unidade_interna_direta = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == item.und).first()
+        vinculo_und = None
+        if not unidade_interna_direta:
+            vinculo_und = db_wms.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == item.und).first()
+
+        unidade_resolvida = unidade_interna_direta or vinculo_und
+        
+        if not unidade_resolvida:
+            return {"sugestao": None, "mensagem": "Unidade pendente"}
+
+        id_und_wms = unidade_interna_direta.id if unidade_interna_direta else vinculo_und.unidade_medida_id
+
+        # 2. Verificar se tem OC
+        if not rec.oc:
+            return {"sugestao": None, "mensagem": "Sem OC vinculada."}
+
+        # 3. Buscar OC no ERP
+        query_erp = text("SELECT * FROM PedidosCompraItens WITH (NOLOCK) WHERE NumeroOC = :oc")
+        itens_oc = db_erp.execute(query_erp, {"oc": rec.oc}).mappings().all()
+
+        if not itens_oc:
+            return {"sugestao": None, "mensagem": "OC não encontrada ou sem itens."}
+
+        from app.models.produto import Produto
+        from app.models.unidade_produto import UnidadeProduto
+
+        candidatos = []
+
+        for item_oc in itens_oc:
+            prod = db_wms.query(Produto).filter(Produto.sku == str(item_oc["Sku"])).first()
+            if not prod:
+                continue
+
+            und_erp_str = str(item_oc["Und"]).upper()
+            und_medida_oc = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == und_erp_str).first()
+            
+            fator_conversao_erp = 1.0
+            if und_medida_oc:
+                prod_und_erp = db_wms.query(UnidadeProduto).filter(
+                    UnidadeProduto.produto_id == prod.id,
+                    UnidadeProduto.unidade_medida_id == und_medida_oc.id
+                ).first()
+                if prod_und_erp:
+                    fator_conversao_erp = prod_und_erp.fator_conversao
+                
+            fator_conversao_xml = 1.0
+            prod_und_xml = db_wms.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == prod.id,
+                UnidadeProduto.unidade_medida_id == id_und_wms
+            ).first()
+
+            if prod_und_xml:
+                fator_conversao_xml = prod_und_xml.fator_conversao
+            else:
+                return {"sugestao": None, "mensagem": "Unidade pendente"}
+            
+            fator_relativo = fator_conversao_erp / fator_conversao_xml
+            
+            qtd_esperada_xml = float(item_oc["Qtd"]) * fator_relativo
+            preco_esperado_xml = float(item_oc["PrecoUnitario"]) / fator_relativo
+
+            val_unitario_xml = float(item.valor_unitario or 0.0)
+
+            # Margem de tolerância
+            margem = 0.01
+
+            match_qtd = abs(float(item.qtd_nota) - qtd_esperada_xml) <= margem
+            match_preco = abs(val_unitario_xml - preco_esperado_xml) <= margem
+
+            if len(itens_oc) == 1 or (match_qtd and match_preco):
+                candidatos.append({
+                    "produto": prod,
+                    "item_oc_desc": item_oc["Descricao"]
+                })
+
+        if not candidatos:
+            return {"sugestao": None, "mensagem": "Nenhum item compatível verificado no ERP."}
+
+        if len(candidatos) == 1:
+            sug_prod = candidatos[0]["produto"]
+            if len(itens_oc) == 1:
+                return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: OC com item único"}
+            else:
+                return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: item com quantidade e preços correspondentes."}
+
+        return {"sugestao": None, "mensagem": "Múltiplos itens compatíveis."}

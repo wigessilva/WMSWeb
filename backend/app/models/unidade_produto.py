@@ -8,6 +8,8 @@ class UnidadeProduto(Base):
     __tablename__ = "UnidadesProduto"
 
     id = Column("Id", Integer, primary_key=True, index=True)
+    erp_id = Column("ErpId", Integer, nullable=True)
+
     # Importante: a ForeignKey agora aponta para "produtos.Id" com "I" maiúsculo
     produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=False)
 

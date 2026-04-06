@@ -54,19 +54,24 @@ class ServicoSincronizacaoERP:
     @staticmethod
     def sincronizar_produtos_unidades(db_wms: Session, db_erp: Session):
         # Ordenamos por Codigo e Fator ASC para garantir que a unidade base (fator 1.0) seja lida primeiro
-        query_erp = text("SELECT Codigo, Sigla, Fator FROM ProdutosUnidades WITH (NOLOCK) ORDER BY Codigo, Fator ASC")
+        query_erp = text("SELECT Id, Codigo, Sigla, Fator FROM ProdutosUnidades WITH (NOLOCK) ORDER BY Codigo, Fator ASC")
         resultados_erp = db_erp.execute(query_erp).fetchall()
 
         unidades_adicionadas = 0
         unidades_atualizadas = 0
+        unidades_removidas = 0
 
-        # Rastreia quais produtos já tiveram sua unidade base (a primeira) processada
+        # Rastreia quais produtos já tiveram sua unidade base processada
         produtos_processados = set()
+        ids_erp_validos = set()
 
         for linha in resultados_erp:
+            linha_id = int(linha.Id)
             codigo_erp = str(linha.Codigo)
             sigla_erp = str(linha.Sigla).upper()
             fator_erp = float(linha.Fator)
+            
+            ids_erp_validos.add(linha_id)
 
             produto = db_wms.query(Produto).filter(Produto.sku == codigo_erp).first()
             if not produto:
@@ -84,13 +89,19 @@ class ServicoSincronizacaoERP:
             else:
                 tipo_unidade = "produto"
 
-            unidade_produto = db_wms.query(UnidadeProduto).filter(
-                UnidadeProduto.produto_id == produto.id,
-                UnidadeProduto.unidade_medida_id == unidade_medida.id
-            ).first()
+            # 1. Tenta achar via ERP ID
+            unidade_produto = db_wms.query(UnidadeProduto).filter(UnidadeProduto.erp_id == linha_id).first()
+
+            # 2. Fallback da transição: busca por PK antiga e adiciona o campo erp_id nela
+            if not unidade_produto:
+                unidade_produto = db_wms.query(UnidadeProduto).filter(
+                    UnidadeProduto.produto_id == produto.id,
+                    UnidadeProduto.unidade_medida_id == unidade_medida.id
+                ).first()
 
             if not unidade_produto:
                 nova_unidade_produto = UnidadeProduto(
+                    erp_id=linha_id,
                     produto_id=produto.id,
                     tipo=tipo_unidade,
                     unidade_medida_id=unidade_medida.id,
@@ -100,11 +111,18 @@ class ServicoSincronizacaoERP:
                 unidades_adicionadas += 1
             else:
                 atualizou = False
+                if unidade_produto.erp_id != linha_id:
+                    unidade_produto.erp_id = linha_id
+                    atualizou = True
+                
+                if unidade_produto.unidade_medida_id != unidade_medida.id:
+                    unidade_produto.unidade_medida_id = unidade_medida.id
+                    atualizou = True
+
                 if unidade_produto.fator_conversao != fator_erp:
                     unidade_produto.fator_conversao = fator_erp
                     atualizou = True
 
-                # Se for a primeira unidade do ERP, garante que o tipo no WMS seja 'base'
                 if tipo_unidade == "base" and unidade_produto.tipo != "base":
                     unidade_produto.tipo = "base"
                     atualizou = True
@@ -112,11 +130,21 @@ class ServicoSincronizacaoERP:
                 if atualizou:
                     unidades_atualizadas += 1
 
+        # Limpeza de órfãos:
+        # Pega todas as unidades que sobraram e deleta se não estiver nos IDs válidos do momento
+        # (Isso fará limpar o rastro de UnidadesProduto repetidas com sigla antiga da transição)
+        unidades_wms = db_wms.query(UnidadeProduto).all()
+        for u in unidades_wms:
+            if u.erp_id not in ids_erp_validos:
+                db_wms.delete(u)
+                unidades_removidas += 1
+
         db_wms.commit()
 
         return {
             "adicionadas": unidades_adicionadas,
-            "atualizadas": unidades_atualizadas
+            "atualizadas": unidades_atualizadas,
+            "removidas": unidades_removidas
         }
 
     @staticmethod

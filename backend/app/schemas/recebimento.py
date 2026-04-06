@@ -7,6 +7,7 @@ from app.enums import StatusRecebimento, StatusRecebimentoItem
 class RecebimentoItemBase(BaseModel):
     descricao: str
     qtd_nota: float
+    valor_unitario: Optional[float] = None
     und: str
     sku: Optional[int] = None
     codigo_fornecedor: Optional[str] = None
