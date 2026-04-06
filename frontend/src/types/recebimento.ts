@@ -1,25 +1,30 @@
-export enum StatusRecebimento {
-  IMPORTADO = "IMPORTADO",
-  PENDENTE = "PENDENTE",
-  AGUARDANDO_LIBERACAO = "AGUARDANDO_LIBERACAO",
-  LIBERADO = "LIBERADO",
-  EM_CONFERENCIA = "EM_CONFERENCIA",
-  EM_ANALISE = "EM_ANALISE",
-  FINALIZADO = "FINALIZADO",
-}
+export const StatusRecebimento = {
+  IMPORTADO: "IMPORTADO",
+  PENDENTE: "PENDENTE",
+  AGUARDANDO_LIBERACAO: "AGUARDANDO_LIBERACAO",
+  LIBERADO: "LIBERADO",
+  EM_CONFERENCIA: "EM_CONFERENCIA",
+  EM_ANALISE: "EM_ANALISE",
+  FINALIZADO: "FINALIZADO",
+} as const;
 
-export enum StatusRecebimentoItem {
-  PENDENTE_VINCULO = "PENDENTE_VINCULO",
-  AGUARDANDO_CONFERENCIA = "AGUARDANDO_CONFERENCIA",
-  EM_CONFERENCIA = "EM_CONFERENCIA",
-  CONFERIDO = "CONFERIDO",
-  DIVERGENTE = "DIVERGENTE",
-}
+export type StatusRecebimento = typeof StatusRecebimento[keyof typeof StatusRecebimento];
+
+export const StatusRecebimentoItem = {
+  PENDENTE_VINCULO: "PENDENTE_VINCULO",
+  AGUARDANDO_CONFERENCIA: "AGUARDANDO_CONFERENCIA",
+  EM_CONFERENCIA: "EM_CONFERENCIA",
+  CONFERIDO: "CONFERIDO",
+  DIVERGENTE: "DIVERGENTE",
+} as const;
+
+export type StatusRecebimentoItem = typeof StatusRecebimentoItem[keyof typeof StatusRecebimentoItem];
 
 export interface RecebimentoItem {
   id: number;
   recebimento_id: number;
   sku: string | null;
+  codigo_fornecedor: string | null;
   descricao: string;
   qtd_nota: number;
   qtd_recebida: number | null;

@@ -43,6 +43,8 @@ class RecebimentoItem(Base):
     # O SKU nasce nulo e aguarda o vínculo (De/Para) do usuário
     sku = Column("Sku", Integer, ForeignKey("Produtos.Id"), nullable=True)
 
+    codigo_fornecedor = Column("CodigoFornecedor", String(100), nullable=True)
+
     descricao = Column("Descricao", String(255), nullable=False)
     qtd_nota = Column("QtdNota", Float, nullable=False)
     qtd_recebida = Column("QtdRecebida", Float, nullable=True)

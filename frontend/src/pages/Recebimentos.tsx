@@ -30,7 +30,17 @@ export default function Recebimentos() {
   const [unidadesInternas, setUnidadesInternas] = useState<UnidadeMedida[]>([])
   const [vinculosUnidades, setVinculosUnidades] = useState<VinculoUnidade[]>([])
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Novos estados para Vincular SKU
+  const [modalSKUAberto, setModalSKUAberto] = useState(false)
+  const [itemSelecionadoParaSKU, setItemSelecionadoParaSKU] = useState<any>(null)
+
+  // Estados para Async Combobox de Produtos
+  const [buscaProduto, setBuscaProduto] = useState("");
+  const [produtosSugeridos, setProdutosSugeridos] = useState<{id: number, sku: string, descricao: string}[]>([]);
+  const [buscandoProdutos, setBuscandoProdutos] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
 
   const carregarRecebimentos = async (termo?: string) => {
     try {
@@ -186,7 +196,22 @@ export default function Recebimentos() {
                 setModalUnidadeAberto(true);
               }
             }] : []),
-            { label: "Vincular SKU", onClick: () => {} },
+            { 
+              label: "Vincular SKU", 
+              onClick: () => {
+                if (!recebimentoSelecionado) {
+                  toast.error("Selecione um romaneio na tabela.");
+                  return;
+                }
+                const item = recebimentoSelecionado.itens.length > 0 ? recebimentoSelecionado.itens[0] : null;
+                if (item) {
+                  setItemSelecionadoParaSKU(item);
+                  setModalSKUAberto(true);
+                } else {
+                  toast.error("Este romaneio não possui itens.");
+                }
+              } 
+            },
             { label: "Alterar Destino", onClick: () => {} }
           ]}
         />
@@ -225,8 +250,8 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5 font-bold text-blue-900">{rec.nfe}</td>
                     <td className="px-3 py-1.5">{rec.oc || "-"}</td>
                     <td className="px-3 py-1.5">{rec.fornecedor}</td>
-                    <td className="px-3 py-1.5">{rec.conferente || "-"}</td>
-                    <td className="px-3 py-1.5">{rec.inicio ? new Date(rec.inicio).toLocaleDateString('pt-BR') : "-"}</td>
+                    <td className="px-3 py-1.5">{rec.conferente_id || "-"}</td>
+                    <td className="px-3 py-1.5">{rec.data_inicio ? new Date(rec.data_inicio).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">
                       <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
@@ -277,13 +302,13 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5 font-bold text-blue-600 text-center">{item.qtd_recebida || 0}</td>
                     <td className="px-3 py-1.5 text-center">{item.und}</td>
                     <td className="px-3 py-1.5">{item.lote || "-"}</td>
-                    <td className="px-3 py-1.5">{item.fab ? new Date(item.fab).toLocaleDateString('pt-BR') : "-"}</td>
-                    <td className="px-3 py-1.5">{item.val ? new Date(item.val).toLocaleDateString('pt-BR') : "-"}</td>
-                    <td className="px-3 py-1.5">{item.vencimento || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.int_embalagem || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.int_material || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.identificacao || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.certif_qual || "-"}</td>
+                    <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
+                    <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
+                    <td className="px-3 py-1.5">{item.data_vencimento || "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.integridade_embalagem !== null ? (item.integridade_embalagem ? "Sim" : "Não") : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.integridade_material !== null ? (item.integridade_material ? "Sim" : "Não") : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? (item.identificacao ? "Sim" : "Não") : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.certificado_qualidade !== null ? (item.certificado_qualidade ? "Sim" : "Não") : "-"}</td>
                     <td className="px-3 py-1.5">{item.destino || "-"}</td>
                     <td className="px-3 py-1.5">
                       <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
@@ -366,6 +391,88 @@ export default function Recebimentos() {
             <div className="flex justify-end space-x-3">
               <Button variant="secondary" onClick={() => setModalUnidadeAberto(false)}>Cancelar</Button>
               <Button variant="primary" loading={carregando} onClick={salvarVinculoUnidade}>Salvar Vínculo</Button>
+            </div>
+          </div>
+      </Modal>
+
+      {/* MODAL VINCULAR SKU */}
+      <Modal isOpen={modalSKUAberto}>
+          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-xl w-full" style={{minHeight: "400px"}}>
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-wms-sidebar">Vincular SKU</h3>
+              <button onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); }} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700">
+                <div className="mb-2"><span className="font-semibold text-gray-800">Nota Fiscal (NFe):</span> {recebimentoSelecionado?.nfe}</div>
+                <div className="mb-2"><span className="font-semibold text-gray-800">Código do Produto (Nota):</span> {itemSelecionadoParaSKU?.codigo_fornecedor || "N/A"}</div>
+                <div><span className="font-semibold text-gray-800">Descrição (Nota):</span> {itemSelecionadoParaSKU?.descricao || "N/A"}</div>
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Buscar Produto (SKU Interno ou Descrição)</label>
+                <input
+                  type="text"
+                  placeholder="Digite ao menos 3 letras para buscar..."
+                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  value={buscaProduto}
+                  onChange={(e) => {
+                    const termo = e.target.value;
+                    setBuscaProduto(termo);
+                    
+                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+                    
+                    if (termo.length >= 3) {
+                      setBuscandoProdutos(true);
+                      debounceTimer.current = setTimeout(async () => {
+                        try {
+                          const res = await fetch(`http://localhost:8000/produtos/?busca=${encodeURIComponent(termo)}`);
+                          if (res.ok) {
+                            const data = await res.json();
+                            setProdutosSugeridos(data);
+                          }
+                        } catch (err) {
+                           console.error("Erro ao buscar produtos", err);
+                        } finally {
+                          setBuscandoProdutos(false);
+                        }
+                      }, 500);
+                    } else {
+                      setProdutosSugeridos([]);
+                      setBuscandoProdutos(false);
+                    }
+                  }}
+                />
+                
+                {buscandoProdutos && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg p-2 text-sm text-gray-500 text-center">
+                    Buscando...
+                  </div>
+                )}
+                
+                {!buscandoProdutos && produtosSugeridos.length > 0 && buscaProduto.length >= 3 && (
+                  <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
+                    {produtosSugeridos.map(prod => (
+                      <li 
+                        key={prod.id} 
+                        className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                        onClick={() => {
+                          setBuscaProduto(`${prod.sku} - ${prod.descricao}`);
+                          setProdutosSugeridos([]);
+                        }}
+                      >
+                         <span className="font-bold text-gray-800">{prod.sku}</span> - {prod.descricao}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-10">
+              <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutosSugeridos([]); }}>Cancelar</Button>
+              <Button variant="primary" onClick={() => setModalSKUAberto(false)}>Vincular</Button>
             </div>
           </div>
       </Modal>
