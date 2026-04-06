@@ -11,9 +11,10 @@ interface ActionToolbarProps {
   onBuscaChange: (termo: string) => void;
   acoes: AcaoToolbar[];
   placeholderBusca?: string;
+  children?: React.ReactNode;
 }
 
-export function ActionToolbar({ termoBusca, onBuscaChange, acoes, placeholderBusca = "Buscar" }: ActionToolbarProps) {
+export function ActionToolbar({ termoBusca, onBuscaChange, acoes, placeholderBusca = "Buscar", children }: ActionToolbarProps) {
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,39 +41,43 @@ export function ActionToolbar({ termoBusca, onBuscaChange, acoes, placeholderBus
         />
       </div>
 
-      {acoes && acoes.length > 0 && (
-        <div className="relative" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={() => setDropdownAberto(!dropdownAberto)}
-            className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
-          >
-            Ações <span className="ml-2 text-xs">▼</span>
-          </button>
+      <div className="flex items-center space-x-2">
+        {children}
+        
+        {acoes && acoes.length > 0 && (
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownAberto(!dropdownAberto)}
+              className="bg-[#1a63b6] text-white px-4 py-1.5 rounded hover:bg-blue-800 transition-colors text-sm font-medium flex items-center shadow-sm"
+            >
+              Ações <span className="ml-2 text-xs">▼</span>
+            </button>
 
-          {dropdownAberto && (
-            <div className="absolute top-10 right-0 w-48 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
-              {acoes.map((acao, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => {
-                    setDropdownAberto(false);
-                    acao.onClick();
-                  }}
-                  className={`block w-full text-left px-4 py-2.5 text-sm border-b border-gray-100 transition-colors ${
-                    acao.isDanger
-                    ? 'text-red-600 hover:bg-red-50 font-medium'
-                    : 'text-gray-700 hover:bg-blue-50'
-                  }`}
-                >
-                  {acao.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            {dropdownAberto && (
+              <div className="absolute top-10 right-0 w-48 bg-white border border-gray-200 rounded shadow-lg z-20 overflow-hidden">
+                {acoes.map((acao, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setDropdownAberto(false);
+                      acao.onClick();
+                    }}
+                    className={`block w-full text-left px-4 py-2.5 text-sm border-b border-gray-100 transition-colors ${
+                      acao.isDanger
+                      ? 'text-red-600 hover:bg-red-50 font-medium'
+                      : 'text-gray-700 hover:bg-blue-50'
+                    }`}
+                  >
+                    {acao.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

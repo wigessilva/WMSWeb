@@ -8,6 +8,8 @@ from ..models.unidade_medida import UnidadeMedida
 from ..models.vinculo_unidade import VinculoUnidade
 from ..schemas.recebimento import RecebimentoCriar
 from ..enums import StatusRecebimento, StatusRecebimentoItem
+from ..core.event_bus import event_bus
+from ..domain.recebimento_fsm import RecebimentoFSM, RecebimentoItemFSM
 
 
 class RecebimentoService:
@@ -34,6 +36,11 @@ class RecebimentoService:
             fornecedor=dados.fornecedor,
             status=StatusRecebimento.IMPORTADO.value
         )
+        
+        # Integração com FSM
+        fsm_rec = RecebimentoFSM(db_receb)
+        if not oc_verificada:
+            fsm_rec.bloquear()
         db.add(db_receb)
         db.flush()  # Guarda temporariamente para gerar o ID (Romaneio)
 
@@ -105,10 +112,18 @@ class RecebimentoService:
 
         tem_pendencia = any(item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value for item in itens)
 
-        if tem_pendencia:
-            recebimento.status = StatusRecebimento.PENDENTE.value
-        else:
-            recebimento.status = StatusRecebimento.AGUARDANDO_LIBERACAO.value
+        fsm = RecebimentoFSM(recebimento)
+        
+        if not tem_pendencia and recebimento.oc:
+            try:
+                if recebimento.status == 'BLOQUEADO':
+                    fsm.desbloquear()
+                fsm.preparar_para_liberar()
+                event_bus.publish('RECEBIMENTO_AGUARDANDO_LIBERACAO', {'id': recebimento_id})
+            except Exception as e:
+                pass
+        elif tem_pendencia and recebimento.status != 'BLOQUEADO':
+            recebimento.status = StatusRecebimento.IMPORTADO.value
 
         db.commit()
         db.refresh(recebimento)
@@ -167,9 +182,16 @@ class RecebimentoService:
 
         # Se a query retornou algo, a OC existe! Então vinculamos:
         recebimento.oc = oc
+        
+        fsm = RecebimentoFSM(recebimento)
+        if recebimento.status == 'BLOQUEADO':
+            fsm.desbloquear()
+        
         db_wms.commit()
         db_wms.refresh(recebimento)
-        return recebimento
+        
+        # Pode estar pronto para liberar agora
+        return RecebimentoService.atualizar_status_pai(db_wms, recebimento_id)
 
     @staticmethod
     def sincronizar_ocs_pendentes(db_wms: Session, db_erp: Session):
@@ -221,7 +243,11 @@ class RecebimentoService:
         for item in itens:
             # Se o SKU já estiver preenchido, o item tem tudo o que precisa e sai da pendência
             if item.sku:
-                item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+                fsm_item = RecebimentoItemFSM(item)
+                try:
+                    fsm_item.vincular_sku()
+                except:
+                    pass
 
         db.commit()
 
@@ -277,7 +303,11 @@ class RecebimentoService:
                 vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == it_pend.und).first()
             unidade_resolvida = unidade_interna_direta or vinculo_und
             if unidade_resolvida:
-                it_pend.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+                fsm_item = RecebimentoItemFSM(it_pend)
+                try:
+                    fsm_item.vincular_sku()
+                except:
+                    pass
 
         # Força atualização do item clicado
         item.sku = produto_id
@@ -286,7 +316,12 @@ class RecebimentoService:
         if not unidade_interna_direta:
             vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == item.und).first()
         if (unidade_interna_direta or vinculo_und) and item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value:
-             item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+            fsm_item = RecebimentoItemFSM(item)
+            try:
+                fsm_item.vincular_sku()
+                event_bus.publish('SKU_VINCULADO_SUCESSO', {'item_id': item.id, 'sku': produto_id})
+            except:
+                pass
 
         db.commit()
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
