@@ -33,6 +33,16 @@ export const recebimentoService = {
     return response.data;
   },
 
+  cancelarLiberacao: async (id: number): Promise<Recebimento> => {
+    const response = await api.post(`/${id}/cancelar-liberacao`);
+    return response.data;
+  },
+
+  rejeitar: async (id: number): Promise<Recebimento> => {
+    const response = await api.post(`/${id}/rejeitar`);
+    return response.data;
+  },
+
   concluirDoca: async (id: number): Promise<Recebimento> => {
     const response = await api.post(`/${id}/concluir-doca`);
     return response.data;

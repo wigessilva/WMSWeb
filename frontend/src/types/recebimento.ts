@@ -2,10 +2,12 @@ export const StatusRecebimento = {
   IMPORTADO: "IMPORTADO",
   PENDENTE: "PENDENTE",
   AGUARDANDO_LIBERACAO: "AGUARDANDO_LIBERACAO",
+  AGUARDANDO_CONFERENCIA: "AGUARDANDO_CONFERENCIA",
   LIBERADO: "LIBERADO",
   EM_CONFERENCIA: "EM_CONFERENCIA",
   EM_ANALISE: "EM_ANALISE",
   FINALIZADO: "FINALIZADO",
+  REJEITADO: "REJEITADO",
 } as const;
 
 export type StatusRecebimento = typeof StatusRecebimento[keyof typeof StatusRecebimento];

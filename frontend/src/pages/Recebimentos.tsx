@@ -187,6 +187,70 @@ export default function Recebimentos() {
     }
   }
 
+  // --- Funções do Painel de Controle ---
+
+  const handleLiberar = async () => {
+    if (!recebimentoSelecionado) return;
+    setCarregando(true);
+    try {
+      const rec = await recebimentoService.liberar(recebimentoSelecionado.id);
+      setRecebimentoSelecionado(rec);
+      setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      toast.success("Conferência liberada. Disponível no coletor!");
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Erro ao liberar");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  const handleCancelarLiberacao = async () => {
+    if (!recebimentoSelecionado) return;
+    if (!confirm("Tem a certeza que deseja cancelar? (Leituras serão zeradas)")) return;
+    setCarregando(true);
+    try {
+      const rec = await recebimentoService.cancelarLiberacao(recebimentoSelecionado.id);
+      setRecebimentoSelecionado(rec);
+      setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      toast.success("Liberação cancelada. A nota voltou para a fila do Painel.");
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Erro ao cancelar liberação");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  const handleRejeitar = async () => {
+    if (!recebimentoSelecionado) return;
+    if (!confirm("Tem a certeza que deseja rejeitar este recebimento inteiramente? Esta ação é final.")) return;
+    setCarregando(true);
+    try {
+      const rec = await recebimentoService.rejeitar(recebimentoSelecionado.id);
+      setRecebimentoSelecionado(rec);
+      setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      toast.success("Recebimento rejeitado definitivamente!");
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Erro ao rejeitar recebimento");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  const handleConcluir = async () => {
+    if (!recebimentoSelecionado) return;
+    setCarregando(true);
+    try {
+      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id);
+      setRecebimentoSelecionado(rec);
+      setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      toast.success("Recebimento concluído com sucesso!");
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Erro ao concluir doca");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   // Regras de Exibição dos Botões
   const temDireto = itemSelecionadoNaTabela ? unidadesInternas.some(u => u.sigla === itemSelecionadoNaTabela.und) : true;
   const temVinculo = itemSelecionadoNaTabela ? vinculosUnidades.some(v => v.unidade_externa === itemSelecionadoNaTabela.und) : true;
@@ -259,6 +323,19 @@ export default function Recebimentos() {
             ] : []),
             ...(itemSelecionadoNaTabela ? [
               { label: "Alterar Destino", onClick: () => { } }
+            ] : []),
+            // Ações do Recebimento (FSM)
+            ...(recebimentoSelecionado && recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' ? [
+              { label: "Liberar Conferência", onClick: handleLiberar, className: "text-green-600 font-bold" }
+            ] : []),
+            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') ? [
+              { label: "Cancelar Conferência", onClick: handleCancelarLiberacao }
+            ] : []),
+            ...(recebimentoSelecionado && ['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'].includes(recebimentoSelecionado.status) && recebimentoSelecionado.itens.every(i => i.status === 'CONFERIDO' || i.status === 'DIVERGENTE') ? [
+              { label: "Concluir Doca", onClick: handleConcluir, className: "text-blue-600 font-bold" }
+            ] : []),
+            ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status) ? [
+              { label: "Rejeitar Recebimento", onClick: handleRejeitar, className: "text-red-600" }
             ] : [])
           ]}
         >
@@ -669,6 +746,7 @@ export default function Recebimentos() {
                         </div>
                       </div>
                     </div>
+
                   </>
                 ) : (
                   <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white shadow-sm">

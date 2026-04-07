@@ -105,7 +105,7 @@ class RecebimentoService:
             return None
 
         # Se já passou da fase de libertação, as mudanças são manuais, não mexe.
-        if recebimento.status in [StatusRecebimento.LIBERADO.value, StatusRecebimento.EM_CONFERENCIA.value, StatusRecebimento.EM_ANALISE.value, StatusRecebimento.FINALIZADO.value]:
+        if recebimento.status in [StatusRecebimento.AGUARDANDO_CONFERENCIA.value, StatusRecebimento.LIBERADO.value, StatusRecebimento.EM_CONFERENCIA.value, StatusRecebimento.EM_ANALISE.value, StatusRecebimento.FINALIZADO.value, StatusRecebimento.REJEITADO.value]:
             return recebimento
 
         itens = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).all()
@@ -134,10 +134,59 @@ class RecebimentoService:
     @staticmethod
     def liberar_romaneio(db: Session, recebimento_id: int):
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
-        if recebimento.status != StatusRecebimento.AGUARDANDO_LIBERACAO.value:
-            raise ValueError("O romaneio possui pendências ou já foi liberado.")
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
 
-        recebimento.status = StatusRecebimento.LIBERADO.value
+        fsm = RecebimentoFSM(recebimento)
+        try:
+            fsm.liberar_conferencia()
+            event_bus.publish('RECEBIMENTO_AGUARDANDO_CONFERENCIA', {'id': recebimento_id})
+        except Exception as e:
+            raise ValueError("O romaneio possui pendências ou não está aguardando liberação.")
+
+        db.commit()
+        db.refresh(recebimento)
+        return recebimento
+
+    @staticmethod
+    def cancelar_liberacao_romaneio(db: Session, recebimento_id: int):
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+
+        fsm = RecebimentoFSM(recebimento)
+        try:
+            fsm.cancelar_conferencia()
+        except Exception as e:
+            raise ValueError("Não é possível cancelar uma conferência neste status.")
+
+        # Zera as contagens apagando as leituras e resetando qtd_recebida
+        itens = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).all()
+        for item in itens:
+            item.qtd_recebida = 0.0
+            from app.models.recebimento import RecebimentoLeitura
+            db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item.id).delete()
+            
+            # Se já estavam conferidos ou divergentes, voltam para liberado
+            if item.status in [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value]:
+                item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+
+        db.commit()
+        db.refresh(recebimento)
+        return recebimento
+
+    @staticmethod
+    def rejeitar_romaneio(db: Session, recebimento_id: int):
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+
+        fsm = RecebimentoFSM(recebimento)
+        try:
+            fsm.rejeitar()
+        except Exception as e:
+            raise ValueError("Não é possível rejeitar um romaneio concluído ou já finalizado.")
+
         db.commit()
         db.refresh(recebimento)
         return recebimento
@@ -145,11 +194,16 @@ class RecebimentoService:
     @staticmethod
     def concluir_doca(db: Session, recebimento_id: int):
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
-        if recebimento.status != StatusRecebimento.EM_CONFERENCIA.value:
-            raise ValueError("Apenas romaneios em conferência podem ser concluídos na doca.")
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
 
-        recebimento.status = StatusRecebimento.EM_ANALISE.value
-        recebimento.conclusao = datetime.now()
+        fsm = RecebimentoFSM(recebimento)
+        try:
+            fsm.concluir()
+            recebimento.conclusao = datetime.now()
+        except Exception as e:
+            raise ValueError("Apenas romaneios com conferências ativas podem ser concluídos.")
+
         db.commit()
         db.refresh(recebimento)
         return recebimento

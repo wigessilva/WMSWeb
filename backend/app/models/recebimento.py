@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
 
-
 class Recebimento(Base):
     __tablename__ = "Recebimentos"
 
@@ -71,3 +70,18 @@ class RecebimentoItem(Base):
     recebimento = relationship("Recebimento", back_populates="itens")
     produto = relationship("Produto")
     destino = relationship("Filial")
+    leituras = relationship("RecebimentoLeitura", back_populates="item", cascade="all, delete-orphan")
+
+class RecebimentoLeitura(Base):
+    __tablename__ = "RecebimentoLeituras"
+
+    id = Column("Id", Integer, primary_key=True, index=True)
+    recebimento_item_id = Column("RecebimentoItemId", Integer, ForeignKey("RecebimentoItens.Id"), nullable=False)
+    qtd = Column("Qtd", Float, nullable=False)
+    und = Column("Und", String(20), nullable=False)
+    ean = Column("Ean", String(50), nullable=True)
+    usuario = Column("Usuario", String(100), nullable=False)
+    data = Column("Data", DateTime, default=datetime.now, nullable=False)
+    ua = Column("UA", String(100), nullable=True)
+
+    item = relationship("RecebimentoItem", back_populates="leituras")

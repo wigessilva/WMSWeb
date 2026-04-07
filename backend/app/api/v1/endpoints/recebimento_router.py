@@ -45,6 +45,20 @@ def liberar_romaneio(id: int = Path(...), db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/{id}/cancelar-liberacao", response_model=RecebimentoSchema)
+def cancelar_liberacao_romaneio(id: int = Path(...), db: Session = Depends(get_db)):
+    try:
+        return RecebimentoService.cancelar_liberacao_romaneio(db=db, recebimento_id=id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{id}/rejeitar", response_model=RecebimentoSchema)
+def rejeitar_romaneio(id: int = Path(...), db: Session = Depends(get_db)):
+    try:
+        return RecebimentoService.rejeitar_romaneio(db=db, recebimento_id=id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/{id}/concluir-doca", response_model=RecebimentoSchema)
 def concluir_doca(id: int = Path(...), db: Session = Depends(get_db)):
     try:

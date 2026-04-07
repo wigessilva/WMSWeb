@@ -4,6 +4,7 @@ export interface AcaoToolbar {
   label: string;
   onClick: () => void;
   isDanger?: boolean;
+  className?: string;
 }
 
 interface ActionToolbarProps {
@@ -65,9 +66,10 @@ export function ActionToolbar({ termoBusca, onBuscaChange, acoes, placeholderBus
                       acao.onClick();
                     }}
                     className={`block w-full text-left px-4 py-2.5 text-sm border-b border-gray-100 transition-colors ${
-                      acao.isDanger
+                      acao.className ? acao.className : 
+                      (acao.isDanger
                       ? 'text-red-600 hover:bg-red-50 font-medium'
-                      : 'text-gray-700 hover:bg-blue-50'
+                      : 'text-gray-700 hover:bg-blue-50')
                     }`}
                   >
                     {acao.label}

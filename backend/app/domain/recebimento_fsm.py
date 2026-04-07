@@ -5,7 +5,9 @@ class RecebimentoFSM(object):
         'IMPORTADO',            
         'BLOQUEADO',            
         'AGUARDANDO_LIBERACAO', 
+        'AGUARDANDO_CONFERENCIA',
         'EM_CONFERENCIA',       
+        'REJEITADO',
         'CONCLUIDO'             
     ]
 
@@ -21,8 +23,14 @@ class RecebimentoFSM(object):
         self.machine.add_transition(trigger='bloquear', source='IMPORTADO', dest='BLOQUEADO')
         self.machine.add_transition(trigger='desbloquear', source='BLOQUEADO', dest='IMPORTADO')
         self.machine.add_transition(trigger='preparar_para_liberar', source=['IMPORTADO', 'BLOQUEADO'], dest='AGUARDANDO_LIBERACAO')
-        self.machine.add_transition(trigger='liberar_conferencia', source='AGUARDANDO_LIBERACAO', dest='EM_CONFERENCIA')
-        self.machine.add_transition(trigger='concluir', source='EM_CONFERENCIA', dest='CONCLUIDO')
+        self.machine.add_transition(trigger='liberar_conferencia', source='AGUARDANDO_LIBERACAO', dest='AGUARDANDO_CONFERENCIA')
+        self.machine.add_transition(trigger='iniciar_conferencia', source='AGUARDANDO_CONFERENCIA', dest='EM_CONFERENCIA')
+        self.machine.add_transition(trigger='cancelar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'], dest='AGUARDANDO_LIBERACAO')
+        self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_concluido'])
+        self.machine.add_transition(trigger='concluir', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'], dest='CONCLUIDO')
+
+    def is_concluido(self):
+        return self.model.status == 'CONCLUIDO'
 
 # ========================================================
 
