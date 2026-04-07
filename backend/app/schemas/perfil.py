@@ -1,20 +1,28 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+class PermissaoSchema(BaseModel):
+    id: int
+    chave: str
+    descricao: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class PerfilBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
-    permite_liberar_sem_oc: bool = False
 
 class PerfilCriar(PerfilBase):
-    pass
+    permissoes: List[str] = [] # Lista de chaves das permissões
 
 class PerfilSchema(PerfilBase):
     id: int
     criado_em: datetime
     atualizado_em: datetime
     rowversion: int
+    permissoes: List[PermissaoSchema] = []
 
     class Config:
         from_attributes = True

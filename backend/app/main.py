@@ -42,6 +42,7 @@ from app.models.parametros_mestres import ParametrosMestres
 from app.models.historico_xml import HistoricoXML
 from app.models.configuracao_integracao import ConfiguracaoIntegracao
 from app.models.log_transicao import LogTransicao
+from app.models.permissao import Permissao
 
 # Importa os novos modelos de Endereçamento
 from app.models.filial import Filial

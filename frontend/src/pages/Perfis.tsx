@@ -7,6 +7,8 @@ import { perfilService } from '../services/perfilService';
 import type { Perfil } from '../types/perfil';
 import toast from 'react-hot-toast';
 
+const LIBERAR_SEM_OC_KEY = 'RECEBIMENTO.LIBERAR_SEM_OC';
+
 export default function Perfis() {
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -48,7 +50,9 @@ export default function Perfis() {
     setModoEdicao(true);
     setNome(perfilSelecionado.nome);
     setDescricao(perfilSelecionado.descricao || '');
-    setPermiteLiberar(perfilSelecionado.permite_liberar_sem_oc || false);
+    // Verifica se a permissão existe na lista
+    const temPermissao = perfilSelecionado.permissoes?.some(p => p.chave === LIBERAR_SEM_OC_KEY);
+    setPermiteLiberar(temPermissao || false);
     setErroNome('');
     setModalAberto(true);
   };
@@ -74,12 +78,22 @@ export default function Perfis() {
     setErroNome('');
     setCarregando(true);
     try {
+      // Monta a lista de permissões (por enquanto apenas uma chave se o checkbox estiver ativo)
+      const permissoes: string[] = permiteLiberar ? [LIBERAR_SEM_OC_KEY] : [];
+
       if (modoEdicao && perfilSelecionado) {
-        // Caso exista um método atualizar no seu perfilService
-        await perfilService.atualizar(perfilSelecionado.id, { nome, descricao, permite_liberar_sem_oc: permiteLiberar });
+        await perfilService.atualizar(perfilSelecionado.id, { 
+          nome, 
+          descricao, 
+          permissoes 
+        });
         toast.success("Perfil atualizado com sucesso!");
       } else {
-        await perfilService.criar({ nome, descricao, permite_liberar_sem_oc: permiteLiberar });
+        await perfilService.criar({ 
+          nome, 
+          descricao, 
+          permissoes 
+        });
         toast.success("Perfil criado com sucesso!");
       }
       setModalAberto(false);
@@ -147,23 +161,26 @@ export default function Perfis() {
                   </td>
                 </tr>
               ) : (
-                perfisFiltrados.map((p) => (
-                  <tr
-                    key={p.id}
-                    onClick={() => setPerfilSelecionado(p)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      perfilSelecionado?.id === p.id ? "bg-blue-100" : ""
-                    }`}
-                  >
-                    <td className="px-4 py-2 font-semibold text-blue-900">{p.nome}</td>
-                    <td className="px-4 py-2 text-gray-500">{p.descricao || "-"}</td>
-                    <td className="px-4 py-2 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${p.permite_liberar_sem_oc ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {p.permite_liberar_sem_oc ? 'SIM' : 'NÃO'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                perfisFiltrados.map((p) => {
+                  const temPermissao = p.permissoes?.some(perm => perm.chave === LIBERAR_SEM_OC_KEY);
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => setPerfilSelecionado(p)}
+                      className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
+                        perfilSelecionado?.id === p.id ? "bg-blue-100" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-2 font-semibold text-blue-900">{p.nome}</td>
+                      <td className="px-4 py-2 text-gray-500">{p.descricao || "-"}</td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${temPermissao ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {temPermissao ? 'SIM' : 'NÃO'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

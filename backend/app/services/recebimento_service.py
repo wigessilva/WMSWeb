@@ -132,10 +132,12 @@ class RecebimentoService:
 
     # # # AÇÕES MANUAIS DE GESTÃO E AUDITORIA # # #
     @staticmethod
-    def _registrar_log(db: Session, recebimento_id: int, acao: str, estado_anterior: str, estado_novo: str, usuario: str = "Sistema", observacao: str = None):
+    def _registrar_log(db: Session, tabela: str, registro_id: int, acao: str, gatilho: str = "MANUAL", estado_anterior: str = None, estado_novo: str = None, usuario: str = "Sistema", observacao: str = None):
         log = LogTransicao(
-            recebimento_id=recebimento_id,
+            tabela=tabela,
+            registro_id=registro_id,
             acao=acao,
+            gatilho=gatilho,
             estado_anterior=estado_anterior,
             estado_novo=estado_novo,
             usuario=usuario,
@@ -157,15 +159,19 @@ class RecebimentoService:
         if not usuario or not bcrypt.checkpw(senha_autorizador.encode('utf-8'), usuario.senha_hash.encode('utf-8')):
             raise ValueError("Credenciais inválidas.")
 
-        if not usuario.perfil_relacao.permite_liberar_sem_oc:
+        # Verifica se o perfil do usuário possui a permissão específica via chave
+        tem_permissao = any(p.chave == "RECEBIMENTO.LIBERAR_SEM_OC" for p in usuario.perfil_relacao.permissoes)
+        
+        if not tem_permissao:
             raise ValueError(f"O usuário {usuario.nome} não possui permissão para aprovar romaneios sem OC.")
 
         recebimento.autorizado_por = usuario.login
         recebimento.autorizado_em = datetime.now()
         
         RecebimentoService._registrar_log(
-            db, recebimento.id, 
-            acao="Autorização de Liberação sem OC", 
+            db, tabela="Recebimentos", registro_id=recebimento.id, 
+            acao="Autorização de Liberação sem OC",
+            gatilho="MANUAL",
             estado_anterior=recebimento.status,
             estado_novo=recebimento.status,
             usuario=usuario.login,
@@ -192,8 +198,9 @@ class RecebimentoService:
             event_bus.publish('RECEBIMENTO_AGUARDANDO_CONFERENCIA', {'id': recebimento_id})
             
             RecebimentoService._registrar_log(
-                db, recebimento.id, 
-                acao="Liberar Conferência", 
+                db, tabela="Recebimentos", registro_id=recebimento.id, 
+                acao="Liberar Conferência",
+                gatilho="MANUAL",
                 estado_anterior=estado_anterior,
                 estado_novo=recebimento.status,
                 usuario=usuario_acao

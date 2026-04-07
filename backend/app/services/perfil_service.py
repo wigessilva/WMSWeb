@@ -2,13 +2,19 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from ..models.perfil import Perfil
 from ..models.usuario import Usuario
+from ..models.permissao import Permissao
 from ..schemas.perfil import PerfilCriar
 
 def listar_perfis(db: Session):
     return db.query(Perfil).all()
 
 def criar_perfil(db: Session, perfil: PerfilCriar):
-    db_perfil = Perfil(nome=perfil.nome, descricao=perfil.descricao, permite_liberar_sem_oc=perfil.permite_liberar_sem_oc)
+    db_perfil = Perfil(nome=perfil.nome, descricao=perfil.descricao)
+    
+    if perfil.permissoes:
+        permissoes_db = db.query(Permissao).filter(Permissao.chave.in_(perfil.permissoes)).all()
+        db_perfil.permissoes = list(permissoes_db)
+        
     db.add(db_perfil)
     db.commit()
     db.refresh(db_perfil)
@@ -19,13 +25,18 @@ def atualizar_perfil(db: Session, perfil_id: int, perfil_atualizado: PerfilCriar
     if not db_perfil:
         raise HTTPException(status_code=404, detail="Perfil nao encontrado")
 
-    # Regra 5: Nao alterar o Administrador
+    # Regra: Nao alterar o Administrador
     if db_perfil.nome == "Administrador":
-        raise HTTPException(status_code=403, detail="O perfil Administrador nao pode ser alterado.")
+        raise HTTPException(status_code=403, detail="O perfil Administrador nao pode ser alterado via API.")
 
     db_perfil.nome = perfil_atualizado.nome
     db_perfil.descricao = perfil_atualizado.descricao
-    db_perfil.permite_liberar_sem_oc = perfil_atualizado.permite_liberar_sem_oc
+    
+    # Atualiza as permissões
+    if perfil_atualizado.permissoes is not None:
+        permissoes_db = db.query(Permissao).filter(Permissao.chave.in_(perfil_atualizado.permissoes)).all()
+        db_perfil.permissoes = list(permissoes_db)
+        
     db.commit()
     db.refresh(db_perfil)
     return db_perfil
