@@ -13,6 +13,9 @@ class Recebimento(Base):
     fornecedor = Column("Fornecedor", String(150), nullable=False)
     conferente = Column("Conferente", String(100), nullable=True)
 
+    autorizado_por = Column("AutorizadoPor", String(100), nullable=True)
+    autorizado_em = Column("AutorizadoEm", DateTime, nullable=True)
+
     inicio = Column("Inicio", DateTime, nullable=True)
     conclusao = Column("Conclusao", DateTime, nullable=True)
 

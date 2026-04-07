@@ -8,7 +8,7 @@ def listar_perfis(db: Session):
     return db.query(Perfil).all()
 
 def criar_perfil(db: Session, perfil: PerfilCriar):
-    db_perfil = Perfil(nome=perfil.nome, descricao=perfil.descricao)
+    db_perfil = Perfil(nome=perfil.nome, descricao=perfil.descricao, permite_liberar_sem_oc=perfil.permite_liberar_sem_oc)
     db.add(db_perfil)
     db.commit()
     db.refresh(db_perfil)
@@ -25,6 +25,7 @@ def atualizar_perfil(db: Session, perfil_id: int, perfil_atualizado: PerfilCriar
 
     db_perfil.nome = perfil_atualizado.nome
     db_perfil.descricao = perfil_atualizado.descricao
+    db_perfil.permite_liberar_sem_oc = perfil_atualizado.permite_liberar_sem_oc
     db.commit()
     db.refresh(db_perfil)
     return db_perfil

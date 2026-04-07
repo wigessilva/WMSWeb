@@ -63,6 +63,15 @@ export const recebimentoService = {
     return response.data;
   },
 
+  autorizar: async (id: number, loginAutorizador: string, senhaAutorizador: string): Promise<Recebimento> => {
+    const payload = {
+      login_autorizador: loginAutorizador,
+      senha_autorizador: senhaAutorizador
+    };
+    const response = await api.post(`/${id}/autorizar`, payload);
+    return response.data;
+  },
+
   vincularOC: async (id: number, oc: string) => {
     const response = await api.post(`/${id}/vincular-oc?oc=${oc}`);
     return response.data;

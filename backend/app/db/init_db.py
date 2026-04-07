@@ -11,7 +11,7 @@ def inicializar_dados_padrao(db: Session):
     perfil_admin = db.query(Perfil).filter(Perfil.nome == "Administrador").first()
 
     if not perfil_admin:
-        perfil_admin = Perfil(nome="Administrador", descricao="Acesso total ao sistema. Nao pode ser alterado.")
+        perfil_admin = Perfil(nome="Administrador", descricao="Acesso total ao sistema. Nao pode ser alterado.", permite_liberar_sem_oc=True)
         db.add(perfil_admin)
         db.commit()
         db.refresh(perfil_admin)

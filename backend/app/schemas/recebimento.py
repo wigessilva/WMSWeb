@@ -39,7 +39,13 @@ class RecebimentoBase(BaseModel):
     oc: Optional[str] = None
     fornecedor: str
     conferente: Optional[str] = None
+    autorizado_por: Optional[str] = None
+    autorizado_em: Optional[datetime] = None
     status: StatusRecebimento = StatusRecebimento.IMPORTADO
+
+class AutorizacaoPayload(BaseModel):
+    login_autorizador: str
+    senha_autorizador: str
 
 class RecebimentoCriar(RecebimentoBase):
     itens: List[RecebimentoItemCriar]

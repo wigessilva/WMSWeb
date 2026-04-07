@@ -12,6 +12,7 @@ export default function Perfis() {
   const [modalAberto, setModalAberto] = useState(false);
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [permiteLiberar, setPermiteLiberar] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erroNome, setErroNome] = useState('');
 
@@ -34,6 +35,7 @@ export default function Perfis() {
     setModoEdicao(false);
     setNome('');
     setDescricao('');
+    setPermiteLiberar(false);
     setErroNome('');
     setModalAberto(true);
   };
@@ -46,6 +48,7 @@ export default function Perfis() {
     setModoEdicao(true);
     setNome(perfilSelecionado.nome);
     setDescricao(perfilSelecionado.descricao || '');
+    setPermiteLiberar(perfilSelecionado.permite_liberar_sem_oc || false);
     setErroNome('');
     setModalAberto(true);
   };
@@ -73,10 +76,10 @@ export default function Perfis() {
     try {
       if (modoEdicao && perfilSelecionado) {
         // Caso exista um método atualizar no seu perfilService
-        await perfilService.atualizar(perfilSelecionado.id, { nome, descricao });
+        await perfilService.atualizar(perfilSelecionado.id, { nome, descricao, permite_liberar_sem_oc: permiteLiberar });
         toast.success("Perfil atualizado com sucesso!");
       } else {
-        await perfilService.criar({ nome, descricao });
+        await perfilService.criar({ nome, descricao, permite_liberar_sem_oc: permiteLiberar });
         toast.success("Perfil criado com sucesso!");
       }
       setModalAberto(false);
@@ -133,6 +136,7 @@ export default function Perfis() {
               <tr>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200">Nome</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 w-1/2">Descrição</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Liberação sem OC</th>
               </tr>
             </thead>
             <tbody className="text-gray-600 text-sm">
@@ -153,6 +157,11 @@ export default function Perfis() {
                   >
                     <td className="px-4 py-2 font-semibold text-blue-900">{p.nome}</td>
                     <td className="px-4 py-2 text-gray-500">{p.descricao || "-"}</td>
+                    <td className="px-4 py-2 text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${p.permite_liberar_sem_oc ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {p.permite_liberar_sem_oc ? 'SIM' : 'NÃO'}
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
@@ -186,6 +195,19 @@ export default function Perfis() {
                   rows={3}
                   className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] resize-none"
                 />
+              </div>
+              <div className="flex items-center mt-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                <input
+                  type="checkbox"
+                  id="permiteLiberar"
+                  checked={permiteLiberar}
+                  onChange={(e) => setPermiteLiberar(e.target.checked)}
+                  disabled={nome.toUpperCase() === 'ADMINISTRADOR'}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="permiteLiberar" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
+                  Usuário tem permissão para liberar conferência sem Ordem de Compra.
+                </label>
               </div>
             </div>
 

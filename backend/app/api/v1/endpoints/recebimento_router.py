@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from typing import List, Optional
 
 from app.db.database import get_db, get_erp_db
-from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema
+from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload
 from app.services.recebimento_service import RecebimentoService
 from app.models.recebimento import Recebimento, RecebimentoItem
 
@@ -62,6 +62,22 @@ def importar_romaneio(
 def liberar_romaneio(id: int = Path(...), db: Session = Depends(get_db)):
     try:
         return RecebimentoService.liberar_romaneio(db=db, recebimento_id=id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{id}/autorizar", response_model=RecebimentoSchema)
+def autorizar_recebimento(
+    payload: AutorizacaoPayload,
+    id: int = Path(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.autorizar_recebimento(
+            db=db, 
+            recebimento_id=id, 
+            login_autorizador=payload.login_autorizador, 
+            senha_autorizador=payload.senha_autorizador
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -9,6 +9,7 @@ class Perfil(Base):
     id = Column("Id", Integer, primary_key=True, index=True)
     nome = Column("Nome", String(50), unique=True, index=True, nullable=False)
     descricao = Column("Descricao", String(255), nullable=True)
+    permite_liberar_sem_oc = Column("PermiteLiberarSemOC", Boolean, default=False, nullable=False)
 
     # Auditoria padrao
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

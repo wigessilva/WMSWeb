@@ -5,6 +5,7 @@ from datetime import datetime
 class PerfilBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
+    permite_liberar_sem_oc: bool = False
 
 class PerfilCriar(PerfilBase):
     pass

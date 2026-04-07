@@ -41,6 +41,7 @@ from app.models.vinculo_unidade import VinculoUnidade
 from app.models.parametros_mestres import ParametrosMestres
 from app.models.historico_xml import HistoricoXML
 from app.models.configuracao_integracao import ConfiguracaoIntegracao
+from app.models.log_transicao import LogTransicao
 
 # Importa os novos modelos de Endereçamento
 from app.models.filial import Filial
@@ -91,7 +92,7 @@ app = FastAPI(
 # --- CONFIGURAÇÃO DE CORS (O PASSE LIVRE PARA O REACT) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

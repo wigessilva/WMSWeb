@@ -46,6 +46,12 @@ export default function Recebimentos() {
   const [buscandoProdutos, setBuscandoProdutos] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Estados para Autorização de Supervisor
+  const [modalAutorizacaoAberto, setModalAutorizacaoAberto] = useState(false);
+  const [autorizadorLogin, setAutorizadorLogin] = useState("");
+  const [autorizadorSenha, setAutorizadorSenha] = useState("");
+  const [carregandoAutorizacao, setCarregandoAutorizacao] = useState(false);
+
 
 
   const carregarRecebimentos = async (termo?: string) => {
@@ -191,6 +197,16 @@ export default function Recebimentos() {
 
   const handleLiberar = async () => {
     if (!recebimentoSelecionado) return;
+    
+    // Se não tem OC vinculada e não está previamente autorizado, chama autorização.
+    if (!recebimentoSelecionado.oc && !recebimentoSelecionado.autorizado_por) {
+      toast.error("O romaneio não tem OC. Libere com credenciais de supervisor.", { duration: 4000 });
+      setAutorizadorLogin("");
+      setAutorizadorSenha("");
+      setModalAutorizacaoAberto(true);
+      return;
+    }
+
     setCarregando(true);
     try {
       const rec = await recebimentoService.liberar(recebimentoSelecionado.id);
@@ -201,6 +217,28 @@ export default function Recebimentos() {
       toast.error(e.response?.data?.detail || "Erro ao liberar");
     } finally {
       setCarregando(false);
+    }
+  }
+
+  const handleAutorizarELiberar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recebimentoSelecionado) return;
+    if (!autorizadorLogin || !autorizadorSenha) {
+      toast.error("Preencha login e senha");
+      return;
+    }
+
+    setCarregandoAutorizacao(true);
+    try {
+      const rec = await recebimentoService.autorizar(recebimentoSelecionado.id, autorizadorLogin, autorizadorSenha);
+      setRecebimentoSelecionado(rec);
+      setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      toast.success("Autorizado com sucesso! Conferência liberada.");
+      setModalAutorizacaoAberto(false);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Credenciais inválidas ou sem permissão");
+    } finally {
+      setCarregandoAutorizacao(false);
     }
   }
 
@@ -626,6 +664,46 @@ export default function Recebimentos() {
             <Button variant="secondary" onClick={() => { setModalSKUAberto(false); setBuscaProduto(""); setProdutoSelecionadoId(null); setProdutosSugeridos([]); setSugestaoMensagem(null); }}>Cancelar</Button>
             <Button variant="primary" loading={carregando} onClick={salvarVinculoSKU}>Vincular</Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* MODAL DE AUTORIZAÇÃO */}
+      <Modal isOpen={modalAutorizacaoAberto}>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-red-600 flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Autorização Necessária
+            </h3>
+            <button onClick={() => setModalAutorizacaoAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
+          <form onSubmit={handleAutorizarELiberar}>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-4">Este romaneio não possui uma Ordem de Compra. Uma pessoa autorizada precisa validar a liberação.</p>
+              <div className="space-y-4">
+                <Input 
+                  label="Login do Responsável" 
+                  value={autorizadorLogin} 
+                  onChange={(e) => setAutorizadorLogin(e.target.value)} 
+                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                  <input
+                    type="password"
+                    value={autorizadorSenha}
+                    onChange={(e) => setAutorizadorSenha(e.target.value)}
+                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button type="button" variant="secondary" onClick={() => setModalAutorizacaoAberto(false)}>Cancelar</Button>
+              <Button type="submit" variant="primary" loading={carregandoAutorizacao}>Autorizar e Liberar</Button>
+            </div>
+          </form>
         </div>
       </Modal>
       {/* MODAL PAINEL DE CONTROLE */}

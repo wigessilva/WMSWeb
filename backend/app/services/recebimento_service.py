@@ -10,6 +10,8 @@ from ..schemas.recebimento import RecebimentoCriar
 from ..enums import StatusRecebimento, StatusRecebimentoItem
 from ..core.event_bus import event_bus
 from ..domain.recebimento_fsm import RecebimentoFSM, RecebimentoItemFSM
+from ..models.log_transicao import LogTransicao
+from ..models.usuario import Usuario
 
 
 class RecebimentoService:
@@ -39,8 +41,7 @@ class RecebimentoService:
         
         # Integração com FSM
         fsm_rec = RecebimentoFSM(db_receb)
-        if not oc_verificada:
-            fsm_rec.bloquear()
+        # Notas sem OC não são mais bloqueadas aqui, elas irão para liberação sujeitas à permissão
         db.add(db_receb)
         db.flush()  # Guarda temporariamente para gerar o ID (Romaneio)
 
@@ -114,7 +115,7 @@ class RecebimentoService:
 
         fsm = RecebimentoFSM(recebimento)
         
-        if not tem_pendencia and recebimento.oc:
+        if not tem_pendencia:
             try:
                 if recebimento.status == 'BLOQUEADO':
                     fsm.desbloquear()
@@ -130,17 +131,73 @@ class RecebimentoService:
         return recebimento
 
     # # # AÇÕES MANUAIS DE GESTÃO E AUDITORIA # # #
+    @staticmethod
+    def _registrar_log(db: Session, recebimento_id: int, acao: str, estado_anterior: str, estado_novo: str, usuario: str = "Sistema", observacao: str = None):
+        log = LogTransicao(
+            recebimento_id=recebimento_id,
+            acao=acao,
+            estado_anterior=estado_anterior,
+            estado_novo=estado_novo,
+            usuario=usuario,
+            observacao=observacao
+        )
+        db.add(log)
 
     @staticmethod
-    def liberar_romaneio(db: Session, recebimento_id: int):
+    def autorizar_recebimento(db: Session, recebimento_id: int, login_autorizador: str, senha_autorizador: str, ip_address: str = None):
+        import bcrypt
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+            
+        if recebimento.oc:
+            raise ValueError("Romaneio já possui OC, não necessita autorização especial.")
+
+        usuario = db.query(Usuario).filter(Usuario.login == login_autorizador).first()
+        if not usuario or not bcrypt.checkpw(senha_autorizador.encode('utf-8'), usuario.senha_hash.encode('utf-8')):
+            raise ValueError("Credenciais inválidas.")
+
+        if not usuario.perfil_relacao.permite_liberar_sem_oc:
+            raise ValueError(f"O usuário {usuario.nome} não possui permissão para aprovar romaneios sem OC.")
+
+        recebimento.autorizado_por = usuario.login
+        recebimento.autorizado_em = datetime.now()
+        
+        RecebimentoService._registrar_log(
+            db, recebimento.id, 
+            acao="Autorização de Liberação sem OC", 
+            estado_anterior=recebimento.status,
+            estado_novo=recebimento.status,
+            usuario=usuario.login,
+            observacao=f"Autorizado manualmente via modal de supervisor (Origem: {ip_address or 'Desconhecida'})"
+        )
+        db.commit()
+        
+        # Após autorizado com sucesso, pode liberar a conferência
+        return RecebimentoService.liberar_romaneio(db, recebimento.id, usuario_acao=usuario.login)
+
+    @staticmethod
+    def liberar_romaneio(db: Session, recebimento_id: int, usuario_acao: str = "Sistema"):
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
 
+        if not recebimento.oc and not recebimento.autorizado_por:
+            raise ValueError("Não é possível liberar um romaneio sem OC e sem autorização do supervisor.")
+
+        estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)
         try:
             fsm.liberar_conferencia()
             event_bus.publish('RECEBIMENTO_AGUARDANDO_CONFERENCIA', {'id': recebimento_id})
+            
+            RecebimentoService._registrar_log(
+                db, recebimento.id, 
+                acao="Liberar Conferência", 
+                estado_anterior=estado_anterior,
+                estado_novo=recebimento.status,
+                usuario=usuario_acao
+            )
         except Exception as e:
             raise ValueError("O romaneio possui pendências ou não está aguardando liberação.")
 

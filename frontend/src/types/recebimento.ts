@@ -49,6 +49,8 @@ export interface Recebimento {
   oc: string | null;
   fornecedor: string;
   conferente_id: number | null;
+  autorizado_por?: string | null;
+  autorizado_em?: string | null;
   data_inicio: string | null;
   conclusao: string | null;
   status: string;
