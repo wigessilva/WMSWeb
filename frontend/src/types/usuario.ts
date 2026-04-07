@@ -12,6 +12,7 @@ export interface Usuario {
   ativo: boolean;
   ultimo_login?: string;
   filiais?: FilialResumo[];
+  permissoes?: string[];  // Chaves das permissões do perfil
 }
 
 export interface UsuarioCriar {

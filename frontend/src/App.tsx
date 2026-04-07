@@ -40,6 +40,14 @@ export default function App() {
     setUsuarioLogado(null);
   }
 
+  // Verifica se o usuário tem alguma permissão que comece com os prefixos indicados
+  const temPermissao = (...prefixos: string[]) => {
+    if (!usuarioLogado?.permissoes) return false;
+    return prefixos.some(prefixo => 
+      usuarioLogado.permissoes!.some(p => p.startsWith(prefixo))
+    );
+  }
+
   // Estados de controle do Layout e Menus
   const [sidebarAberta, setSidebarAberta] = useState(true)
   const [menuConfigAberto, setMenuConfigAberto] = useState(false)
@@ -51,6 +59,7 @@ export default function App() {
   if (!usuarioLogado) {
     return <Login onLogin={handleLogin} />
   }
+
 
   return (
     <div className="flex min-h-screen font-sans text-gray-800">
@@ -73,7 +82,8 @@ export default function App() {
         {sidebarAberta ? (
           <nav className="flex-1 p-3 space-y-2 mt-2 overflow-y-auto overflow-x-hidden whitespace-nowrap">
 
-          {/* 1. CONFIGURAÇÕES */}
+          {/* 1. CONFIGURAÇÕES — visível se tem permissões de CONFIGURACOES, ACESSOS ou CADASTROS */}
+          {temPermissao('CONFIGURACOES.', 'ACESSOS.', 'CADASTROS.') && (
           <div>
             <button
               onClick={() => setMenuConfigAberto(!menuConfigAberto)}
@@ -84,21 +94,23 @@ export default function App() {
             </button>
             {menuConfigAberto && (
               <div className="pl-4 mt-1 space-y-1 ml-2">
-                <Link to="/usuarios" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Usuários</Link>
-                <Link to="/perfis" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Perfis</Link>
-                <Link to="/filiais" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Filiais</Link>
-                <Link to="/unidades-medida" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Unidades de Medida</Link>
-                <Link to="/vinculos-unidades" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Unidades</Link>
-                <Link to="/parametros" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Parâmetros Mestres</Link>
+                {temPermissao('ACESSOS.USUARIOS') && <Link to="/usuarios" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Usuários</Link>}
+                {temPermissao('ACESSOS.PERFIS') && <Link to="/perfis" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Perfis</Link>}
+                {temPermissao('CADASTROS.FILIAIS') && <Link to="/filiais" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Filiais</Link>}
+                {temPermissao('CADASTROS.UNIDADES_MEDIDA') && <Link to="/unidades-medida" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Unidades de Medida</Link>}
+                {temPermissao('CADASTROS.VINCULOS_UNIDADE') && <Link to="/vinculos-unidades" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Unidades</Link>}
+                {temPermissao('CONFIGURACOES.PARAMETROS') && <Link to="/parametros" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Parâmetros Mestres</Link>}
                 <Link to="/impressao" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Impressão</Link>
               </div>
             )}
           </div>
+          )}
 
-          {/* 2. HOME */}
+          {/* 2. HOME — sempre visível */}
           <Link to="/" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Home</Link>
 
-          {/* 3. GESTÃO DE PRODUTOS */}
+          {/* 3. GESTÃO DE PRODUTOS — visível se tem permissões de CADASTROS */}
+          {temPermissao('CADASTROS.PRODUTOS', 'CADASTROS.VINCULOS_FORNECEDOR') && (
           <div>
             <button
               onClick={() => setMenuProdutosAberto(!menuProdutosAberto)}
@@ -109,14 +121,16 @@ export default function App() {
             </button>
             {menuProdutosAberto && (
               <div className="pl-4 mt-1 space-y-1 ml-2">
-                <Link to="/produtos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Produtos</Link>
-                <Link to="/familias" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Famílias</Link>
-                <Link to="/vinculos-fornecedores" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Fornecedores</Link>
+                {temPermissao('CADASTROS.PRODUTOS') && <Link to="/produtos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Produtos</Link>}
+                {temPermissao('CADASTROS.PRODUTOS') && <Link to="/familias" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Famílias</Link>}
+                {temPermissao('CADASTROS.VINCULOS_FORNECEDOR') && <Link to="/vinculos-fornecedores" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Vínculos de Fornecedores</Link>}
               </div>
             )}
           </div>
+          )}
 
-          {/* 4. ESTOQUE */}
+          {/* 4. ESTOQUE — visível se tem permissões de ESTOQUE ou CADASTROS.ENDERECOS */}
+          {temPermissao('ESTOQUE.', 'CADASTROS.ENDERECOS') && (
           <div>
             <button
               onClick={() => setMenuEstoqueAberto(!menuEstoqueAberto)}
@@ -127,16 +141,19 @@ export default function App() {
             </button>
             {menuEstoqueAberto && (
               <div className="pl-4 mt-1 space-y-1 ml-2">
-                <Link to="/estoque/uas" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">UAs</Link>
-                <Link to="/estoque/enderecos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Endereços</Link>
+                {temPermissao('ESTOQUE.GERENCIAR_UAS') && <Link to="/estoque/uas" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">UAs</Link>}
+                {temPermissao('CADASTROS.ENDERECOS') && <Link to="/estoque/enderecos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Endereços</Link>}
               </div>
             )}
           </div>
+          )}
 
-          {/* 5. RECEBIMENTO */}
+          {/* 5. RECEBIMENTO — visível se tem permissões de RECEBIMENTO */}
+          {temPermissao('RECEBIMENTO.') && (
           <Link to="/recebimento" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Recebimento</Link>
+          )}
 
-          {/* 6. ATIVIDADES */}
+          {/* 6. ATIVIDADES — sempre visível */}
           <Link to="/atividades" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Atividades</Link>
 
 

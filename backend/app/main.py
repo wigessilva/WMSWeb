@@ -29,7 +29,8 @@ from app.api.v1.endpoints import (
     recebimento_router,
     configuracao_router,
     vinculo_unidade_router,
-    vinculo_fornecedor_router
+    vinculo_fornecedor_router,
+    permissao_router
 )
 
 # Importa os modelos para que o SQLAlchemy crie as relações corretamente
@@ -127,6 +128,7 @@ app.include_router(solicitacao_transferencia_router.router, prefix="/solicitacoe
 app.include_router(auth_router.router, prefix="/auth", tags=["Autenticação"])
 app.include_router(perfil_router.router, prefix="/perfis", tags=["Perfis de Acesso"])
 app.include_router(usuario_router.router, prefix="/usuarios", tags=["Utilizadores"])
+app.include_router(permissao_router.router, prefix="/permissoes", tags=["Permissões"])
 
 @app.get("/")
 def raiz():
