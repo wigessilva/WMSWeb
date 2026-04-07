@@ -1,8 +1,6 @@
 import './App.css'
 import { Routes, Route, Link } from 'react-router-dom'
-import { useState, useRef } from 'react'
-import { useEffect } from 'react'
-import { configuracaoService } from './services/configuracaoService'
+import { useState } from 'react'
 import Perfis from './pages/Perfis'
 import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
@@ -10,12 +8,14 @@ import Filiais from './pages/Filiais'
 import UnidadesMedida from './pages/UnidadesMedida'
 import VinculosUnidades from './pages/VinculosUnidades'
 import Recebimentos from './pages/Recebimentos'
+import Atividades from './pages/Atividades'
+import Conferencia from './pages/Conferencia'
 import Produtos from './pages/Produtos'
 import Familias from './pages/Familias'
 import VinculosFornecedores from './pages/VinculosFornecedores'
 import ParametrosMestres from './pages/ParametrosMestres'
 import type { Usuario } from './types/usuario'
-import { Toaster, toast } from 'react-hot-toast'
+import { Toaster } from 'react-hot-toast'
 import { Modal } from './components/Modal'
 
 export default function App() {
@@ -136,6 +136,10 @@ export default function App() {
           {/* 5. RECEBIMENTO */}
           <Link to="/recebimento" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Recebimento</Link>
 
+          {/* 6. ATIVIDADES */}
+          <Link to="/atividades" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Atividades</Link>
+
+
           </nav>
         ) : (
           <div className="flex-1"></div>
@@ -192,6 +196,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<h2 className="text-2xl font-bold text-wms-sidebar">Dashboard Central</h2>} />
             <Route path="/recebimento" element={<Recebimentos />} />
+            <Route path="/atividades" element={<Atividades />} />
+            <Route path="/conferencia/:id" element={<Conferencia />} />
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/familias" element={<Familias />} />

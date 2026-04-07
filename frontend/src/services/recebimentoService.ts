@@ -18,6 +18,16 @@ export const recebimentoService = {
     return response.data;
   },
 
+  listarAtividades: async (): Promise<Recebimento[]> => {
+    const response = await api.get('/atividades');
+    return response.data;
+  },
+
+  iniciarConferencia: async (id: number, conferenteId: string): Promise<Recebimento> => {
+    const response = await api.post(`/${id}/iniciar-conferencia?conferente_id=${encodeURIComponent(conferenteId)}`);
+    return response.data;
+  },
+
   importar: async (dados: any, cnpj: string): Promise<Recebimento> => {
     const response = await api.post(`/importar?cnpj_fornecedor=${cnpj}`, dados);
     return response.data;

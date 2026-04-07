@@ -10,6 +10,26 @@ from app.models.recebimento import Recebimento, RecebimentoItem
 
 router = APIRouter()
 
+# --- ROTAS DE ATIVIDADES OPERACIONAIS ---
+@router.get("/atividades", response_model=List[RecebimentoSchema])
+def listar_atividades_operacionais(db: Session = Depends(get_db)):
+    # Retorna notas em aguardando conferência ou em conferência
+    query = db.query(Recebimento).filter(
+        Recebimento.status.in_(["AGUARDANDO_CONFERENCIA", "EM_CONFERENCIA"])
+    )
+    return query.order_by(Recebimento.criado_em.desc()).all()
+
+@router.post("/{id}/iniciar-conferencia", response_model=RecebimentoSchema)
+def iniciar_conferencia(
+    id: int = Path(...), 
+    conferente_id: str = Query(..., description="ID ou Nome do conferente assumindo a tarefa"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.iniciar_conferencia(db=db, recebimento_id=id, conferente_id=conferente_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # --- NOVA ROTA DE LISTAGEM ---
 @router.get("/", response_model=List[RecebimentoSchema])
 def listar_recebimentos(termo: Optional[str] = Query(None, description="Termo de busca geral"), db: Session = Depends(get_db)):

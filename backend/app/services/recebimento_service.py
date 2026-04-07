@@ -149,6 +149,33 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
+    def iniciar_conferencia(db: Session, recebimento_id: int, conferente_id: str):
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+
+        # Se já estiver em conferência e for outra pessoa
+        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente_id and recebimento.conferente_id != conferente_id:
+            raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente_id}.")
+
+        # Se já é a própria pessoa voltando para a conferência
+        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente_id == conferente_id:
+            return recebimento
+
+        fsm = RecebimentoFSM(recebimento)
+        try:
+            fsm.iniciar_conferencia()
+            recebimento.data_inicio = datetime.now()
+            recebimento.conferente_id = conferente_id
+            event_bus.publish('RECEBIMENTO_EM_CONFERENCIA', {'id': recebimento_id, 'conferente': conferente_id})
+        except Exception as e:
+            raise ValueError("Não é possível iniciar a conferência deste romaneio (status inválido).")
+
+        db.commit()
+        db.refresh(recebimento)
+        return recebimento
+
+    @staticmethod
     def cancelar_liberacao_romaneio(db: Session, recebimento_id: int):
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
