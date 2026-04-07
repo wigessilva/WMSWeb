@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePermissao } from '../hooks/usePermissao'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
 import { parametrosMestresService } from '../services/parametrosMestresService'
@@ -8,6 +9,7 @@ import type { Produto } from '../types/produto'
 import type { Familia } from '../types/familia'
 
 export default function ParametrosMestres() {
+  const { temPermissao } = usePermissao()
   const [idParametros, setIdParametros] = useState<number | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [salvando, setSalvando] = useState(false)
@@ -287,13 +289,15 @@ export default function ParametrosMestres() {
     <div className="space-y-6 max-w-5xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Parâmetros Mestres</h1>
-        <button
-          onClick={handleSalvar}
-          disabled={salvando}
-          className="bg-[#1a63b6] text-white px-6 py-2 rounded hover:bg-blue-800 transition-colors font-medium shadow-sm disabled:opacity-50"
-        >
-          {salvando ? "Salvando..." : "Salvar"}
-        </button>
+        {temPermissao('CONFIGURACOES.PARAMETROS') && (
+          <button
+            onClick={handleSalvar}
+            disabled={salvando}
+            className="bg-[#1a63b6] text-white px-6 py-2 rounded hover:bg-blue-800 transition-colors font-medium shadow-sm disabled:opacity-50"
+          >
+            {salvando ? "Salvando..." : "Salvar"}
+          </button>
+        )}
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
@@ -395,17 +399,19 @@ export default function ParametrosMestres() {
               Ver Exceções
             </button>
 
-            <label className="flex items-center space-x-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={resetarExcecoesConfirm}
-                onChange={(e) => setResetarExcecoesConfirm(e.target.checked)}
-                className="rounded border-gray-300 text-red-600 focus:ring-red-500 w-4 h-4"
-              />
-              <span className="text-sm text-gray-600 group-hover:text-red-600 transition-colors">
-                Resetar todas as exceções ao salvar
-              </span>
-            </label>
+            {temPermissao('CONFIGURACOES.PARAMETROS') && (
+              <label className="flex items-center space-x-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={resetarExcecoesConfirm}
+                  onChange={(e) => setResetarExcecoesConfirm(e.target.checked)}
+                  className="rounded border-gray-300 text-red-600 focus:ring-red-500 w-4 h-4"
+                />
+                <span className="text-sm text-gray-600 group-hover:text-red-600 transition-colors">
+                  Resetar todas as exceções ao salvar
+                </span>
+              </label>
+            )}
           </div>
         </div>
       </div>

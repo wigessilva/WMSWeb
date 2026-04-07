@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { ActionToolbar } from '../components/ActionToolbar';
 import toast from 'react-hot-toast';
 import { vinculoFornecedorService } from '../services/vinculoFornecedorService';
 import type { VinculoFornecedor } from '../services/vinculoFornecedorService';
 
 export default function VinculosFornecedores() {
+  const { temPermissao } = usePermissao();
   const [vinculos, setVinculos] = useState<VinculoFornecedor[]>([]);
   const [termoBusca, setTermoBusca] = useState('');
   const [vinculoSelecionado, setVinculoSelecionado] = useState<VinculoFornecedor | null>(null);
@@ -47,17 +49,19 @@ export default function VinculosFornecedores() {
             carregarVinculos(termo);
           }}
           acoes={[
-            {
-              label: "Excluir",
-              isDanger: true,
-              onClick: () => {
-                if (!vinculoSelecionado) {
-                  toast.error("Selecione um vínculo visualizado na tabela.");
-                  return;
+            ...(temPermissao('CADASTROS.VINCULOS_FORNECEDOR') ? [
+              {
+                label: "Excluir",
+                isDanger: true,
+                onClick: () => {
+                  if (!vinculoSelecionado) {
+                    toast.error("Selecione um vínculo visualizado na tabela.");
+                    return;
+                  }
+                  excluirVinculo(vinculoSelecionado.id);
                 }
-                excluirVinculo(vinculoSelecionado.id);
               }
-            }
+            ] : [])
           ]}
         />
 

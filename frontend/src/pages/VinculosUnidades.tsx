@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -10,6 +11,7 @@ import type { UnidadeMedida } from '../types/unidadeMedida';
 import toast from 'react-hot-toast';
 
 export default function VinculosUnidades() {
+  const { temPermissao } = usePermissao();
   const [vinculos, setVinculos] = useState<VinculoUnidade[]>([]);
   const [unidades, setUnidades] = useState<UnidadeMedida[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -132,19 +134,21 @@ export default function VinculosUnidades() {
           termoBusca={termoBusca}
           onBuscaChange={setTermoBusca}
           acoes={[
-            { label: "Adicionar", onClick: abrirModalCriar },
-            { label: "Editar", onClick: abrirModalEditar },
-            {
-              label: "Excluir",
-              isDanger: true,
-              onClick: () => {
-                if (!vinculoSelecionado) {
-                  toast.error("Selecione um vínculo");
-                  return;
+            ...(temPermissao('CADASTROS.VINCULOS_UNIDADE') ? [
+              { label: "Adicionar", onClick: abrirModalCriar },
+              { label: "Editar", onClick: abrirModalEditar },
+              {
+                label: "Excluir",
+                isDanger: true,
+                onClick: () => {
+                  if (!vinculoSelecionado) {
+                    toast.error("Selecione um vínculo");
+                    return;
+                  }
+                  excluirVinculo(vinculoSelecionado.id, vinculoSelecionado.unidade_externa, getSiglaUnidade(vinculoSelecionado.unidade_medida_id));
                 }
-                excluirVinculo(vinculoSelecionado.id, vinculoSelecionado.unidade_externa, getSiglaUnidade(vinculoSelecionado.unidade_medida_id));
               }
-            }
+            ] : [])
           ]}
         />
 

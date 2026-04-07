@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -10,6 +11,7 @@ import type { Perfil } from '../types/perfil';
 import toast from 'react-hot-toast';
 
 export default function Usuarios() {
+  const { temPermissao } = usePermissao();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -169,23 +171,25 @@ export default function Usuarios() {
           termoBusca={termoBusca}
           onBuscaChange={setTermoBusca}
           acoes={[
-            { label: "Adicionar", onClick: abrirModalCriar },
-            { label: "Editar", onClick: abrirModalEditar },
-            {
-              label: "Inativar",
-              isDanger: true,
-              onClick: () => {
-                if (!usuarioSelecionado) {
-                  toast.error("Selecione um usuário");
-                  return;
+            ...(temPermissao('ACESSOS.USUARIOS') ? [
+              { label: "Adicionar", onClick: abrirModalCriar },
+              { label: "Editar", onClick: abrirModalEditar },
+              {
+                label: "Inativar",
+                isDanger: true,
+                onClick: () => {
+                  if (!usuarioSelecionado) {
+                    toast.error("Selecione um usuário");
+                    return;
+                  }
+                  if (!usuarioSelecionado.ativo) {
+                    toast.error("Este usuário já se encontra inativo");
+                    return;
+                  }
+                  inativarUsuario(usuarioSelecionado.id, usuarioSelecionado.nome);
                 }
-                if (!usuarioSelecionado.ativo) {
-                  toast.error("Este usuário já se encontra inativo");
-                  return;
-                }
-                inativarUsuario(usuarioSelecionado.id, usuarioSelecionado.nome);
               }
-            }
+            ] : [])
           ]}
         />
 

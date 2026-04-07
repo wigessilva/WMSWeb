@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { Button } from '../components/Button';
 import { unidadeMedidaService } from '../services/unidadeMedidaService';
 import type { UnidadeMedida } from '../types/unidadeMedida';
 import toast from 'react-hot-toast';
 
 export default function UnidadesMedida() {
+  const { temPermissao } = usePermissao();
   const [unidades, setUnidades] = useState<UnidadeMedida[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [termoBusca, setTermoBusca] = useState('');
@@ -78,14 +80,16 @@ export default function UnidadesMedida() {
           </div>
 
           <div>
-            <Button
-              variant="primary"
-              onClick={sincronizarComERP}
-              loading={carregando}
-              loadingText="Sincronizando..."
-            >
-              ↻ Sincronizar
-            </Button>
+            {temPermissao('CADASTROS.UNIDADES_MEDIDA') && (
+              <Button
+                variant="primary"
+                onClick={sincronizarComERP}
+                loading={carregando}
+                loadingText="Sincronizando..."
+              >
+                ↻ Sincronizar
+              </Button>
+            )}
           </div>
         </div>
 
@@ -118,6 +122,7 @@ export default function UnidadesMedida() {
                           className="sr-only peer"
                           checked={u.decimais}
                           onChange={() => alternarDecimais(u.id, u.decimais)}
+                          disabled={!temPermissao('CADASTROS.UNIDADES_MEDIDA')}
                         />
                         <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[6px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1a63b6]"></div>
                       </label>

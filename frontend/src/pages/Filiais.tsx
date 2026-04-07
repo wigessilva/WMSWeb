@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -8,6 +9,7 @@ import type { Filial } from '../types/filial';
 import toast from 'react-hot-toast';
 
 export default function Filiais() {
+  const { temPermissao } = usePermissao();
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
@@ -125,19 +127,21 @@ export default function Filiais() {
           termoBusca={termoBusca}
           onBuscaChange={setTermoBusca}
           acoes={[
-            { label: "Adicionar", onClick: abrirModalCriar },
-            { label: "Editar", onClick: abrirModalEditar },
-            {
-              label: "Excluir",
-              isDanger: true,
-              onClick: () => {
-                if (!filialSelecionada) {
-                  toast.error("Selecione uma filial");
-                  return;
+            ...(temPermissao('CADASTROS.FILIAIS') ? [
+              { label: "Adicionar", onClick: abrirModalCriar },
+              { label: "Editar", onClick: abrirModalEditar },
+              {
+                label: "Excluir",
+                isDanger: true,
+                onClick: () => {
+                  if (!filialSelecionada) {
+                    toast.error("Selecione uma filial");
+                    return;
+                  }
+                  excluirFilial(filialSelecionada.id, filialSelecionada.nome);
                 }
-                excluirFilial(filialSelecionada.id, filialSelecionada.nome);
               }
-            }
+            ] : [])
           ]}
         />
 

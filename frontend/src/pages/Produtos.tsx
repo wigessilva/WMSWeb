@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePermissao } from '../hooks/usePermissao'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
@@ -33,6 +34,7 @@ const validarEAN = (ean: string) => {
 };
 
 export default function Produtos() {
+  const { temPermissao } = usePermissao()
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null)
   const [carregando, setCarregando] = useState(false)
@@ -427,16 +429,18 @@ export default function Produtos() {
             carregarProdutos(termo);
           }}
           acoes={[
-            {
-              label: "Editar",
-              onClick: () => {
-                if (!produtoSelecionado) {
-                  toast.error("Selecione um produto na tabela.");
-                  return;
+            ...(temPermissao('CADASTROS.PRODUTOS') ? [
+              {
+                label: "Editar",
+                onClick: () => {
+                  if (!produtoSelecionado) {
+                    toast.error("Selecione um produto na tabela.");
+                    return;
+                  }
+                  abrirModalEditar(produtoSelecionado);
                 }
-                abrirModalEditar(produtoSelecionado);
               }
-            },
+            ] : []),
             {
               label: "Sincronizar",
               onClick: sincronizarEAtualizar

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { usePermissao } from '../hooks/usePermissao'
 import { recebimentoService } from '../services/recebimentoService'
 import { configuracaoService } from '../services/configuracaoService'
 import { unidadeMedidaService } from '../services/unidadeMedidaService'
@@ -13,6 +14,7 @@ import type { UnidadeMedida } from '../types/unidadeMedida'
 import { toast } from 'react-hot-toast'
 
 export default function Recebimentos() {
+  const { temPermissao } = usePermissao()
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([])
   const [recebimentoSelecionado, setRecebimentoSelecionado] = useState<Recebimento | null>(null)
   const [carregando, setCarregando] = useState(false)
@@ -296,6 +298,10 @@ export default function Recebimentos() {
   const precisaVincularUnidade = itemSelecionadoNaTabela && !temDireto && !temVinculo;
   const precisaVincularSKU = itemSelecionadoNaTabela && !itemSelecionadoNaTabela.sku;
 
+  // Verifica se o romaneio já foi finalizado (pode mostrar quantidades)
+  const romaneioFinalizado = recebimentoSelecionado && ['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status);
+  const podeVerQuantidades = temPermissao('RECEBIMENTO.VER_QUANTIDADES') || romaneioFinalizado;
+
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
@@ -307,18 +313,22 @@ export default function Recebimentos() {
           }}
           acoes={[
             { label: "Atualizar", onClick: sincronizarEAtualizar },
-            { label: "Configurar Pasta XML", onClick: () => setModalConfigAberto(true) },
-            {
-              label: "Editar OC",
-              onClick: () => {
-                if (!recebimentoSelecionado) {
-                  toast.error("Selecione um romaneio na tabela para editar a OC.");
-                  return;
+            ...(temPermissao('CONFIGURACOES.INTEGRACAO') ? [
+              { label: "Configurar Pasta XML", onClick: () => setModalConfigAberto(true) }
+            ] : []),
+            ...(temPermissao('RECEBIMENTO.EDITAR_OC') ? [
+              {
+                label: "Editar OC",
+                onClick: () => {
+                  if (!recebimentoSelecionado) {
+                    toast.error("Selecione um romaneio na tabela para editar a OC.");
+                    return;
+                  }
+                  setOcDigitada(recebimentoSelecionado.oc || "");
+                  setModalOCAberto(true);
                 }
-                setOcDigitada(recebimentoSelecionado.oc || "");
-                setModalOCAberto(true);
               }
-            },
+            ] : []),
             ...(precisaVincularUnidade ? [
               {
                 label: "Vincular Unidade",
@@ -328,7 +338,7 @@ export default function Recebimentos() {
                 }
               }
             ] : []),
-            ...(precisaVincularSKU ? [
+            ...(precisaVincularSKU && temPermissao('RECEBIMENTO.VINCULAR_SKU') ? [
               {
                 label: "Vincular SKU",
                 onClick: () => {
@@ -359,20 +369,20 @@ export default function Recebimentos() {
                 }
               }
             ] : []),
-            ...(itemSelecionadoNaTabela ? [
+            ...(itemSelecionadoNaTabela && temPermissao('RECEBIMENTO.ALTERAR_DESTINO') ? [
               { label: "Alterar Destino", onClick: () => { } }
             ] : []),
             // Ações do Recebimento (FSM)
-            ...(recebimentoSelecionado && recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' ? [
+            ...(recebimentoSelecionado && recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' && temPermissao('RECEBIMENTO.LIBERAR') ? [
               { label: "Liberar Conferência", onClick: handleLiberar, className: "text-green-600 font-bold" }
             ] : []),
-            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') ? [
+            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') && temPermissao('RECEBIMENTO.CONFERIR') ? [
               { label: "Cancelar Conferência", onClick: handleCancelarLiberacao }
             ] : []),
-            ...(recebimentoSelecionado && ['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'].includes(recebimentoSelecionado.status) && recebimentoSelecionado.itens.every(i => i.status === 'CONFERIDO' || i.status === 'DIVERGENTE') ? [
-              { label: "Concluir Doca", onClick: handleConcluir, className: "text-blue-600 font-bold" }
+            ...(recebimentoSelecionado && ['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'].includes(recebimentoSelecionado.status) && recebimentoSelecionado.itens.every(i => i.status === 'CONFERIDO' || i.status === 'DIVERGENTE') && temPermissao('RECEBIMENTO.FINALIZAR') ? [
+              { label: "Concluir", onClick: handleConcluir, className: "text-blue-600 font-bold" }
             ] : []),
-            ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status) ? [
+            ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status) && temPermissao('RECEBIMENTO.REJEITAR') ? [
               { label: "Rejeitar Recebimento", onClick: handleRejeitar, className: "text-red-600" }
             ] : [])
           ]}
@@ -479,9 +489,9 @@ export default function Recebimentos() {
                   >
                     <td className="px-3 py-1.5 font-medium text-blue-800">{item.sku || "N/A"}</td>
                     <td className="px-3 py-1.5">{item.descricao}</td>
-                    <td className="px-3 py-1.5 font-medium text-center">{item.qtd_nota}</td>
-                    <td className="px-3 py-1.5 font-bold text-blue-600 text-center">{item.qtd_recebida || 0}</td>
-                    <td className="px-3 py-1.5 text-center">{item.und}</td>
+                    <td className="px-3 py-1.5 font-medium text-center">{podeVerQuantidades || item.status === 'CONFERIDO' || item.status === 'DIVERGENTE' ? item.qtd_nota : '***'}</td>
+                    <td className="px-3 py-1.5 font-bold text-blue-600 text-center">{podeVerQuantidades || item.status === 'CONFERIDO' || item.status === 'DIVERGENTE' ? (item.qtd_recebida || 0) : '***'}</td>
+                    <td className="px-3 py-1.5 text-center">{podeVerQuantidades || item.status === 'CONFERIDO' || item.status === 'DIVERGENTE' ? item.und : '***'}</td>
                     <td className="px-3 py-1.5">{item.lote || "-"}</td>
                     <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>

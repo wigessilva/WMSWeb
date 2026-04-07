@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePermissao } from '../hooks/usePermissao'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
@@ -9,6 +10,7 @@ import { parametrosMestresService } from '../services/parametrosMestresService'
 import type { Familia } from '../types/familia'
 
 export default function Familias() {
+  const { temPermissao } = usePermissao()
   const [familias, setFamilias] = useState<Familia[]>([])
   const [familiaSelecionada, setFamiliaSelecionada] = useState<Familia | null>(null)
   const [carregando, setCarregando] = useState(false)
@@ -259,25 +261,27 @@ export default function Familias() {
             carregarFamilias(termo);
           }}
           acoes={[
-            {
-              label: "Criar",
-              onClick: () => {
-                resetarFormulario();
-                setModalCriarAberto(true);
-              }
-            },
-            { label: "Editar", onClick: abrirModalEditar },
-            {
-              label: "Excluir",
-              isDanger: true,
-              onClick: () => {
-                if (!familiaSelecionada) {
-                  toast.error("Selecione uma família.");
-                  return;
+            ...(temPermissao('CADASTROS.PRODUTOS') ? [
+              {
+                label: "Criar",
+                onClick: () => {
+                  resetarFormulario();
+                  setModalCriarAberto(true);
                 }
-                handleExcluir();
+              },
+              { label: "Editar", onClick: abrirModalEditar },
+              {
+                label: "Excluir",
+                isDanger: true,
+                onClick: () => {
+                  if (!familiaSelecionada) {
+                    toast.error("Selecione uma família.");
+                    return;
+                  }
+                  handleExcluir();
+                }
               }
-            }
+            ] : [])
           ]}
         />
 

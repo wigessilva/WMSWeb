@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePermissao } from '../hooks/usePermissao';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -10,6 +11,7 @@ import type { PermissaoInfo } from '../services/permissaoService';
 import toast from 'react-hot-toast';
 
 export default function Perfis() {
+  const { temPermissao } = usePermissao();
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [nome, setNome] = useState('');
@@ -148,19 +150,21 @@ export default function Perfis() {
           termoBusca={termoBusca}
           onBuscaChange={setTermoBusca}
           acoes={[
-            { label: "Adicionar", onClick: abrirModalCriar },
-            { label: "Editar", onClick: abrirModalEditar },
-            {
-              label: "Excluir",
-              isDanger: true,
-              onClick: () => {
-                if (!perfilSelecionado) {
-                  toast.error("Selecione um perfil");
-                  return;
+            ...(temPermissao('ACESSOS.PERFIS') ? [
+              { label: "Adicionar", onClick: abrirModalCriar },
+              { label: "Editar", onClick: abrirModalEditar },
+              {
+                label: "Excluir",
+                isDanger: true,
+                onClick: () => {
+                  if (!perfilSelecionado) {
+                    toast.error("Selecione um perfil");
+                    return;
+                  }
+                  excluirPerfil(perfilSelecionado.id, perfilSelecionado.nome);
                 }
-                excluirPerfil(perfilSelecionado.id, perfilSelecionado.nome);
               }
-            }
+            ] : [])
           ]}
         />
 
