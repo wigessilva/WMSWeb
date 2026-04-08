@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Perfis from './pages/Perfis'
 import Usuarios from './pages/Usuarios'
@@ -19,6 +19,8 @@ import { Toaster } from 'react-hot-toast'
 import { Modal } from './components/Modal'
 
 export default function App() {
+  const navigate = useNavigate()
+
   // Tenta recuperar o usuário da sessão caso ele faça F5 (recarregar a página)
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(() => {
     const user = sessionStorage.getItem('wms_sessao_usuario');
@@ -33,11 +35,17 @@ export default function App() {
     if (usuario.filiais && usuario.filiais.length > 0 && !localStorage.getItem('wms_api_url')) {
       localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8008');
     }
+
+    // Redireciona para a Home ao logar
+    navigate('/');
   }
 
   const handleLogout = () => {
     sessionStorage.removeItem('wms_sessao_usuario');
     setUsuarioLogado(null);
+
+    // Reseta a rota para a Home ao deslogar
+    navigate('/');
   }
 
   // Verifica se o usuário tem alguma permissão que comece com os prefixos indicados

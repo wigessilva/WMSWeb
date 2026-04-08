@@ -16,6 +16,7 @@ class PerfilBase(BaseModel):
 
 class PerfilCriar(PerfilBase):
     permissoes: List[str] = [] # Lista de chaves das permissões
+    editor_permissoes: Optional[List[str]] = None  # Permissões do editor (para validação de delegação)
 
 class PerfilSchema(PerfilBase):
     id: int

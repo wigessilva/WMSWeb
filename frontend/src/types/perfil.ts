@@ -15,4 +15,5 @@ export interface PerfilCriar {
   nome: string;
   descricao?: string;
   permissoes: string[]; // Lista de chaves (strings)
+  editor_permissoes?: string[]; // Permissões do editor para validação de delegação
 }

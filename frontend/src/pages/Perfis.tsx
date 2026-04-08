@@ -30,6 +30,15 @@ export default function Perfis() {
 
   const isAdmin = nome.toUpperCase() === 'ADMINISTRADOR';
 
+  // Permissões do editor (usuário logado)
+  const permissoesDoEditor: string[] = (() => {
+    const sessao = sessionStorage.getItem('wms_sessao_usuario');
+    return sessao ? (JSON.parse(sessao).permissoes || []) : [];
+  })();
+
+  // Verifica se o editor pode delegar uma permissão específica
+  const podeDelegarPermissao = (chave: string) => permissoesDoEditor.includes(chave);
+
   const perfisFiltrados = useMemo(() => {
     if (!termoBusca) return perfis;
     const termo = termoBusca.toLowerCase();
@@ -81,7 +90,8 @@ export default function Perfis() {
   };
 
   const togglePermissao = (chave: string) => {
-    if (isAdmin) return; // Admin não pode ser editado
+    if (isAdmin) return;
+    if (!podeDelegarPermissao(chave)) return; // Delegação: só pode mexer no que tem
     setPermissoesSelecionadas(prev => {
       const novo = new Set(prev);
       if (novo.has(chave)) {
@@ -101,13 +111,27 @@ export default function Perfis() {
     setErroNome('');
     setCarregando(true);
     try {
-      const permissoes = Array.from(permissoesSelecionadas);
+      // Ao salvar, inclui tanto as permissões selecionáveis quanto as não-delegáveis
+      // que o perfil já possuía (para não perdê-las)
+      const permissoesParaSalvar = Array.from(permissoesSelecionadas);
+
+      // Em modo edição, preserva as permissões que o editor não pode delegar
+      if (modoEdicao && perfilSelecionado) {
+        const permissoesOriginais = perfilSelecionado.permissoes?.map(p => p.chave) || [];
+        for (const chave of permissoesOriginais) {
+          if (!podeDelegarPermissao(chave) && !permissoesParaSalvar.includes(chave)) {
+            permissoesParaSalvar.push(chave);
+          }
+        }
+      }
+
+      const permissoes = permissoesParaSalvar;
 
       if (modoEdicao && perfilSelecionado) {
-        await perfilService.atualizar(perfilSelecionado.id, { nome, descricao, permissoes });
+        await perfilService.atualizar(perfilSelecionado.id, { nome, descricao, permissoes, editor_permissoes: permissoesDoEditor });
         toast.success("Perfil atualizado com sucesso!");
       } else {
-        await perfilService.criar({ nome, descricao, permissoes });
+        await perfilService.criar({ nome, descricao, permissoes, editor_permissoes: permissoesDoEditor });
         toast.success("Perfil criado com sucesso!");
       }
       setModalAberto(false);
@@ -263,12 +287,16 @@ export default function Perfis() {
                         className="bg-gray-50 px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => {
                           if (isAdmin && modoEdicao) return;
-                          // Toggle all permissions in this module
+                          // Delegação: só faz toggle nas permissões que o editor pode delegar
+                          const permissoesDelegaveis = permissoes.filter(p => podeDelegarPermissao(p.chave));
+                          if (permissoesDelegaveis.length === 0) return;
+
                           const novas = new Set(permissoesSelecionadas);
-                          if (todasMarcadas) {
-                            permissoes.forEach(p => novas.delete(p.chave));
+                          const todasDelegaveisMarcadas = permissoesDelegaveis.every(p => novas.has(p.chave));
+                          if (todasDelegaveisMarcadas) {
+                            permissoesDelegaveis.forEach(p => novas.delete(p.chave));
                           } else {
-                            permissoes.forEach(p => novas.add(p.chave));
+                            permissoesDelegaveis.forEach(p => novas.add(p.chave));
                           }
                           setPermissoesSelecionadas(novas);
                         }}
@@ -284,21 +312,30 @@ export default function Perfis() {
 
                       {/* Checkboxes */}
                       <div className="px-4 py-2 space-y-1.5">
-                        {permissoes.map(perm => (
-                          <label
-                            key={perm.chave}
-                            className={`flex items-start space-x-2.5 py-1 ${isAdmin && modoEdicao ? 'opacity-70' : 'cursor-pointer'}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isAdmin && modoEdicao ? true : permissoesSelecionadas.has(perm.chave)}
-                              onChange={() => togglePermissao(perm.chave)}
-                              disabled={isAdmin && modoEdicao}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5 flex-shrink-0"
-                            />
-                            <span className="text-sm text-gray-600 leading-tight">{perm.descricao}</span>
-                          </label>
-                        ))}
+                        {permissoes.map(perm => {
+                          const podeDelegarEsta = podeDelegarPermissao(perm.chave);
+                          const bloqueadoAdmin = isAdmin && modoEdicao;
+                          const desabilitado = bloqueadoAdmin || !podeDelegarEsta;
+
+                          return (
+                            <label
+                              key={perm.chave}
+                              className={`flex items-start space-x-2.5 py-1 ${desabilitado ? 'opacity-60' : 'cursor-pointer'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={bloqueadoAdmin ? true : permissoesSelecionadas.has(perm.chave)}
+                                onChange={() => togglePermissao(perm.chave)}
+                                disabled={desabilitado}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5 flex-shrink-0"
+                              />
+                              <span className="text-sm text-gray-600 leading-tight">
+                                {perm.descricao}
+                                {!podeDelegarEsta && !bloqueadoAdmin && ' 🔒'}
+                              </span>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   );
