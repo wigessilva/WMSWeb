@@ -161,8 +161,10 @@ export default function App() {
           <Link to="/recebimento" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Recebimento</Link>
           )}
 
-          {/* 6. ATIVIDADES — sempre visível */}
+          {/* 6. ATIVIDADES — visível se tem permissão de conferência */}
+          {temPermissao('RECEBIMENTO.CONFERIR') && (
           <Link to="/atividades" className="block p-2.5 rounded hover:bg-[#1d6197] transition-colors text-sm font-medium">Atividades</Link>
+          )}
 
 
           </nav>
