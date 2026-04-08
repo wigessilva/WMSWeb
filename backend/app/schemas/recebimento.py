@@ -26,9 +26,25 @@ class RecebimentoItemBase(BaseModel):
 class RecebimentoItemCriar(RecebimentoItemBase):
     pass
 
+from typing import Any
+from pydantic import model_validator
+
 class RecebimentoItemSchema(RecebimentoItemBase):
     id: int
     recebimento_id: int
+    sku: Optional[str] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def convert_orm(cls, data: Any) -> Any:
+        if not isinstance(data, dict) and hasattr(data, "__table__"):
+            produto = getattr(data, 'produto', None)
+            sku_real = produto.sku if produto else None
+            # Copia os campos do ORM, filtrando nomes internos do SQLAlchemy
+            ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+            ret['sku'] = sku_real
+            return ret
+        return data
 
     class Config:
         from_attributes = True

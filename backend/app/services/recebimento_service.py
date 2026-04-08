@@ -55,7 +55,7 @@ class RecebimentoService:
 
         # 2. Insere os itens e tenta fazer a tradução (De/Para) automaticamente
         for item_dados in dados.itens:
-            # Tenta descobrir o SKU interno
+            # Tenta descobrir o SKU interno (estritamente via CodigoFornecedor e Cnpj)
             vinculo_prod = db.query(VinculoProdutoFornecedor).filter(
                 VinculoProdutoFornecedor.cnpj_fornecedor == cnpj_fornecedor,
                 VinculoProdutoFornecedor.codigo_fornecedor == item_dados.codigo_fornecedor
@@ -77,12 +77,20 @@ class RecebimentoService:
             # Define o status do item
             sku_encontrado = vinculo_prod.produto_id if vinculo_prod else None
             unidade_resolvida = unidade_interna_direta or vinculo_und
-            status_item = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value if (
+            status_item = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value if (
                     sku_encontrado and unidade_resolvida) else StatusRecebimentoItem.PENDENTE_VINCULO.value
+
+            # Se achou o SKU, usa a descrição do cadastro de produtos para manter consistência
+            descricao_final = item_dados.descricao
+            if sku_encontrado:
+                from app.models.produto import Produto
+                prod = db.query(Produto).filter(Produto.id == sku_encontrado).first()
+                if prod:
+                    descricao_final = prod.descricao
 
             novo_item = RecebimentoItem(
                 recebimento_id=db_receb.id,
-                descricao=item_dados.descricao,
+                descricao=descricao_final,
                 qtd_nota=item_dados.qtd_nota,
                 valor_unitario=item_dados.valor_unitario,
                 und=item_dados.und,
@@ -123,8 +131,18 @@ class RecebimentoService:
                 event_bus.publish('RECEBIMENTO_AGUARDANDO_LIBERACAO', {'id': recebimento_id})
             except Exception as e:
                 pass
-        elif tem_pendencia and recebimento.status != 'BLOQUEADO':
-            recebimento.status = StatusRecebimento.IMPORTADO.value
+        elif tem_pendencia:
+            # Transição para PENDENTE via FSM
+            try:
+                if recebimento.status == StatusRecebimento.IMPORTADO.value:
+                    fsm.marcar_pendente()
+                elif recebimento.status == StatusRecebimento.AGUARDANDO_LIBERACAO.value:
+                    fsm.regredir_para_pendente()
+                elif recebimento.status == StatusRecebimento.BLOQUEADO.value:
+                    pass  # Mantém bloqueado
+            except:
+                # Fallback direto se a transição FSM falhar
+                recebimento.status = StatusRecebimento.PENDENTE.value
 
         db.commit()
         db.refresh(recebimento)
@@ -410,16 +428,23 @@ class RecebimentoService:
         historico = db.query(HistoricoXML).filter(HistoricoXML.nfe == rec.nfe).first()
         if not historico:
             raise ValueError("Histórico da NFe não encontrado para extrair o CNPJ do emissor.")
+        
         cnpj = historico.cnpj_emitente
 
-        codigo_do_forn = item.codigo_fornecedor or item.descricao
+        # O vínculo é baseado estritamente no código do fornecedor enviado na NF
+        codigo_do_forn = item.codigo_fornecedor
+        
+        if not codigo_do_forn:
+            # Se não há código, não podemos criar um vínculo persistente na tabela VinculosProdutoFornecedor
+            # Mas ainda podemos atualizar o SKU deste item específico e de outros itens idênticos na mesma situação
+            existente = None
+        else:
+            existente = db.query(VinculoProdutoFornecedor).filter(
+                VinculoProdutoFornecedor.cnpj_fornecedor == cnpj,
+                VinculoProdutoFornecedor.codigo_fornecedor == codigo_do_forn
+            ).first()
 
-        existente = db.query(VinculoProdutoFornecedor).filter(
-            VinculoProdutoFornecedor.cnpj_fornecedor == cnpj,
-            VinculoProdutoFornecedor.codigo_fornecedor == codigo_do_forn
-        ).first()
-
-        if not existente:
+        if codigo_do_forn and not existente:
             novo_vinculo = VinculoProdutoFornecedor(
                 cnpj_fornecedor=cnpj,
                 codigo_fornecedor=codigo_do_forn,
@@ -428,34 +453,62 @@ class RecebimentoService:
             )
             db.add(novo_vinculo)
             db.flush()
-        else:
+        elif existente:
             existente.produto_id = produto_id
             if criado_por:
                 existente.criado_por = criado_por
 
-        # Atualiza os itens do mesmo produto nesta nota
-        itens_pendentes = db.query(RecebimentoItem).filter(
-            RecebimentoItem.recebimento_id == recebimento_id,
-            RecebimentoItem.codigo_fornecedor == item.codigo_fornecedor,
-            RecebimentoItem.status == StatusRecebimentoItem.PENDENTE_VINCULO.value
-        ).all()
+        # Encontrar todas as NFes do fornecedor com esse CNPJ para atualizar outras notas pendentes
+        historicos_forn = db.query(HistoricoXML.nfe).filter(HistoricoXML.cnpj_emitente == cnpj).all()
+        nfes_forn = [h[0] for h in historicos_forn]
+        
+        recebimentos_ids = []
+        if nfes_forn:
+            recs = db.query(Recebimento.id).filter(
+                Recebimento.nfe.in_(nfes_forn),
+                Recebimento.status.in_([
+                    StatusRecebimento.IMPORTADO.value, 
+                    StatusRecebimento.BLOQUEADO.value, 
+                    StatusRecebimento.AGUARDANDO_LIBERACAO.value
+                ])
+            ).all()
+            recebimentos_ids = [r[0] for r in recs]
 
-        for it_pend in itens_pendentes:
-            it_pend.sku = produto_id
-            unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == it_pend.und).first()
-            vinculo_und = None
-            if not unidade_interna_direta:
-                vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == it_pend.und).first()
-            unidade_resolvida = unidade_interna_direta or vinculo_und
-            if unidade_resolvida:
-                fsm_item = RecebimentoItemFSM(it_pend)
-                try:
-                    fsm_item.vincular_sku()
-                except:
-                    pass
+        # Puxa o objeto produto para buscar a descrição real
+        from app.models.produto import Produto
+        prod = db.query(Produto).filter(Produto.id == produto_id).first()
+        descricao_prod = prod.descricao if prod else "Descrição não encontrada"
+
+        recebimentos_afetados = set()
+        
+        # Atualiza os itens do mesmo produto nesta nota e em outras notas pendentes do mesmo fornecedor
+        if recebimentos_ids:
+            itens_pendentes = db.query(RecebimentoItem).filter(
+                RecebimentoItem.recebimento_id.in_(recebimentos_ids),
+                RecebimentoItem.codigo_fornecedor == item.codigo_fornecedor,
+                RecebimentoItem.status == StatusRecebimentoItem.PENDENTE_VINCULO.value,
+                RecebimentoItem.id != item_id
+            ).all()
+
+            for it_pend in itens_pendentes:
+                it_pend.sku = produto_id
+                it_pend.descricao = descricao_prod
+                unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == it_pend.und).first()
+                vinculo_und = None
+                if not unidade_interna_direta:
+                    vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == it_pend.und).first()
+                unidade_resolvida = unidade_interna_direta or vinculo_und
+                if unidade_resolvida:
+                    fsm_item = RecebimentoItemFSM(it_pend)
+                    try:
+                        fsm_item.vincular_sku()
+                        recebimentos_afetados.add(it_pend.recebimento_id)
+                    except:
+                        pass
 
         # Força atualização do item clicado
         item.sku = produto_id
+        item.descricao = descricao_prod
         unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == item.und).first()
         vinculo_und = None
         if not unidade_interna_direta:
@@ -469,6 +522,13 @@ class RecebimentoService:
                 pass
 
         db.commit()
+        
+        # Atualiza status pai das notas paralelas que também foram vinculadas por repetição
+        for rec_id in recebimentos_afetados:
+            if rec_id != recebimento_id:
+                RecebimentoService.atualizar_status_pai(db, rec_id)
+
+        # Atualiza a nota clicada e a devolve pra tela
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
     @staticmethod

@@ -173,6 +173,9 @@ export default function Recebimentos() {
       setProdutoSelecionadoId(null);
       setProdutosSugeridos([]);
       setSugestaoMensagem(null);
+      
+      // Recarrega a lista para mostrar atualizações em cascata sem precisar de F5
+      carregarRecebimentos();
     } catch (error: any) {
       console.error("Erro ao vincular SKU:", error);
       toast.error(error.response?.data?.detail || "Erro ao vincular o SKU. Verifique o servidor.");
