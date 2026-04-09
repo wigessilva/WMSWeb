@@ -24,21 +24,21 @@ def criar_uas_lote(
 def listar_uas(db: Session = Depends(get_db)):
     return UAService.listar_todas(db)
 
-@router.post("/{codigo}/expedir", response_model=UASchema)
-def expedir_ua(codigo: str, dados: UAExpedirTransferencia, db: Session = Depends(get_db)):
+@router.post("/{ua}/expedir", response_model=UASchema)
+def expedir_ua(ua: str, dados: UAExpedirTransferencia, db: Session = Depends(get_db)):
     try:
-        return UAService.expedir_transferencia(db=db, codigo=codigo, dados=dados)
+        return UAService.expedir_transferencia(db=db, ua_codigo=ua, dados=dados)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/{codigo}/receber", response_model=UASchema)
+@router.post("/{ua}/receber", response_model=UASchema)
 def receber_ua(
-    codigo: str,
+    ua: str,
     dados: UAReceberTransferencia,
     filial_id: int = Query(..., description="ID da Filial onde o operador está a bipar a entrada"),
     db: Session = Depends(get_db)
 ):
     try:
-        return UAService.receber_transferencia(db=db, codigo=codigo, nova_filial_id=filial_id, dados=dados)
+        return UAService.receber_transferencia(db=db, ua_codigo=ua, nova_filial_id=filial_id, dados=dados)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

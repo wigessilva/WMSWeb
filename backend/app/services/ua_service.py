@@ -1,7 +1,7 @@
 import random
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from ..models.ua import UA
-from ..schemas.ua import UACriar, UAExpedirTransferencia, UAReceberTransferencia
+from ..schemas.ua import UACriar, UASchema, UAExpedirTransferencia, UAReceberTransferencia
 
 # Importamos os modelos extras para validações e histórico
 from ..models.historico_ua import HistoricoUA
@@ -17,21 +17,21 @@ class UAService:
 
         while True:
             numero = f"{random.randint(0, 9999999):07d}"
-            codigo = f"UA{numero}"
+            ua_codigo = f"UA{numero}"
 
-            if codigo in codigos_temporarios:
+            if ua_codigo in codigos_temporarios:
                 continue
 
-            existe = db.query(UA).filter(UA.codigo == codigo).first()
+            existe = db.query(UA).filter(UA.ua == ua_codigo).first()
             if not existe:
-                return codigo
+                return ua_codigo
 
     @staticmethod
     def criar(db: Session, dados: UACriar):
-        novo_codigo = UAService._gerar_codigo_unico(db)
+        novo_ua = UAService._gerar_codigo_unico(db)
 
         db_obj = UA(
-            codigo=novo_codigo,
+            ua=novo_ua,
             filial_id=dados.filial_id,
             produto_id=dados.produto_id,
             lote=dados.lote,
@@ -75,11 +75,11 @@ class UAService:
 
         # 1. Gera todas as UAs na memória
         for _ in range(quantidade):
-            novo_codigo = UAService._gerar_codigo_unico(db, codigos_gerados)
-            codigos_gerados.add(novo_codigo)
+            novo_ua = UAService._gerar_codigo_unico(db, codigos_gerados)
+            codigos_gerados.add(novo_ua)
 
             db_obj = UA(
-                codigo=novo_codigo,
+                ua=novo_ua,
                 filial_id=dados.filial_id,
                 produto_id=dados.produto_id,
                 lote=dados.lote,
@@ -124,11 +124,20 @@ class UAService:
 
     @staticmethod
     def listar_todas(db: Session):
-        return db.query(UA).all()
+        uas = db.query(UA).options(joinedload(UA.produto)).all()
+        # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema
+        resultado = []
+        for ua in uas:
+            schema = UASchema.from_orm(ua)
+            if ua.produto:
+                schema.sku = ua.produto.sku
+                schema.descricao = ua.produto.descricao
+            resultado.append(schema)
+        return resultado
 
     @staticmethod
-    def expedir_transferencia(db: Session, codigo: str, dados: UAExpedirTransferencia):
-        ua = db.query(UA).filter(UA.codigo == codigo).first()
+    def expedir_transferencia(db: Session, ua_codigo: str, dados: UAExpedirTransferencia):
+        ua = db.query(UA).filter(UA.ua == ua_codigo).first()
         if not ua:
             raise ValueError("UA não encontrada.")
 
@@ -183,8 +192,8 @@ class UAService:
         return ua
 
     @staticmethod
-    def receber_transferencia(db: Session, codigo: str, nova_filial_id: int, dados: UAReceberTransferencia):
-        ua = db.query(UA).filter(UA.codigo == codigo).first()
+    def receber_transferencia(db: Session, ua_codigo: str, nova_filial_id: int, dados: UAReceberTransferencia):
+        ua = db.query(UA).filter(UA.ua == ua_codigo).first()
         if not ua:
             raise ValueError("UA não encontrada.")
 

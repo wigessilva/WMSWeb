@@ -1,6 +1,8 @@
 export interface UA {
   id: number;
-  codigo: string;
+  ua: string;
+  sku?: string | null;
+  descricao?: string | null;
   filial_id: number;
   filial_destino_id?: number | null;
   produto_id?: number | null;

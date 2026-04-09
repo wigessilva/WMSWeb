@@ -50,8 +50,12 @@ class UACriar(UABase):
 # Schema para devolução dos dados (Leitura)
 class UASchema(UABase):
     id: int
-    codigo: str
+    ua: str
     status: str
+    
+    sku: Optional[str] = None
+    descricao: Optional[str] = None
+    
     criado_em: datetime
     atualizado_em: datetime
     rowversion: int

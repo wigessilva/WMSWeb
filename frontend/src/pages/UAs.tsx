@@ -28,7 +28,9 @@ export default function UAs() {
 
   // Filtragem local básica
   const uasFiltradas = uas.filter(ua => 
-    ua.codigo.toLowerCase().includes(termoBusca.toLowerCase()) ||
+    ua.ua.toLowerCase().includes(termoBusca.toLowerCase()) ||
+    (ua.sku?.toLowerCase() || "").includes(termoBusca.toLowerCase()) ||
+    (ua.descricao?.toLowerCase() || "").includes(termoBusca.toLowerCase()) ||
     ua.status.toLowerCase().includes(termoBusca.toLowerCase()) ||
     ua.estado.toLowerCase().includes(termoBusca.toLowerCase())
   )
@@ -52,16 +54,14 @@ export default function UAs() {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="sticky top-0 bg-gray-50 shadow-sm">
               <tr className="text-gray-700 text-sm">
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">ID</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Código</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Filial</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Destino</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Produto</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Lote</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200">Validade</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200">UA</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200">SKU</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200">Descrição</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200">Lote</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Endereço</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Dimensões (LCA)</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200">Val</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Dimensões</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Estado</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Status</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Observações</th>
@@ -89,25 +89,23 @@ export default function UAs() {
                     key={ua.id}
                     className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
                   >
-                    <td className="px-3 py-2 text-gray-400">#{ua.id}</td>
-                    <td className="px-3 py-2 font-bold text-blue-900">{ua.codigo}</td>
-                    <td className="px-3 py-2">ID: {ua.filial_id}</td>
-                    <td className="px-3 py-2">{ua.filial_destino_id ? `ID: ${ua.filial_destino_id}` : "-"}</td>
-                    <td className="px-3 py-2">{ua.produto_id ? `ID: ${ua.produto_id}` : "Virgem"}</td>
-                    <td className="px-3 py-2">{ua.lote || "-"}</td>
-                    <td className="px-3 py-2">
-                      {ua.data_validade ? new Date(ua.data_validade).toLocaleDateString('pt-BR') : "-"}
-                    </td>
+                    <td className="px-3 py-2 font-bold text-blue-900">{ua.ua}</td>
+                    <td className="px-3 py-2 font-medium text-gray-700">{ua.sku || "-"}</td>
+                    <td className="px-3 py-2 text-gray-600 truncate max-w-xs" title={ua.descricao || ""}>{ua.descricao || "-"}</td>
                     <td className="px-3 py-2 text-center font-semibold text-blue-600">
                       {ua.quantidade || "0"}
                     </td>
+                    <td className="px-3 py-2">{ua.lote || "-"}</td>
                     <td className="px-3 py-2 text-center">
                       <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono text-xs">
                         {ua.endereco_id ? `ID: ${ua.endereco_id}` : "Em Trânsito"}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-center text-xs">
-                      {ua.largura || 0} x {ua.comprimento || 0} x {ua.altura || 0}
+                    <td className="px-3 py-2">
+                       {ua.data_validade ? new Date(ua.data_validade).toLocaleDateString('pt-BR') : "-"}
+                    </td>
+                     <td className="px-3 py-2 text-center text-xs">
+                      {ua.largura || 0}x{ua.comprimento || 0}x{ua.altura || 0}
                     </td>
                     <td className="px-3 py-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${

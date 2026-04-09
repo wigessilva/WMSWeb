@@ -10,7 +10,7 @@ class UA(Base):
     id = Column("Id", Integer, primary_key=True, index=True)
 
     # Ex: UA0124589 (2 letras + 7 números = 9 caracteres)
-    codigo = Column("Codigo", String(9), unique=True, index=True, nullable=False)
+    ua = Column("UA", String(9), unique=True, index=True, nullable=False)
 
     # A qual filial esta etiqueta física pertence
     filial_id = Column("FilialId", Integer, ForeignKey("Filiais.Id"), nullable=False)
