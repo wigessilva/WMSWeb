@@ -30,10 +30,14 @@ def iniciar_conferencia(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+from sqlalchemy.orm import selectinload
+
 # --- NOVA ROTA DE LISTAGEM ---
 @router.get("/", response_model=List[RecebimentoSchema])
 def listar_recebimentos(termo: Optional[str] = Query(None, description="Termo de busca geral"), db: Session = Depends(get_db)):
-    query = db.query(Recebimento)
+    query = db.query(Recebimento).options(
+        selectinload(Recebimento.itens).selectinload(RecebimentoItem.produto)
+    )
 
     if termo:
         # Busca em campos do cabeçalho e verifica se algum item do romaneio corresponde

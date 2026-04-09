@@ -62,7 +62,8 @@ class VinculoFornecedorService:
                 Recebimento.status.in_([
                     StatusRecebimento.IMPORTADO.value, 
                     StatusRecebimento.BLOQUEADO.value, 
-                    StatusRecebimento.AGUARDANDO_LIBERACAO.value
+                    StatusRecebimento.AGUARDANDO_LIBERACAO.value,
+                    StatusRecebimento.PENDENTE.value
                 ])
             ).all()
 

@@ -62,16 +62,16 @@ class RecebimentoService:
             ).first()
 
             # Tenta descobrir a Unidade interna
-            # Confere primeiro se existe na tabela UnidadesMedida (sigla exata)
+            # Confere primeiro se existe na tabela UnidadesMedida (sigla exata ou case-insensitive)
             unidade_interna_direta = db.query(UnidadeMedida).filter(
-                UnidadeMedida.sigla == item_dados.und
+                UnidadeMedida.sigla.ilike(item_dados.und)
             ).first()
 
             vinculo_und = None
             if not unidade_interna_direta:
                 # Se não achou direto, confere na tabela de vínculos
                 vinculo_und = db.query(VinculoUnidade).filter(
-                    VinculoUnidade.unidade_externa == item_dados.und
+                    VinculoUnidade.unidade_externa.ilike(item_dados.und)
                 ).first()
 
             # Define o status do item
@@ -108,41 +108,44 @@ class RecebimentoService:
 
     @staticmethod
     def atualizar_status_pai(db: Session, recebimento_id: int):
-        # A nossa Máquina de Estados Finita Simplificada
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
             return None
 
         # Se já passou da fase de libertação, as mudanças são manuais, não mexe.
-        if recebimento.status in [StatusRecebimento.AGUARDANDO_CONFERENCIA.value, StatusRecebimento.LIBERADO.value, StatusRecebimento.EM_CONFERENCIA.value, StatusRecebimento.EM_ANALISE.value, StatusRecebimento.FINALIZADO.value, StatusRecebimento.REJEITADO.value]:
+        status_avancados = [StatusRecebimento.AGUARDANDO_CONFERENCIA.value, StatusRecebimento.LIBERADO.value, StatusRecebimento.EM_CONFERENCIA.value, StatusRecebimento.EM_ANALISE.value, StatusRecebimento.FINALIZADO.value, StatusRecebimento.REJEITADO.value]
+        if recebimento.status in status_avancados:
             return recebimento
 
         itens = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).all()
 
-        tem_pendencia = any(item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value for item in itens)
+        # 1. Recalcula e garante o status correto de todos os itens da nota
+        for item in itens:
+            if item.status in [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value]:
+                continue
+                
+            unidade_resolvida = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first() or \
+                                db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa.ilike(item.und)).first()
+            
+            status_correto = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value if (item.sku and unidade_resolvida) else StatusRecebimentoItem.PENDENTE_VINCULO.value
+            
+            if item.status != status_correto:
+                item.status = status_correto
+                if status_correto == StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value:
+                    event_bus.publish('SKU_VINCULADO_SUCESSO', {'item_id': item.id, 'sku': item.sku})
 
-        fsm = RecebimentoFSM(recebimento)
-        
-        if not tem_pendencia:
-            try:
-                if recebimento.status == 'BLOQUEADO':
-                    fsm.desbloquear()
-                fsm.preparar_para_liberar()
+        # 2. Recalcula o status do cabeçalho (Romaneio) com base na saúde dos itens
+        tem_pendencia = any(item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value for item in itens)
+        status_pai_correto = StatusRecebimento.PENDENTE.value if tem_pendencia else StatusRecebimento.AGUARDANDO_LIBERACAO.value
+
+        if recebimento.status != status_pai_correto:
+            if recebimento.status == StatusRecebimento.BLOQUEADO.value and not tem_pendencia:
+                recebimento.status = status_pai_correto
                 event_bus.publish('RECEBIMENTO_AGUARDANDO_LIBERACAO', {'id': recebimento_id})
-            except Exception as e:
-                pass
-        elif tem_pendencia:
-            # Transição para PENDENTE via FSM
-            try:
-                if recebimento.status == StatusRecebimento.IMPORTADO.value:
-                    fsm.marcar_pendente()
-                elif recebimento.status == StatusRecebimento.AGUARDANDO_LIBERACAO.value:
-                    fsm.regredir_para_pendente()
-                elif recebimento.status == StatusRecebimento.BLOQUEADO.value:
-                    pass  # Mantém bloqueado
-            except:
-                # Fallback direto se a transição FSM falhar
-                recebimento.status = StatusRecebimento.PENDENTE.value
+            elif recebimento.status != StatusRecebimento.BLOQUEADO.value:
+                recebimento.status = status_pai_correto
+                if status_pai_correto == StatusRecebimento.AGUARDANDO_LIBERACAO.value:
+                    event_bus.publish('RECEBIMENTO_AGUARDANDO_LIBERACAO', {'id': recebimento_id})
 
         db.commit()
         db.refresh(recebimento)
@@ -396,25 +399,11 @@ class RecebimentoService:
             db.add(novo_vinculo)
             db.flush()
 
-        # Atualiza os itens deste recebimento que estavam pendentes por causa desta unidade
-        itens = db.query(RecebimentoItem).filter(
-            RecebimentoItem.recebimento_id == recebimento_id,
-            RecebimentoItem.und == unidade_externa,
-            RecebimentoItem.status == StatusRecebimentoItem.PENDENTE_VINCULO.value
-        ).all()
-
-        for item in itens:
-            # Se o SKU já estiver preenchido, o item tem tudo o que precisa e sai da pendência
-            if item.sku:
-                fsm_item = RecebimentoItemFSM(item)
-                try:
-                    fsm_item.vincular_sku()
-                except:
-                    pass
-
+        # Como criamos o vínculo global acima, basta commitar.
+        # O recalculo delegará a avaliação das unidades pendentes na próxima linha.
         db.commit()
 
-        # Atualiza o status do pai (romaneio) para ver se sai de PENDENTE
+        # Aciona o motor central que recalcula itens e cabeçalho
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
     @staticmethod
@@ -469,7 +458,8 @@ class RecebimentoService:
                 Recebimento.status.in_([
                     StatusRecebimento.IMPORTADO.value, 
                     StatusRecebimento.BLOQUEADO.value, 
-                    StatusRecebimento.AGUARDANDO_LIBERACAO.value
+                    StatusRecebimento.AGUARDANDO_LIBERACAO.value,
+                    StatusRecebimento.PENDENTE.value
                 ])
             ).all()
             recebimentos_ids = [r[0] for r in recs]
@@ -493,33 +483,13 @@ class RecebimentoService:
             for it_pend in itens_pendentes:
                 it_pend.sku = produto_id
                 it_pend.descricao = descricao_prod
-                unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == it_pend.und).first()
-                vinculo_und = None
-                if not unidade_interna_direta:
-                    vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == it_pend.und).first()
-                unidade_resolvida = unidade_interna_direta or vinculo_und
-                if unidade_resolvida:
-                    fsm_item = RecebimentoItemFSM(it_pend)
-                    try:
-                        fsm_item.vincular_sku()
-                        recebimentos_afetados.add(it_pend.recebimento_id)
-                    except:
-                        pass
+                
+                # Sempre adicionamos aos afetados para garantir recálculo do status pai
+                recebimentos_afetados.add(it_pend.recebimento_id)
 
         # Força atualização do item clicado
         item.sku = produto_id
         item.descricao = descricao_prod
-        unidade_interna_direta = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == item.und).first()
-        vinculo_und = None
-        if not unidade_interna_direta:
-            vinculo_und = db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == item.und).first()
-        if (unidade_interna_direta or vinculo_und) and item.status == StatusRecebimentoItem.PENDENTE_VINCULO.value:
-            fsm_item = RecebimentoItemFSM(item)
-            try:
-                fsm_item.vincular_sku()
-                event_bus.publish('SKU_VINCULADO_SUCESSO', {'item_id': item.id, 'sku': produto_id})
-            except:
-                pass
 
         db.commit()
         
