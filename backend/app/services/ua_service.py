@@ -1,4 +1,5 @@
 import random
+from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from ..models.ua import UA
 from ..schemas.ua import UACriar, UASchema, UAExpedirTransferencia, UAReceberTransferencia
@@ -11,20 +12,12 @@ from ..models.solicitacao_transferencia import SolicitacaoTransferencia
 
 class UAService:
     @staticmethod
-    def _gerar_codigo_unico(db: Session, codigos_temporarios: set = None) -> str:
-        if codigos_temporarios is None:
-            codigos_temporarios = set()
-
-        while True:
-            numero = f"{random.randint(0, 9999999):07d}"
-            ua_codigo = f"UA{numero}"
-
-            if ua_codigo in codigos_temporarios:
-                continue
-
-            existe = db.query(UA).filter(UA.ua == ua_codigo).first()
-            if not existe:
-                return ua_codigo
+    def _gerar_codigo_unico(db: Session) -> str:
+        # Busca o próximo valor da SEQUENCE no SQL Server
+        proximo_id = db.execute(text("SELECT NEXT VALUE FOR UA_Sequence")).scalar()
+        
+        # Formata como UA0000001 (UA + 7 dígitos com zeros à esquerda)
+        return f"UA{proximo_id:07d}"
 
     @staticmethod
     def criar(db: Session, dados: UACriar):
@@ -75,8 +68,7 @@ class UAService:
 
         # 1. Gera todas as UAs na memória
         for _ in range(quantidade):
-            novo_ua = UAService._gerar_codigo_unico(db, codigos_gerados)
-            codigos_gerados.add(novo_ua)
+            novo_ua = UAService._gerar_codigo_unico(db)
 
             db_obj = UA(
                 ua=novo_ua,
