@@ -1,0 +1,20 @@
+export interface UA {
+  id: number;
+  codigo: string;
+  filial_id: number;
+  filial_destino_id?: number | null;
+  produto_id?: number | null;
+  lote?: string | null;
+  data_validade?: string | null;
+  quantidade?: number | null;
+  unidade_produto_id?: number | null;
+  endereco_id?: number | null;
+  largura?: number | null;
+  comprimento?: number | null;
+  altura?: number | null;
+  estado: string;
+  status: string;
+  observacoes?: string | null;
+  criado_em: string;
+  atualizado_em: string;
+}

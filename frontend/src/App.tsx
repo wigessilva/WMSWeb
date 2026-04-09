@@ -12,6 +12,7 @@ import Atividades from './pages/Atividades'
 import Conferencia from './pages/Conferencia'
 import Produtos from './pages/Produtos'
 import Familias from './pages/Familias'
+import UAs from './pages/UAs'
 import VinculosFornecedores from './pages/VinculosFornecedores'
 import ParametrosMestres from './pages/ParametrosMestres'
 import type { Usuario } from './types/usuario'
@@ -226,6 +227,7 @@ export default function App() {
             <Route path="/atividades" element={<Atividades />} />
             <Route path="/conferencia/:id" element={<Conferencia />} />
             <Route path="/estoque" element={<h2>Estoque</h2>} />
+            <Route path="/estoque/uas" element={<UAs />} />
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/familias" element={<Familias />} />
             <Route path="/vinculos-fornecedores" element={<VinculosFornecedores />} />
