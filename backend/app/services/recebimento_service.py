@@ -215,8 +215,13 @@ class RecebimentoService:
         estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)
         try:
-            fsm.liberar_conferencia()
+            recebimento.liberar_conferencia()
             event_bus.publish('RECEBIMENTO_AGUARDANDO_CONFERENCIA', {'id': recebimento_id})
+            
+            # Avança os itens que estavam aguardando para a nova fase
+            for item in recebimento.itens:
+                if item.status == StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value:
+                    item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
             
             RecebimentoService._registrar_log(
                 db, tabela="Recebimentos", registro_id=recebimento.id, 
@@ -249,9 +254,14 @@ class RecebimentoService:
 
         fsm = RecebimentoFSM(recebimento)
         try:
-            fsm.iniciar_conferencia()
+            recebimento.iniciar_conferencia()
             recebimento.data_inicio = datetime.now()
             recebimento.conferente_id = conferente_id
+            
+            # Avança os itens para a fase de conferência
+            for item in recebimento.itens:
+                if item.status == StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value:
+                    item.status = StatusRecebimentoItem.EM_CONFERENCIA.value
             event_bus.publish('RECEBIMENTO_EM_CONFERENCIA', {'id': recebimento_id, 'conferente': conferente_id})
         except Exception as e:
             raise ValueError("Não é possível iniciar a conferência deste romaneio (status inválido).")
@@ -268,7 +278,7 @@ class RecebimentoService:
 
         fsm = RecebimentoFSM(recebimento)
         try:
-            fsm.cancelar_conferencia()
+            recebimento.cancelar_conferencia()
         except Exception as e:
             raise ValueError("Não é possível cancelar uma conferência neste status.")
 
@@ -279,9 +289,10 @@ class RecebimentoService:
             from app.models.recebimento import RecebimentoLeitura
             db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item.id).delete()
             
-            # Se já estavam conferidos ou divergentes, voltam para liberado
-            if item.status in [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value]:
-                item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+            # Todos os itens regressam para aguardando liberação
+            status_avancados = [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value, StatusRecebimentoItem.EM_CONFERENCIA.value, StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value]
+            if item.status in status_avancados:
+                item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
 
         db.commit()
         db.refresh(recebimento)
@@ -295,7 +306,7 @@ class RecebimentoService:
 
         fsm = RecebimentoFSM(recebimento)
         try:
-            fsm.rejeitar()
+            recebimento.rejeitar()
         except Exception as e:
             raise ValueError("Não é possível rejeitar um romaneio concluído ou já finalizado.")
 
@@ -311,7 +322,7 @@ class RecebimentoService:
 
         fsm = RecebimentoFSM(recebimento)
         try:
-            fsm.concluir()
+            recebimento.concluir()
             recebimento.conclusao = datetime.now()
         except Exception as e:
             raise ValueError("Apenas romaneios com conferências ativas podem ser concluídos.")
@@ -351,7 +362,7 @@ class RecebimentoService:
         
         fsm = RecebimentoFSM(recebimento)
         if recebimento.status == 'BLOQUEADO':
-            fsm.desbloquear()
+            recebimento.desbloquear()
         
         db_wms.commit()
         db_wms.refresh(recebimento)
