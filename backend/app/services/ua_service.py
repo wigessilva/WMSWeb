@@ -115,6 +115,19 @@ class UAService:
         return novas_uas
 
     @staticmethod
+    def buscar_por_codigo(db: Session, ua_codigo: str):
+        ua = db.query(UA).filter(UA.ua == ua_codigo).options(joinedload(UA.produto)).first()
+        if not ua:
+            return None
+        
+        # Mapeia manualmente para injetar SKU e Descrição se houver produto
+        schema = UASchema.from_orm(ua)
+        if ua.produto:
+            schema.sku = ua.produto.sku
+            schema.descricao = ua.produto.descricao
+        return schema
+
+    @staticmethod
     def listar_todas(db: Session):
         uas = db.query(UA).options(joinedload(UA.produto)).all()
         # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema

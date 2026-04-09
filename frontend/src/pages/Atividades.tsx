@@ -39,7 +39,7 @@ export default function Atividades() {
   const handleConferir = async (atividade: Recebimento) => {
     try {
       // Se já estiver em conferência pela mesma pessoa, apenas redireciona
-      if (atividade.status === 'EM_CONFERENCIA' && atividade.conferente_id === nomeUsuario) {
+      if (atividade.status === 'EM_CONFERENCIA' && atividade.conferente === nomeUsuario) {
         navigate(`/conferencia/${atividade.id}`);
         return;
       }
@@ -92,7 +92,7 @@ export default function Atividades() {
           )}
 
           {atividadesFiltradas.map((atv) => {
-            const emUsoPorOutro = atv.status === 'EM_CONFERENCIA' && atv.conferente_id && atv.conferente_id !== nomeUsuario;
+            const emUsoPorOutro = atv.status === 'EM_CONFERENCIA' && atv.conferente && atv.conferente !== nomeUsuario;
             
             // Se estiver em uso por outro e a regra é ocultar (conforme o pedido da issue)
             if (emUsoPorOutro) return null;
@@ -132,7 +132,7 @@ export default function Atividades() {
                     <div>
                       <span className="block text-xs text-gray-500 font-semibold mb-0.5">Início</span>
                       <span className="font-semibold text-gray-700">
-                        {atv.data_inicio ? new Date(atv.data_inicio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Aguardando...'}
+                        {atv.inicio ? new Date(atv.inicio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Aguardando...'}
                       </span>
                     </div>
                   </div>

@@ -7,7 +7,10 @@ class RecebimentoFSM(object):
         'BLOQUEADO',            
         'AGUARDANDO_LIBERACAO', 
         'AGUARDANDO_CONFERENCIA',
-        'EM_CONFERENCIA',       
+        'LIBERADO',
+        'EM_CONFERENCIA',
+        'EM_ANALISE',
+        'FINALIZADO',
         'REJEITADO',
         'CONCLUIDO'             
     ]
@@ -27,7 +30,7 @@ class RecebimentoFSM(object):
         self.machine.add_transition(trigger='preparar_para_liberar', source=['IMPORTADO', 'PENDENTE', 'BLOQUEADO'], dest='AGUARDANDO_LIBERACAO')
         self.machine.add_transition(trigger='regredir_para_pendente', source='AGUARDANDO_LIBERACAO', dest='PENDENTE')
         self.machine.add_transition(trigger='liberar_conferencia', source='AGUARDANDO_LIBERACAO', dest='AGUARDANDO_CONFERENCIA')
-        self.machine.add_transition(trigger='iniciar_conferencia', source='AGUARDANDO_CONFERENCIA', dest='EM_CONFERENCIA')
+        self.machine.add_transition(trigger='iniciar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA', 'LIBERADO'], dest='EM_CONFERENCIA')
         self.machine.add_transition(trigger='cancelar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'], dest='AGUARDANDO_LIBERACAO')
         self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_concluido'])
         self.machine.add_transition(trigger='concluir', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'], dest='CONCLUIDO')

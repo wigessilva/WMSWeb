@@ -14,5 +14,15 @@ export const uaService = {
   listar: async (): Promise<UA[]> => {
     const response = await api.get('/');
     return response.data;
+  },
+  buscarPorCodigo: async (codigo: string): Promise<UA> => {
+    const response = await api.get(`/${codigo}`);
+    return response.data;
+  },
+  criarEmLote: async (quantidade: number, filialId: number): Promise<UA[]> => {
+    const response = await api.post(`/lote?quantidade=${quantidade}`, {
+      filial_id: filialId
+    });
+    return response.data;
   }
 };

@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from ..models.perfil import Perfil
 from ..models.permissao import Permissao
 from ..models.usuario import Usuario
@@ -100,5 +101,18 @@ def inicializar_dados_padrao(db: Session):
     if not config_robo:
         config_robo = ConfiguracaoIntegracao(nome_servico="ROBO_NFE", caminho_diretorio="", ativo=True)
         db.add(config_robo)
+
+    # 6. Inicializa a UA_Sequence se nao existir (Importante para o Chão de Fábrica)
+    try:
+        db.execute(text("""
+            IF NOT EXISTS (SELECT * FROM sys.sequences WHERE name = 'UA_Sequence')
+            BEGIN
+                CREATE SEQUENCE UA_Sequence START WITH 1 INCREMENT BY 1;
+            END
+        """))
+        db.commit()
+    except Exception as e:
+        print(f"Alerta: Erro ao inicializar UA_Sequence: {e}")
+        db.rollback()
 
     db.commit()

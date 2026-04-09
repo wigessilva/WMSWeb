@@ -24,6 +24,13 @@ def criar_uas_lote(
 def listar_uas(db: Session = Depends(get_db)):
     return UAService.listar_todas(db)
 
+@router.get("/{ua_codigo}", response_model=UASchema)
+def buscar_ua_por_codigo(ua_codigo: str, db: Session = Depends(get_db)):
+    ua = UAService.buscar_por_codigo(db=db, ua_codigo=ua_codigo)
+    if not ua:
+        raise HTTPException(status_code=404, detail="UA não encontrada")
+    return ua
+
 @router.post("/{ua}/expedir", response_model=UASchema)
 def expedir_ua(ua: str, dados: UAExpedirTransferencia, db: Session = Depends(get_db)):
     try:

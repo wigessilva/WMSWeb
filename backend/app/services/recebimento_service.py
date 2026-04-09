@@ -245,18 +245,18 @@ class RecebimentoService:
             raise ValueError("Romaneio não encontrado.")
 
         # Se já estiver em conferência e for outra pessoa
-        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente_id and recebimento.conferente_id != conferente_id:
-            raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente_id}.")
+        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente and recebimento.conferente != conferente_id:
+            raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente}.")
 
         # Se já é a própria pessoa voltando para a conferência
-        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente_id == conferente_id:
+        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente == conferente_id:
             return recebimento
 
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.iniciar_conferencia()
-            recebimento.data_inicio = datetime.now()
-            recebimento.conferente_id = conferente_id
+            recebimento.inicio = datetime.now()
+            recebimento.conferente = conferente_id
             
             # Avança os itens para a fase de conferência
             for item in recebimento.itens:
@@ -264,7 +264,7 @@ class RecebimentoService:
                     item.status = StatusRecebimentoItem.EM_CONFERENCIA.value
             event_bus.publish('RECEBIMENTO_EM_CONFERENCIA', {'id': recebimento_id, 'conferente': conferente_id})
         except Exception as e:
-            raise ValueError("Não é possível iniciar a conferência deste romaneio (status inválido).")
+            raise ValueError(f"Não é possível iniciar a conferência: Status atual '{recebimento.status}' não permite transição para Conferência. (Erro: {str(e)})")
 
         db.commit()
         db.refresh(recebimento)

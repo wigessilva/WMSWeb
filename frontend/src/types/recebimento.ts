@@ -48,10 +48,10 @@ export interface Recebimento {
   nfe: string;
   oc: string | null;
   fornecedor: string;
-  conferente_id: number | null;
+  conferente: string | null;
   autorizado_por?: string | null;
   autorizado_em?: string | null;
-  data_inicio: string | null;
+  inicio: string | null;
   conclusao: string | null;
   status: string;
   criado_em: string;
