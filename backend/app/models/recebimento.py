@@ -68,6 +68,7 @@ class RecebimentoItem(Base):
     destino_id = Column("DestinoId", Integer, ForeignKey("Filiais.Id"), nullable=True)
 
     status = Column("Status", String(50), default="Pendente", nullable=False)
+    tentativas = Column("Tentativas", Integer, default=0, nullable=False)
 
     # Relacionamentos
     recebimento = relationship("Recebimento", back_populates="itens")

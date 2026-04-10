@@ -42,6 +42,7 @@ export interface RecebimentoItem {
   certificado_qualidade: boolean | null;
   destino: string | null;
   status: string;
+  tentativas: number;
 }
 
 export interface Recebimento {

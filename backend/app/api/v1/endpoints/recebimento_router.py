@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
 
 from app.db.database import get_db, get_erp_db
-from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload
+from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload, ConclusaoItemSchema
 from app.services.recebimento_service import RecebimentoService
 from app.models.recebimento import Recebimento, RecebimentoItem
 
@@ -176,3 +176,16 @@ def sugestao_vinculo_sku(
     db_erp: Session = Depends(get_erp_db)
 ):
     return RecebimentoService.sugerir_vinculo_sku(db_wms=db, db_erp=db_erp, recebimento_id=id, item_id=item_id)
+
+@router.post("/{id}/itens/{item_id}/registrar-conferencia")
+def registrar_conferencia_item(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    conclusao: ConclusaoItemSchema = Body(...),
+    usuario: str = Query(..., description="Nome do conferente"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.registrar_conferencia_item(db=db, item_id=item_id, dados=conclusao, usuario=usuario)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

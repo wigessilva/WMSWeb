@@ -34,6 +34,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     recebimento_id: int
     sku: Optional[str] = None
     produto_id: Optional[int] = None
+    tentativas: int = 0
 
     @model_validator(mode='before')
     @classmethod
@@ -79,3 +80,18 @@ class RecebimentoSchema(RecebimentoBase):
 
     class Config:
         from_attributes = True
+
+# Schemas para Conclusão de Conferência
+class ConferenciaItemLeitura(BaseModel):
+    ua: str
+    quantidade: float
+    unidade_produto_id: Optional[int] = None
+    fator_conversao: float = 1.0
+    lote: Optional[str] = None
+    data_validade: Optional[str] = None
+    und: str # Sigla da unidade usada no momento do bipe
+
+class ConclusaoItemSchema(BaseModel):
+    tentativas: int
+    status_final: str # 'CONFERIDO' ou 'DIVERGENTE'
+    leituras: List[ConferenciaItemLeitura]

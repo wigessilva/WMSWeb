@@ -299,6 +299,102 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
+    def registrar_conferencia_item(db: Session, item_id: int, dados: any, usuario: str):
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        if not item:
+            raise ValueError("Item não encontrado.")
+
+        # 1. Atualiza as tentativas e o status do item
+        item.tentativas = dados.tentativas
+        item.status = dados.status_final
+
+        # 2. Limpa leituras anteriores se houver (para permitir re-conferência limpa)
+        from app.models.recebimento import RecebimentoLeitura
+        db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item_id).delete()
+
+        total_recebido = 0.0
+        
+        # 3. Processa cada leitura bipada
+        from app.models.ua import UA
+        from app.services.ua_service import UAService
+        
+        for leit in dados.leituras:
+            # Calcula a quantidade convertida para a unidade da nota
+            qtd_convertida = leit.quantidade * leit.fator_conversao
+            total_recebido += qtd_convertida
+
+            # Cria o registro da leitura para auditoria
+            nova_leitura = RecebimentoLeitura(
+                recebimento_item_id=item_id,
+                qtd=leit.quantidade,
+                und=leit.und,
+                usuario=usuario,
+                ua=leit.ua
+            )
+            db.add(nova_leitura)
+
+            # CRIA A UA FÍSICA NO SISTEMA
+            # Se a conferência foi concluída, a UA nasce no estado "Bom" e status "Aguardando Armazenamento"
+            # (conforme a regra de negócio discutida)
+            
+            # Precisamos de uma filial_id. Pegamos do romaneio pai.
+            filial_id = 1 # Fallback, mas idealmente vem do contexto ou da primeira filial do sistema
+            
+            nova_ua_obj = UA(
+                ua=leit.ua,
+                filial_id=filial_id,
+                produto_id=item.sku, # item.sku é o ID do produto no wms
+                lote=leit.lote,
+                data_validade=datetime.strptime(leit.data_validade, "%d/%m/%Y") if leit.data_validade else None,
+                quantidade=leit.quantidade,
+                unidade_produto_id=leit.unidade_produto_id,
+                fator_conversao=leit.fator_conversao,
+                status="Aguardando Armazenamento",
+                estado="Bom",
+                criado_por=usuario
+            )
+            # Se a UA já existe (bipada como UA virgem), atualizamos. Senão, criamos.
+            ua_existente = db.query(UA).filter(UA.ua == leit.ua).first()
+            if ua_existente:
+                ua_existente.produto_id = nova_ua_obj.produto_id
+                ua_existente.lote = nova_ua_obj.lote
+                ua_existente.data_validade = nova_ua_obj.data_validade
+                ua_existente.quantidade = nova_ua_obj.quantidade
+                ua_existente.unidade_produto_id = nova_ua_obj.unidade_produto_id
+                ua_existente.fator_conversao = nova_ua_obj.fator_conversao
+                ua_existente.status = nova_ua_obj.status
+                ua_existente.atualizado_por = usuario
+            else:
+                db.add(nova_ua_obj)
+
+        # 4. Atualiza a quantidade total recebida no item
+        item.qtd_recebida = total_recebido
+
+        db.commit()
+        db.refresh(item)
+        
+        # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
+        RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
+        
+        return item
+
+    @staticmethod
+    def atualizar_status_pos_conferencia(db: Session, recebimento_id: int):
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento:
+            return
+        
+        itens = recebimento.itens
+        concluidos = [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value]
+        
+        # Se todos os itens estão conferidos ou divergentes
+        if all(it.status in concluidos for it in itens):
+            # O Romaneio vai para EM_ANALISE para o fiscal decidir
+            recebimento.status = StatusRecebimento.EM_ANALISE.value
+            recebimento.conclusao = datetime.now()
+            db.commit()
+
+    @staticmethod
     def rejeitar_romaneio(db: Session, recebimento_id: int):
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:

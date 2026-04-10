@@ -34,6 +34,10 @@ export default function Conferencia() {
   // Cache de unidades por produto_id
   const [unidadesCache, setUnidadesCache] = useState<Record<number, any[]>>({});
 
+  // Controle de tentativas por item
+  const [tentativasPorItem, setTentativasPorItem] = useState<Record<number, number>>({});
+  const [finalizando, setFinalizando] = useState(false);
+
   useEffect(() => {
     async function carregarDados() {
       if (!id) return;
@@ -42,6 +46,12 @@ export default function Conferencia() {
         const atual = dados.find(r => r.id === Number(id));
         if (atual) {
           setRecebimento(atual);
+          // Inicializa tentativas para itens que ainda não foram conferidos
+          const tents: Record<number, number> = {};
+          atual.itens.forEach(it => {
+            tents[it.id] = it.tentativas || 3;
+          });
+          setTentativasPorItem(tents);
         } else {
           toast.error("Recebimento não encontrado.");
           navigate('/atividades');
@@ -65,21 +75,21 @@ export default function Conferencia() {
 
   // Carregamento de unidades em cache (Lazy Loading)
   useEffect(() => {
-    async function carregarUnidades() {
-      const item = recebimento?.itens[itemAtualIndex];
-      if (!item || !item.produto_id) return;
+    const item = recebimento?.itens[itemAtualIndex];
+    if (!item || !item.produto_id) return;
 
-      if (!unidadesCache[item.produto_id]) {
+    if (!unidadesCache[item.produto_id]) {
+      const carregarUnidades = async () => {
         try {
-          const unidades = await produtoService.listarUnidades(item.produto_id);
+          const unidades = await produtoService.listarUnidades(item.produto_id!);
           setUnidadesCache(prev => ({ ...prev, [item.produto_id!]: unidades }));
         } catch (error) {
           console.error("Erro ao buscar unidades:", error);
         }
-      }
+      };
+      carregarUnidades();
     }
-    carregarUnidades();
-  }, [itemAtualIndex, recebimento, unidadesCache]);
+  }, [itemAtualIndex, recebimento]);
 
   const handleBiparUA = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -300,9 +310,9 @@ export default function Conferencia() {
                   <div className="text-2xl font-black text-[#1e3a8a] tracking-widest">{uaAtual?.ua}</div>
                   <button 
                     onClick={() => setStep('BIPAR_UA')}
-                    className="bg-blue-600 text-white text-[10px] px-3 py-1.5 font-black uppercase rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-[#1e3a8a] text-white text-[10px] px-3 py-1.5 font-black uppercase rounded-lg hover:bg-blue-900 transition-colors shadow-md"
                   >
-                    Trocar UA
+                    Nova UA
                   </button>
                 </div>
 
@@ -405,13 +415,104 @@ export default function Conferencia() {
                 <div className="p-8 bg-gray-50 border-t border-gray-100">
                   <Button 
                     variant="primary" 
-                    className="w-full py-6 text-2xl font-black uppercase tracking-widest rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 active:translate-y-0"
-                    onClick={() => {
-                      toast.success("Volume Salvo!");
-                      setStep('BIPAR_UA');
+                    className="w-full py-6 text-2xl font-black uppercase tracking-widest rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
+                    loading={finalizando}
+                    onClick={async () => {
+                      if (!itemAtual) return;
+                      
+                      const totalBipado = uasDoItem.reduce((acc, curr: any) => acc + (curr.quantidade || 0) * (curr.fator_conversao || 1), 0);
+                      
+                      let statusFinal = 'CONFERIDO';
+                      if (Math.abs(totalBipado - itemAtual.qtd_nota) > 0.001) {
+                        const tentsRestantes = (tentativasPorItem[itemAtual.id] || 3) - 1;
+                        if (tentsRestantes > 0) {
+                          setTentativasPorItem(prev => ({ ...prev, [itemAtual.id]: tentsRestantes }));
+                          toast.error(`Quantidade divergente! Você tem mais ${tentsRestantes} tentativas.`, {
+                            duration: 4000,
+                            position: 'top-center',
+                            style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
+                          });
+                          return;
+                        } else {
+                          statusFinal = 'DIVERGENTE';
+                        }
+                      }
+
+                      // Enviar para o backend
+                      setFinalizando(true);
+                      try {
+                        const payload = {
+                          tentativas: 3 - (tentativasPorItem[itemAtual.id] || 3) + 1,
+                          status_final: statusFinal,
+                          leituras: uasDoItem.map(u => ({
+                            ua: u.ua,
+                            quantidade: u.quantidade || 0,
+                            unidade_produto_id: u.unidade_produto_id,
+                            fator_conversao: u.fator_conversao || 1,
+                            lote: u.lote || null,
+                            data_validade: u.data_validade || null,
+                            und: (unidadesCache[itemAtual.produto_id!] || []).find(und => und.unidade_medida_id === u.unidade_medida_id)?.unidade_medida_relacao?.sigla || itemAtual.und
+                          }))
+                        };
+
+                        const user = localStorage.getItem('wms_user_login') || 'Coletor';
+                        const response = await fetch(`${localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL}/recebimentos/${id}/itens/${itemAtual.id}/registrar-conferencia?usuario=${user}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error("Erro no servidor");
+                        const itemAtualizado = await response.json();
+
+                        toast.success(statusFinal === 'CONFERIDO' ? "Item Conferido com Sucesso!" : "Item Finalizado com Divergência");
+                        
+                        // Atualiza o estado local para que o findIndex veja o novo status
+                        let proximosItens = recebimento?.itens || [];
+                        if (recebimento) {
+                          const novosItens = [...recebimento.itens];
+                          const idx = novosItens.findIndex(i => i.id === itemAtual.id);
+                          if (idx !== -1) {
+                            novosItens[idx] = itemAtualizado;
+                            setRecebimento({ ...recebimento, itens: novosItens });
+                            proximosItens = novosItens;
+                          }
+                        }
+
+                        // Busca o próximo item pendente usando a lista atualizada
+                        const indexProximo = proximosItens.findIndex((it, idx) => 
+                          idx > itemAtualIndex && (it.status === 'AGUARDANDO_CONFERENCIA' || it.status === 'EM_CONFERENCIA')
+                        );
+
+                        if (indexProximo !== -1) {
+                          setItemAtualIndex(indexProximo);
+                          setStep('BIPAR_UA');
+                          setUaAtualIndex(0);
+                          setUasPorItem(prev => ({ ...prev, [itemAtual.id]: [] })); // Limpa localmente as leituras do item finalizado
+                        } else {
+                          // Se não achou depois do atual, tenta do começo
+                          const indexVolta = proximosItens.findIndex((it) => 
+                            (it.status === 'AGUARDANDO_CONFERENCIA' || it.status === 'EM_CONFERENCIA') && it.id !== itemAtual.id
+                          );
+                          if (indexVolta !== -1) {
+                            setItemAtualIndex(indexVolta);
+                            setStep('BIPAR_UA');
+                            setUaAtualIndex(0);
+                            setUasPorItem(prev => ({ ...prev, [itemAtual.id]: [] }));
+                          } else {
+                            toast("Todas as tarefas concluídas!", { icon: '🎉' });
+                            navigate('/atividades');
+                          }
+                        }
+                      } catch (error) {
+                        console.error(error);
+                        toast.error("Erro ao salvar conferência.");
+                      } finally {
+                        setFinalizando(false);
+                      }
                     }}
                   >
-                    OK - Salvar Volume
+                    Finalizar
                   </Button>
                   <button 
                     onClick={() => {
