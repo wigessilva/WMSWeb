@@ -439,9 +439,9 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5 font-bold text-blue-900">{rec.nfe}</td>
                     <td className="px-3 py-1.5">{rec.oc || "-"}</td>
                     <td className="px-3 py-1.5">{rec.fornecedor}</td>
-                    <td className="px-3 py-1.5">{rec.conferente_id || "-"}</td>
-                    <td className="px-3 py-1.5">{rec.data_inicio ? new Date(rec.data_inicio).toLocaleDateString('pt-BR') : "-"}</td>
-                    <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleDateString('pt-BR') : "-"}</td>
+                    <td className="px-3 py-1.5">{rec.conferente || "-"}</td>
+                    <td className="px-3 py-1.5">{rec.inicio ? new Date(rec.inicio).toLocaleString('pt-BR') : "-"}</td>
+                    <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">
                       <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
                         {rec.status}
@@ -879,7 +879,7 @@ export default function Recebimentos() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-xs italic text-gray-400">
-                                {recebimentoSelecionado.conferente_id || "Não atribuído"}
+                                {recebimentoSelecionado.conferente || "Não atribuído"}
                               </td>
                             </tr>
                           );

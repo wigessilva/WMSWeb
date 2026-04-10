@@ -255,7 +255,8 @@ class RecebimentoService:
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.iniciar_conferencia()
-            recebimento.inicio = datetime.now()
+            if not recebimento.inicio:
+                recebimento.inicio = datetime.now()
             recebimento.conferente = conferente_id
             
             # Avança os itens para a fase de conferência
@@ -337,15 +338,23 @@ class RecebimentoService:
             # Se a conferência foi concluída, a UA nasce no estado "Bom" e status "Aguardando Armazenamento"
             # (conforme a regra de negócio discutida)
             
-            # Precisamos de uma filial_id. Pegamos do romaneio pai.
-            filial_id = 1 # Fallback, mas idealmente vem do contexto ou da primeira filial do sistema
+            # Precisamos de uma filial_id. Pegamos do destino do item ou fallback.
+            filial_id = item.destino_id or 1
             
+            # Validação segura da data de validade
+            data_val = None
+            if leit.data_validade and isinstance(leit.data_validade, str) and leit.data_validade.strip():
+                try:
+                    data_val = datetime.strptime(leit.data_validade.strip(), "%d/%m/%Y")
+                except (ValueError, TypeError):
+                    data_val = None
+
             nova_ua_obj = UA(
                 ua=leit.ua,
                 filial_id=filial_id,
-                produto_id=item.sku, # item.sku é o ID do produto no wms
+                produto_id=item.sku,
                 lote=leit.lote,
-                data_validade=datetime.strptime(leit.data_validade, "%d/%m/%Y") if leit.data_validade else None,
+                data_validade=data_val,
                 quantidade=leit.quantidade,
                 unidade_produto_id=leit.unidade_produto_id,
                 fator_conversao=leit.fator_conversao,
@@ -368,7 +377,22 @@ class RecebimentoService:
                 db.add(nova_ua_obj)
 
         # 4. Atualiza a quantidade total recebida no item
-        item.qtd_recebida = total_recebido
+        # Precisamos converter o total_recebido (que está na unidade base) para a unidade da nota
+        from app.models.unidade_produto import UnidadeProduto
+        fator_nota = 1.0
+        
+        # Busca a unidade de medida interna correspondente à sigla da nota
+        und_medida_nota = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first()
+        if und_medida_nota:
+            up_nota = db.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == item.sku,
+                UnidadeProduto.unidade_medida_id == und_medida_nota.id
+            ).first()
+            if up_nota:
+                fator_nota = up_nota.fator_conversao
+        
+        # Salva a quantidade convertida para a unidade da nota (arredondando para 4 casas decimais)
+        item.qtd_recebida = round(total_recebido / (fator_nota if fator_nota > 0 else 1.0), 4)
 
         db.commit()
         db.refresh(item)
@@ -391,7 +415,6 @@ class RecebimentoService:
         if all(it.status in concluidos for it in itens):
             # O Romaneio vai para EM_ANALISE para o fiscal decidir
             recebimento.status = StatusRecebimento.EM_ANALISE.value
-            recebimento.conclusao = datetime.now()
             db.commit()
 
     @staticmethod
@@ -403,6 +426,7 @@ class RecebimentoService:
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.rejeitar()
+            recebimento.conclusao = datetime.now()
         except Exception as e:
             raise ValueError("Não é possível rejeitar um romaneio concluído ou já finalizado.")
 
@@ -419,7 +443,6 @@ class RecebimentoService:
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.concluir()
-            recebimento.conclusao = datetime.now()
         except Exception as e:
             raise ValueError("Apenas romaneios com conferências ativas podem ser concluídos.")
 
@@ -436,6 +459,7 @@ class RecebimentoService:
         # Aqui no futuro entrará a lógica de gerar o stock (criar as UAs físicas)
 
         recebimento.status = StatusRecebimento.FINALIZADO.value
+        recebimento.conclusao = datetime.now()
         db.commit()
         db.refresh(recebimento)
         return recebimento

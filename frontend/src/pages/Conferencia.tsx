@@ -184,6 +184,13 @@ export default function Conferencia() {
   const uasDoItem = itemAtual ? (uasPorItem[itemAtual.id] || []) : [];
   const uaAtual = uasDoItem[uaAtualIndex];
 
+  const totalBase = uasDoItem.reduce((acc, curr: any) => acc + (Number(curr.quantidade) || 0) * (curr.fator_conversao || 1), 0);
+  const unidadesProd = itemAtual ? (unidadesCache[itemAtual.produto_id!] || []) : [];
+  const unidadeAtiva = unidadesProd.find(u => u.unidade_medida_id === uaAtual?.unidade_medida_id);
+  const fatorAtivo = unidadeAtiva?.fator_conversao || 1;
+  const siglaAtiva = unidadeAtiva?.unidade_medida_relacao?.sigla || itemAtual?.und || '';
+  const totalExibicao = totalBase / (fatorAtivo || 1);
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans p-4">
       <main className="flex-1 max-w-lg mx-auto w-full flex flex-col justify-start">
@@ -327,8 +334,8 @@ export default function Conferencia() {
                     <div className="bg-emerald-600 text-white p-5 rounded-[2rem] shadow-lg shadow-emerald-200">
                       <label className="text-[9px] font-black uppercase tracking-widest block opacity-70 mb-1">Total Bipado</label>
                       <div className="text-3xl font-black">
-                        {uasDoItem.reduce((acc, curr: any) => acc + (curr.quantidade || 0) * (curr.fator_conversao || 1), 0)}
-                        <span className="text-xs ml-1 opacity-50 uppercase">{itemAtual?.und}</span>
+                        {totalExibicao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 })}
+                        <span className="text-xs ml-1 opacity-50 uppercase">{siglaAtiva}</span>
                       </div>
                     </div>
                   </div>
@@ -420,15 +427,21 @@ export default function Conferencia() {
                     onClick={async () => {
                       if (!itemAtual) return;
                       
-                      const totalBipado = uasDoItem.reduce((acc, curr: any) => acc + (curr.quantidade || 0) * (curr.fator_conversao || 1), 0);
+                      const totalBipado = uasDoItem.reduce((acc, curr: any) => acc + (Number(curr.quantidade) || 0) * (curr.fator_conversao || 1), 0);
                       
+                      // Busca o fator da unidade da NA nota para comparar na base comum
+                      const unidadesProdComp = unidadesCache[itemAtual.produto_id!] || [];
+                      const undNota = unidadesProdComp.find(u => u.unidade_medida_relacao?.sigla === itemAtual.und);
+                      const fatorNota = undNota?.fator_conversao || 1;
+                      const qtdEsperadaBase = itemAtual.qtd_nota * fatorNota;
+
                       let statusFinal = 'CONFERIDO';
-                      if (Math.abs(totalBipado - itemAtual.qtd_nota) > 0.001) {
+                      if (Math.abs(totalBipado - qtdEsperadaBase) > 0.01) {
                         const tentsRestantes = (tentativasPorItem[itemAtual.id] || 3) - 1;
                         if (tentsRestantes > 0) {
                           setTentativasPorItem(prev => ({ ...prev, [itemAtual.id]: tentsRestantes }));
                           toast.error(`Quantidade divergente! Você tem mais ${tentsRestantes} tentativas.`, {
-                            duration: 4000,
+                            duration: 5000,
                             position: 'top-center',
                             style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
                           });

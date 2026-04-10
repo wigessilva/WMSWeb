@@ -28,6 +28,7 @@ class UA(Base):
     # Quantidade amarrada à Unidade específica daquele Produto
     quantidade = Column("Quantidade", Float, nullable=True)
     unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("UnidadesProduto.Id"), nullable=True)
+    fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)
 
     # Localização Física (Opcional, pois pode estar 'Em Trânsito' na empilhadora)
     endereco_id = Column("EnderecoId", Integer, ForeignKey("Enderecos.Id"), nullable=True)
