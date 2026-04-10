@@ -43,6 +43,13 @@ export interface RecebimentoItem {
   destino: string | null;
   status: string;
   tentativas: number;
+  descricoes_visuais?: string[];
+  
+  // Parâmetros de conferência do produto (para validação)
+  lote_obrigatorio?: boolean;
+  bloquear_sem_lote?: boolean;
+  bloquear_sem_validade?: boolean;
+  vencimento_minimo?: number;
 }
 
 export interface Recebimento {

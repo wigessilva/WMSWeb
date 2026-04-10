@@ -816,6 +816,14 @@ export default function Recebimentos() {
                               {itensPendentesFisico.map(item => (
                                 <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
                               ))}
+                              {recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
+                                <div key={item.id} className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 text-[10px] text-blue-700">
+                                  <span className="font-black uppercase block mb-1">Identificação Visual:</span>
+                                  {item.descricoes_visuais?.map((d, idx) => (
+                                    <div key={idx} className="italic">"{d}"</div>
+                                  ))}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -857,7 +865,14 @@ export default function Recebimentos() {
                           return (
                             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                               <td className="px-4 py-3 font-medium text-[#1a63b6]">{item.sku || "---"}</td>
-                              <td className="px-4 py-3 max-w-xs truncate">{item.descricao}</td>
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-gray-900">{item.descricao}</div>
+                                {item.descricoes_visuais && item.descricoes_visuais.length > 0 && (
+                                  <div className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-1 font-bold italic border border-amber-100">
+                                    Obs: {item.descricoes_visuais.join('; ')}
+                                  </div>
+                                )}
+                              </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center space-x-2">
                                   <div className="w-full bg-gray-200 rounded-full h-2 min-w-[80px]">

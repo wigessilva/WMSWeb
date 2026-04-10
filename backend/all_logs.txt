@@ -1,0 +1,2 @@
+Total Logs: 1
+(2, 'Recebimentos', 1002, 'Liberar Conferência', 'MANUAL', 'AGUARDANDO_LIBERACAO', 'AGUARDANDO_CONFERENCIA', 'Sistema', datetime.datetime(2026, 4, 9, 22, 59, 55, 663000), None)

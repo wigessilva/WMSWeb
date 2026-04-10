@@ -1,7 +1,7 @@
 import type { ParametrosMestres, ParametrosMestresEditar } from '../types/parametrosMestres';
 
 // Pega a URL do localStorage ou usa a variável de ambiente/padrão
-const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8007';
+const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL
 
 const getHeaders = () => ({
   'Content-Type': 'application/json'

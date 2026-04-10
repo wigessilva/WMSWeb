@@ -87,5 +87,6 @@ class RecebimentoLeitura(Base):
     usuario = Column("Usuario", String(100), nullable=False)
     data = Column("Data", DateTime, default=datetime.now, nullable=False)
     ua = Column("UA", String(100), nullable=True)
+    descricao_visual = Column("DescricaoVisual", String(255), nullable=True)
 
     item = relationship("RecebimentoItem", back_populates="leituras")

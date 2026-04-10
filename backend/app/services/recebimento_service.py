@@ -319,7 +319,27 @@ class RecebimentoService:
         from app.models.ua import UA
         from app.services.ua_service import UAService
         
+        filial_id = item.destino_id or 1
+
+        # 3. Processa cada leitura bipada
+        from app.models.ua import UA
+        from app.models.unidade_produto import UnidadeProduto
+        
         for leit in dados.leituras:
+            # VALIDAÇÃO DE GTIN (EAN)
+            if leit.ean:
+                # Busca se o EAN bipado pertence a alguma unidade cadastrada para este produto
+                unidade_ean = db.query(UnidadeProduto).filter(
+                    UnidadeProduto.produto_id == item.sku,
+                    UnidadeProduto.ean == leit.ean
+                ).first()
+                
+                if not unidade_ean:
+                    raise ValueError(f"O GTIN {leit.ean} não corresponde ao produto {item.descricao}.")
+            elif not leit.descricao_visual or not leit.descricao_visual.strip():
+                # Se não tem EAN, a descrição visual é obrigatória
+                raise ValueError(f"Para itens sem código de barras, a descrição visual é obrigatória.")
+
             # Calcula a quantidade convertida para a unidade da nota
             qtd_convertida = leit.quantidade * leit.fator_conversao
             total_recebido += qtd_convertida
@@ -329,6 +349,8 @@ class RecebimentoService:
                 recebimento_item_id=item_id,
                 qtd=leit.quantidade,
                 und=leit.und,
+                ean=leit.ean,
+                descricao_visual=leit.descricao_visual,
                 usuario=usuario,
                 ua=leit.ua
             )

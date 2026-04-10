@@ -20,7 +20,6 @@ class UABase(BaseModel):
     estado: str = Field(default="Bom")
     observacoes: Optional[str] = None
 
-    # Validador de segurança
     @field_validator('estado')
     @classmethod
     def validar_estado(cls, v):
@@ -28,7 +27,10 @@ class UABase(BaseModel):
             raise ValueError("O estado da UA deve ser estritamente 'Bom' ou 'Ruim'.")
         return v
 
-    # O "Cérebro" da UA Virgem
+
+# Para a criação, não pedimos o código nem o status.
+class UACriar(UABase):
+    # O "Cérebro" da UA Virgem - Validado apenas na criação
     @model_validator(mode='after')
     def validar_dependencias_produto(self):
         # Cenário 1: UA com Produto (Precisa ter quantidade e unidade)
@@ -40,11 +42,6 @@ class UABase(BaseModel):
             if self.quantidade is not None or self.unidade_produto_id is not None or self.lote is not None:
                 raise ValueError("Uma UA virgem não pode conter quantidade, unidade, lote ou validade. Deixe esses campos vazios.")
         return self
-
-
-# Para a criação, não pedimos o código nem o status.
-class UACriar(UABase):
-    pass
 
 
 # Schema para devolução dos dados (Leitura)

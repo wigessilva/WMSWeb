@@ -35,6 +35,13 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     sku: Optional[str] = None
     produto_id: Optional[int] = None
     tentativas: int = 0
+    descricoes_visuais: List[str] = []
+    
+    # Parâmetros de conferência do produto
+    lote_obrigatorio: Optional[bool] = None
+    bloquear_sem_lote: Optional[bool] = None
+    bloquear_sem_validade: Optional[bool] = None
+    vencimento_minimo: Optional[int] = None
 
     @model_validator(mode='before')
     @classmethod
@@ -42,10 +49,24 @@ class RecebimentoItemSchema(RecebimentoItemBase):
         if not isinstance(data, dict) and hasattr(data, "__table__"):
             produto = getattr(data, 'produto', None)
             sku_real = produto.sku if produto else None
+            
+            # Pega as descrições visuais únicas de todas as leituras
+            leituras = getattr(data, 'leituras', [])
+            desc_visuais = list(set([l.descricao_visual for l in leituras if getattr(l, 'descricao_visual', None)]))
+
             # Copia os campos do ORM, filtrando nomes internos do SQLAlchemy
             ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
             ret['sku'] = sku_real
             ret['produto_id'] = getattr(data, 'sku', None) # No banco o campo Sku é o ID
+            ret['descricoes_visuais'] = desc_visuais
+
+            # Adiciona os parâmetros do produto para validação no frontend
+            if produto:
+                ret['lote_obrigatorio'] = getattr(produto, 'lote_obrigatorio', None)
+                ret['bloquear_sem_lote'] = getattr(produto, 'bloquear_sem_lote', None)
+                ret['bloquear_sem_validade'] = getattr(produto, 'bloquear_sem_validade', None)
+                ret['vencimento_minimo'] = getattr(produto, 'vencimento_minimo', None)
+            
             return ret
         return data
 
@@ -90,6 +111,8 @@ class ConferenciaItemLeitura(BaseModel):
     lote: Optional[str] = None
     data_validade: Optional[str] = None
     und: str # Sigla da unidade usada no momento do bipe
+    ean: Optional[str] = None
+    descricao_visual: Optional[str] = None
 
 class ConclusaoItemSchema(BaseModel):
     tentativas: int

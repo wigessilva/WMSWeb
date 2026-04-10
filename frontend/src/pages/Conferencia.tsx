@@ -23,7 +23,7 @@ export default function Conferencia() {
   // Estados de Navegação
   const [itemAtualIndex, setItemAtualIndex] = useState(0);
   const [uaAtualIndex, setUaAtualIndex] = useState(0);
-  
+
   // Mapeamento de UAs bipadas por Item ID
   const [uasPorItem, setUasPorItem] = useState<Record<number, UA[]>>({});
 
@@ -98,7 +98,7 @@ export default function Conferencia() {
     setValidandoUA(true);
     try {
       const uaValida = await uaService.buscarPorCodigo(codigoUA.trim().toUpperCase());
-      
+
       const itemAtual = recebimento?.itens[itemAtualIndex];
       if (!itemAtual) return;
 
@@ -107,14 +107,15 @@ export default function Conferencia() {
       const unidadePadrao = unidades[0];
 
       // Adiciona a UA ao item atual
-      const novaUa = { 
-        ...uaValida, 
-        sku: itemAtual.sku, 
+      const novaUa = {
+        ...uaValida,
+        sku: itemAtual.sku,
         produto_id: itemAtual.produto_id,
         fator_conversao: unidadePadrao?.fator_conversao || 1,
-        unidade_medida_id: unidadePadrao?.unidade_medida_id
-      }; 
-      
+        unidade_medida_id: unidadePadrao?.unidade_medida_id,
+        unidade_produto_id: unidadePadrao?.id
+      };
+
       const novasUasDoItem = [...(uasPorItem[itemAtual.id] || []), novaUa];
       setUasPorItem(prev => ({
         ...prev,
@@ -195,11 +196,11 @@ export default function Conferencia() {
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans p-4">
       <main className="flex-1 max-w-lg mx-auto w-full flex flex-col justify-start">
         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden border border-gray-200 flex-1 flex flex-col animate-in fade-in zoom-in-95 duration-500">
-          
+
           {/* CABEÇALHO INTERNO DO DISPOSITIVO */}
           <div className="bg-[#1e3a8a] text-white p-6 pb-4 shadow-lg z-10">
             <div className="flex justify-between items-center mb-6">
-              <button 
+              <button
                 onClick={() => navigate('/atividades', { replace: true })}
                 className="text-white/70 hover:text-white transition-all transform hover:scale-110"
               >
@@ -217,12 +218,12 @@ export default function Conferencia() {
             <div className="grid grid-cols-2 gap-3">
               {/* Navegação de Item */}
               <div className="bg-blue-900/40 rounded-2xl p-3 flex items-center justify-between border border-blue-400/20">
-                <button 
+                <button
                   onClick={anteriorItem}
                   disabled={itemAtualIndex === 0}
                   className="p-1 hover:bg-white/10 rounded-full disabled:opacity-10 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" /></svg>
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="text-[8px] text-blue-200 font-black uppercase tracking-widest leading-none mb-1">SKU</span>
@@ -230,23 +231,23 @@ export default function Conferencia() {
                     {itemAtualIndex + 1}<span className="text-blue-400 mx-1 text-sm font-normal">/</span>{recebimento?.itens.length || 0}
                   </span>
                 </div>
-                <button 
+                <button
                   onClick={proximoItem}
                   disabled={!recebimento || itemAtualIndex === recebimento.itens.length - 1}
                   className="p-1 hover:bg-white/10 rounded-full disabled:opacity-10 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" /></svg>
                 </button>
               </div>
 
               {/* Navegação de UA */}
               <div className="bg-blue-900/40 rounded-2xl p-3 flex items-center justify-between border border-blue-400/20">
-                <button 
+                <button
                   onClick={anteriorUA}
                   disabled={uaAtualIndex === 0}
                   className="p-1 hover:bg-white/10 rounded-full disabled:opacity-10 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" /></svg>
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="text-[8px] text-blue-200 font-black uppercase tracking-widest leading-none mb-1">UA</span>
@@ -254,12 +255,12 @@ export default function Conferencia() {
                     {uasDoItem.length > 0 ? uaAtualIndex + 1 : 0}<span className="text-blue-400 mx-1 text-sm font-normal">/</span>{uasDoItem.length}
                   </span>
                 </div>
-                <button 
+                <button
                   onClick={proximaUA}
                   disabled={uaAtualIndex === uasDoItem.length - 1 || uasDoItem.length === 0}
                   className="p-1 hover:bg-white/10 rounded-full disabled:opacity-10 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" /></svg>
                 </button>
               </div>
             </div>
@@ -285,7 +286,7 @@ export default function Conferencia() {
 
                 <form onSubmit={handleBiparUA} className="w-full">
                   <div className="relative">
-                    <input 
+                    <input
                       ref={inputUARef}
                       type="text"
                       value={codigoUA}
@@ -307,7 +308,7 @@ export default function Conferencia() {
                 </form>
 
                 <div className="flex-1"></div>
-                
+
                 <div className="w-full h-1 bg-gray-100 rounded-full opacity-50"></div>
               </div>
             ) : (
@@ -315,7 +316,7 @@ export default function Conferencia() {
                 {/* SUB-HEADER DA UA ATUAL */}
                 <div className="bg-blue-50 px-6 py-4 flex justify-between items-center border-b border-blue-100">
                   <div className="text-2xl font-black text-[#1e3a8a] tracking-widest">{uaAtual?.ua}</div>
-                  <button 
+                  <button
                     onClick={() => setStep('BIPAR_UA')}
                     className="bg-[#1e3a8a] text-white text-[10px] px-3 py-1.5 font-black uppercase rounded-lg hover:bg-blue-900 transition-colors shadow-md"
                   >
@@ -343,7 +344,7 @@ export default function Conferencia() {
                   <div className="space-y-6">
                     <div className="relative">
                       <label className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] block mb-2 pl-2">Quantidade</label>
-                      <input 
+                      <input
                         type="number"
                         className="w-full bg-white border-4 border-blue-50 rounded-[1.5rem] p-5 text-4xl font-black text-blue-700 shadow-inner focus:border-blue-500 focus:outline-none transition-all"
                         value={uaAtual?.quantidade || ''}
@@ -360,7 +361,7 @@ export default function Conferencia() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="relative">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Lote</label>
-                        <input 
+                        <input
                           type="text"
                           className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all uppercase"
                           value={uaAtual?.lote || ''}
@@ -374,7 +375,7 @@ export default function Conferencia() {
                       </div>
                       <div className="relative">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Unidade</label>
-                        <select 
+                        <select
                           className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all appearance-none"
                           value={uaAtual?.unidade_medida_id || ''}
                           onChange={(e) => {
@@ -382,10 +383,11 @@ export default function Conferencia() {
                             const undObj = (unidadesCache[itemAtual!.produto_id!] || []).find(u => u.unidade_medida_id === undId);
                             if (undObj) {
                               const novasUas = [...uasDoItem];
-                              novasUas[uaAtualIndex] = { 
-                                ...uaAtual, 
-                                unidade_medida_id: undId, 
-                                fator_conversao: undObj.fator_conversao 
+                              novasUas[uaAtualIndex] = {
+                                ...uaAtual,
+                                unidade_medida_id: undId,
+                                fator_conversao: undObj.fator_conversao,
+                                unidade_produto_id: undObj.id
                               };
                               setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
                             }
@@ -398,45 +400,163 @@ export default function Conferencia() {
                           ))}
                         </select>
                       </div>
+                      <div className="relative">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Validade</label>
+                        <input
+                          type="text"
+                          placeholder="DD/MM/AAAA"
+                          className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
+                          value={uaAtual?.data_validade || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const novasUas = [...uasDoItem];
+                            novasUas[uaAtualIndex] = { ...uaAtual, data_validade: val };
+                            setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                          }}
+                        />
+                      </div>
                     </div>
 
-                    <div className="relative">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Validade</label>
-                      <input 
-                        type="text"
-                        placeholder="DD/MM/AAAA"
-                        className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
-                        value={uaAtual?.data_validade || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const novasUas = [...uasDoItem];
-                          novasUas[uaAtualIndex] = { ...uaAtual, data_validade: val };
-                          setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
-                        }}
-                      />
+                    {/* SEÇÃO DE IDENTIFICAÇÃO DO PRODUTO */}
+                    <div className="bg-white border-2 border-blue-50 rounded-[2rem] p-6 space-y-4 shadow-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Identificação</label>
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-tight group-hover:text-blue-800 transition-colors">Sem GTIN?</span>
+                          <input
+                            type="checkbox"
+                            className="w-5 h-5 rounded-lg border-2 border-blue-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            checked={!!uaAtual?.sem_gtin}
+                            onChange={(e) => {
+                              const val = e.target.checked;
+                              const novasUas = [...uasDoItem];
+                              novasUas[uaAtualIndex] = {
+                                ...uaAtual,
+                                sem_gtin: val,
+                                ean: val ? '' : (uaAtual.ean || ''),
+                                descricao_visual: val ? (uaAtual.descricao_visual || '') : ''
+                              };
+                              setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="relative">
+                          {!uaAtual?.sem_gtin ? (
+                            <input
+                              type="text"
+                              placeholder="BIPE OU DIGITE O GTIN"
+                              className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200"
+                              value={uaAtual?.ean || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const novasUas = [...uasDoItem];
+                                novasUas[uaAtualIndex] = { ...uaAtual, ean: val };
+                                setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                              }}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="DESCRIÇÃO VISUAL"
+                              className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200 animate-in fade-in zoom-in-95 duration-300"
+                              value={uaAtual?.descricao_visual || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const novasUas = [...uasDoItem];
+                                novasUas[uaAtualIndex] = { ...uaAtual, descricao_visual: val };
+                                setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* AÇÃO FINAL DA TELA */}
                 <div className="p-8 bg-gray-50 border-t border-gray-100">
-                  <Button 
-                    variant="primary" 
+                  <Button
+                    variant="primary"
                     className="w-full py-6 text-2xl font-black uppercase tracking-widest rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
                     loading={finalizando}
                     onClick={async () => {
                       if (!itemAtual) return;
-                      
+
+                      // VALIDAÇÃO DE IDENTIFICAÇÃO
+                      const identificacaoIncompleta = uasDoItem.some(u => !u.ean && !u.descricao_visual);
+                      if (identificacaoIncompleta) {
+                        toast.error("Código de barras inválido!", {
+                          style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
+                        });
+                        return;
+                      }
+
+                      // VALIDAÇÃO DE LOTE E VALIDADE OBRIGATÓRIOS
+                      const loteObrigatorio = itemAtual.lote_obrigatorio || itemAtual.bloquear_sem_lote;
+                      const validadeObrigatoria = itemAtual.bloquear_sem_validade;
+
+                      for (const ua of uasDoItem) {
+                        if (loteObrigatorio && (!ua.lote || !ua.lote.trim())) {
+                          toast.error("Lote obrigatório para este produto!", {
+                            style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
+                          });
+                          return;
+                        }
+                        if (validadeObrigatoria && (!ua.data_validade || !ua.data_validade.trim())) {
+                          toast.error("Validade obrigatória para este produto!", {
+                            style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
+                          });
+                          return;
+                        }
+                      }
+
+                      let statusFinal = 'CONFERIDO';
+
+                      // VALIDAÇÃO DE VENCIMENTO MÍNIMO
+                      if (itemAtual.vencimento_minimo) {
+                        let temVencimentoCurto = false;
+                        for (const ua of uasDoItem) {
+                          if (ua.data_validade) {
+                            try {
+                              const parts = ua.data_validade.split('/');
+                              if (parts.length === 3) {
+                                const dataVal = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                                const hoje = new Date();
+                                hoje.setHours(0, 0, 0, 0);
+                                const diffTime = dataVal.getTime() - hoje.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                if (diffDays < itemAtual.vencimento_minimo) {
+                                  temVencimentoCurto = true;
+                                  break;
+                                }
+                              }
+                            } catch (e) {
+                              console.error("Erro ao validar data:", e);
+                            }
+                          }
+                        }
+
+                        if (temVencimentoCurto) {
+                          const prosseguir = window.confirm(`Atenção: Este produto possui volumes com vencimento abaixo do mínimo permitido (${itemAtual.vencimento_minimo} dias). Deseja finalizar assim mesmo enviando para ANÁLISE DO FISCAL?`);
+                          if (!prosseguir) return;
+                          statusFinal = 'DIVERGENTE';
+                        }
+                      }
+
                       const totalBipado = uasDoItem.reduce((acc, curr: any) => acc + (Number(curr.quantidade) || 0) * (curr.fator_conversao || 1), 0);
-                      
+
                       // Busca o fator da unidade da NA nota para comparar na base comum
                       const unidadesProdComp = unidadesCache[itemAtual.produto_id!] || [];
                       const undNota = unidadesProdComp.find(u => u.unidade_medida_relacao?.sigla === itemAtual.und);
                       const fatorNota = undNota?.fator_conversao || 1;
                       const qtdEsperadaBase = itemAtual.qtd_nota * fatorNota;
 
-                      let statusFinal = 'CONFERIDO';
-                      if (Math.abs(totalBipado - qtdEsperadaBase) > 0.01) {
+                      if (statusFinal !== 'DIVERGENTE' && Math.abs(totalBipado - qtdEsperadaBase) > 0.01) {
                         const tentsRestantes = (tentativasPorItem[itemAtual.id] || 3) - 1;
                         if (tentsRestantes > 0) {
                           setTentativasPorItem(prev => ({ ...prev, [itemAtual.id]: tentsRestantes }));
@@ -464,6 +584,8 @@ export default function Conferencia() {
                             fator_conversao: u.fator_conversao || 1,
                             lote: u.lote || null,
                             data_validade: u.data_validade || null,
+                            ean: u.ean || null,
+                            descricao_visual: u.descricao_visual || null,
                             und: (unidadesCache[itemAtual.produto_id!] || []).find(und => und.unidade_medida_id === u.unidade_medida_id)?.unidade_medida_relacao?.sigla || itemAtual.und
                           }))
                         };
@@ -479,7 +601,7 @@ export default function Conferencia() {
                         const itemAtualizado = await response.json();
 
                         toast.success(statusFinal === 'CONFERIDO' ? "Item Conferido com Sucesso!" : "Item Finalizado com Divergência");
-                        
+
                         // Atualiza o estado local para que o findIndex veja o novo status
                         let proximosItens = recebimento?.itens || [];
                         if (recebimento) {
@@ -493,7 +615,7 @@ export default function Conferencia() {
                         }
 
                         // Busca o próximo item pendente usando a lista atualizada
-                        const indexProximo = proximosItens.findIndex((it, idx) => 
+                        const indexProximo = proximosItens.findIndex((it, idx) =>
                           idx > itemAtualIndex && (it.status === 'AGUARDANDO_CONFERENCIA' || it.status === 'EM_CONFERENCIA')
                         );
 
@@ -504,7 +626,7 @@ export default function Conferencia() {
                           setUasPorItem(prev => ({ ...prev, [itemAtual.id]: [] })); // Limpa localmente as leituras do item finalizado
                         } else {
                           // Se não achou depois do atual, tenta do começo
-                          const indexVolta = proximosItens.findIndex((it) => 
+                          const indexVolta = proximosItens.findIndex((it) =>
                             (it.status === 'AGUARDANDO_CONFERENCIA' || it.status === 'EM_CONFERENCIA') && it.id !== itemAtual.id
                           );
                           if (indexVolta !== -1) {
@@ -527,7 +649,7 @@ export default function Conferencia() {
                   >
                     Finalizar
                   </Button>
-                  <button 
+                  <button
                     onClick={() => {
                       const novasUas = uasDoItem.filter((_, i) => i !== uaAtualIndex);
                       setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));

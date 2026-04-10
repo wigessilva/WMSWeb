@@ -40,7 +40,7 @@ class UA(Base):
 
     # Qualidade e Status de Ciclo de Vida
     estado = Column("Estado", String(10), default="Bom", nullable=False)
-    status = Column("Status", String(20), default="Gerada", nullable=False)
+    status = Column("Status", String(50), default="Gerada", nullable=False)
     observacoes = Column("Observacoes", String(255), nullable=True)
 
     # Auditoria Padrão ACID
