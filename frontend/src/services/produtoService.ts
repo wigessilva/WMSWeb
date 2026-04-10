@@ -43,5 +43,11 @@ export const produtoService = {
     });
     if (!response.ok) throw new Error('Erro ao atualizar a unidade');
     return response.json();
+  },
+  
+  listarUnidades: async (produtoId: number) => {
+    const response = await fetch(`${getBaseUrl()}/produtos/${produtoId}/unidades`, { headers: getHeaders() });
+    if (!response.ok) throw new Error('Erro ao buscar unidades do produto');
+    return response.json();
   }
 };

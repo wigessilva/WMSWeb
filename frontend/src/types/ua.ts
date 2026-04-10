@@ -10,6 +10,8 @@ export interface UA {
   data_validade?: string | null;
   quantidade?: number | null;
   unidade_produto_id?: number | null;
+  fator_conversao?: number | null;
+  unidade_medida_id?: number | null;
   endereco_id?: number | null;
   largura?: number | null;
   comprimento?: number | null;

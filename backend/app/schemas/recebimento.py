@@ -33,6 +33,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     id: int
     recebimento_id: int
     sku: Optional[str] = None
+    produto_id: Optional[int] = None
 
     @model_validator(mode='before')
     @classmethod
@@ -43,6 +44,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             # Copia os campos do ORM, filtrando nomes internos do SQLAlchemy
             ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
             ret['sku'] = sku_real
+            ret['produto_id'] = getattr(data, 'sku', None) # No banco o campo Sku é o ID
             return ret
         return data
 

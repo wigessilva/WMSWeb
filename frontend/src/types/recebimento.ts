@@ -26,6 +26,7 @@ export interface RecebimentoItem {
   id: number;
   recebimento_id: number;
   sku: string | null;
+  produto_id: number | null;
   codigo_fornecedor: string | null;
   descricao: string;
   qtd_nota: number;

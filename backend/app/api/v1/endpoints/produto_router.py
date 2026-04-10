@@ -69,3 +69,10 @@ def editar_unidade_produto(unidade_id: int, dados: UnidadeProdutoEditar, db: Ses
     if not unidade:
         raise HTTPException(status_code=404, detail="Unidade não encontrada")
     return unidade
+
+@router.get("/{produto_id}/unidades", response_model=list[UnidadeProdutoSchema])
+def listar_unidades_produto(produto_id: int, db: Session = Depends(get_db)):
+    produto = ProdutoService.buscar_por_id(db, produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    return produto.unidades

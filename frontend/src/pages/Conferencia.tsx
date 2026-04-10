@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { recebimentoService } from '../services/recebimentoService';
 import { uaService } from '../services/uaService';
+import { produtoService } from '../services/produtoService';
 import { Button } from '../components/Button';
 import { toast } from 'react-hot-toast';
 import type { Recebimento } from '../types/recebimento';
@@ -29,6 +30,9 @@ export default function Conferencia() {
   // Estado da Bipagem Atual
   const [codigoUA, setCodigoUA] = useState('');
   const [validandoUA, setValidandoUA] = useState(false);
+
+  // Cache de unidades por produto_id
+  const [unidadesCache, setUnidadesCache] = useState<Record<number, any[]>>({});
 
   useEffect(() => {
     async function carregarDados() {
@@ -59,6 +63,24 @@ export default function Conferencia() {
     }
   }, [step]);
 
+  // Carregamento de unidades em cache (Lazy Loading)
+  useEffect(() => {
+    async function carregarUnidades() {
+      const item = recebimento?.itens[itemAtualIndex];
+      if (!item || !item.produto_id) return;
+
+      if (!unidadesCache[item.produto_id]) {
+        try {
+          const unidades = await produtoService.listarUnidades(item.produto_id);
+          setUnidadesCache(prev => ({ ...prev, [item.produto_id!]: unidades }));
+        } catch (error) {
+          console.error("Erro ao buscar unidades:", error);
+        }
+      }
+    }
+    carregarUnidades();
+  }, [itemAtualIndex, recebimento, unidadesCache]);
+
   const handleBiparUA = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!codigoUA.trim() || validandoUA) return;
@@ -70,8 +92,18 @@ export default function Conferencia() {
       const itemAtual = recebimento?.itens[itemAtualIndex];
       if (!itemAtual) return;
 
-      // Adiciona a UA ao item atual (mantendo o SKU do item atual para a UA conferida)
-      const novaUa = { ...uaValida, sku: itemAtual.sku, produto_id: itemAtual.id }; // Simplified mapping
+      // Pega a unidade padrão (primeira da lista)
+      const unidades = unidadesCache[itemAtual.produto_id!] || [];
+      const unidadePadrao = unidades[0];
+
+      // Adiciona a UA ao item atual
+      const novaUa = { 
+        ...uaValida, 
+        sku: itemAtual.sku, 
+        produto_id: itemAtual.produto_id,
+        fator_conversao: unidadePadrao?.fator_conversao || 1,
+        unidade_medida_id: unidadePadrao?.unidade_medida_id
+      }; 
       
       const novasUasDoItem = [...(uasPorItem[itemAtual.id] || []), novaUa];
       setUasPorItem(prev => ({
@@ -79,7 +111,7 @@ export default function Conferencia() {
         [itemAtual.id]: novasUasDoItem
       }));
 
-      // Muda para a tela de conferência focada nesta UA (a última bipada)
+      // Muda para a tela de conferência focada nesta UA
       setUaAtualIndex(novasUasDoItem.length - 1);
       setStep('CONFERENCIA');
       setCodigoUA('');
@@ -285,7 +317,7 @@ export default function Conferencia() {
                     <div className="bg-emerald-600 text-white p-5 rounded-[2rem] shadow-lg shadow-emerald-200">
                       <label className="text-[9px] font-black uppercase tracking-widest block opacity-70 mb-1">Total Bipado</label>
                       <div className="text-3xl font-black">
-                        {uasDoItem.reduce((acc, curr) => acc + (curr.quantidade || 0), 0)}
+                        {uasDoItem.reduce((acc, curr: any) => acc + (curr.quantidade || 0) * (curr.fator_conversao || 1), 0)}
                         <span className="text-xs ml-1 opacity-50 uppercase">{itemAtual?.und}</span>
                       </div>
                     </div>
@@ -324,20 +356,47 @@ export default function Conferencia() {
                         />
                       </div>
                       <div className="relative">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Validade</label>
-                        <input 
-                          type="text"
-                          placeholder="DD/MM/AAAA"
-                          className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
-                          value={uaAtual?.data_validade || ''}
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Unidade</label>
+                        <select 
+                          className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all appearance-none"
+                          value={uaAtual?.unidade_medida_id || ''}
                           onChange={(e) => {
-                            const val = e.target.value;
-                            const novasUas = [...uasDoItem];
-                            novasUas[uaAtualIndex] = { ...uaAtual, data_validade: val };
-                            setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                            const undId = Number(e.target.value);
+                            const undObj = (unidadesCache[itemAtual!.produto_id!] || []).find(u => u.unidade_medida_id === undId);
+                            if (undObj) {
+                              const novasUas = [...uasDoItem];
+                              novasUas[uaAtualIndex] = { 
+                                ...uaAtual, 
+                                unidade_medida_id: undId, 
+                                fator_conversao: undObj.fator_conversao 
+                              };
+                              setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                            }
                           }}
-                        />
+                        >
+                          {(unidadesCache[itemAtual?.produto_id!] || []).map(und => (
+                            <option key={und.id} value={und.unidade_medida_id}>
+                              {und.unidade_medida_relacao?.sigla}
+                            </option>
+                          ))}
+                        </select>
                       </div>
+                    </div>
+
+                    <div className="relative">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Validade</label>
+                      <input 
+                        type="text"
+                        placeholder="DD/MM/AAAA"
+                        className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
+                        value={uaAtual?.data_validade || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const novasUas = [...uasDoItem];
+                          novasUas[uaAtualIndex] = { ...uaAtual, data_validade: val };
+                          setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
