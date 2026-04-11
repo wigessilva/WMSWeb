@@ -382,6 +382,7 @@ class RecebimentoService:
                 fator_conversao=leit.fator_conversao,
                 status="Aguardando Armazenamento",
                 estado="Bom",
+                descricao_visual=leit.descricao_visual,
                 criado_por=usuario
             )
             # Se a UA já existe (bipada como UA virgem), atualizamos. Senão, criamos.
@@ -394,6 +395,7 @@ class RecebimentoService:
                 ua_existente.unidade_produto_id = nova_ua_obj.unidade_produto_id
                 ua_existente.fator_conversao = nova_ua_obj.fator_conversao
                 ua_existente.status = nova_ua_obj.status
+                ua_existente.descricao_visual = nova_ua_obj.descricao_visual
                 ua_existente.atualizado_por = usuario
             else:
                 db.add(nova_ua_obj)

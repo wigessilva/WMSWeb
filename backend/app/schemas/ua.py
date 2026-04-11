@@ -18,6 +18,7 @@ class UABase(BaseModel):
     altura: Optional[float] = None
 
     estado: str = Field(default="Bom")
+    descricao_visual: Optional[str] = None
     observacoes: Optional[str] = None
 
     @field_validator('estado')

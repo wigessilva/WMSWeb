@@ -60,12 +60,21 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             ret['produto_id'] = getattr(data, 'sku', None) # No banco o campo Sku é o ID
             ret['descricoes_visuais'] = desc_visuais
 
-            # Adiciona os parâmetros do produto para validação no frontend
+            # Adiciona os parâmetros do produto para validação no frontend (com herança da família)
             if produto:
-                ret['lote_obrigatorio'] = getattr(produto, 'lote_obrigatorio', None)
-                ret['bloquear_sem_lote'] = getattr(produto, 'bloquear_sem_lote', None)
-                ret['bloquear_sem_validade'] = getattr(produto, 'bloquear_sem_validade', None)
-                ret['vencimento_minimo'] = getattr(produto, 'vencimento_minimo', None)
+                fam = produto.familia_relacao
+                
+                def get_param(name):
+                    # Tenta no produto, se for None, tenta na família
+                    val = getattr(produto, name, None)
+                    if val is None and fam:
+                        val = getattr(fam, name, None)
+                    return val
+
+                ret['lote_obrigatorio'] = get_param('lote_obrigatorio')
+                ret['bloquear_sem_lote'] = get_param('bloquear_sem_lote')
+                ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade')
+                ret['vencimento_minimo'] = get_param('vencimento_minimo')
             
             return ret
         return data
