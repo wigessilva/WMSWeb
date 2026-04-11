@@ -116,7 +116,10 @@ class UAService:
 
     @staticmethod
     def buscar_por_codigo(db: Session, ua_codigo: str):
-        ua = db.query(UA).filter(UA.ua == ua_codigo).options(joinedload(UA.produto)).first()
+        ua = db.query(UA).filter(
+            UA.ua == ua_codigo,
+            UA.status != 'ESTORNADA'
+        ).options(joinedload(UA.produto)).first()
         if not ua:
             return None
         
@@ -129,7 +132,7 @@ class UAService:
 
     @staticmethod
     def listar_todas(db: Session):
-        uas = db.query(UA).options(joinedload(UA.produto)).all()
+        uas = db.query(UA).filter(UA.status != 'ESTORNADA').options(joinedload(UA.produto)).all()
         # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema
         resultado = []
         for ua in uas:

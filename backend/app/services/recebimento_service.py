@@ -509,11 +509,18 @@ class RecebimentoService:
         ua_ids = [u[0] for u in uas_para_remover]
 
         if ua_ids:
-            # Remove o histórico primeiro (Auditoria do estoque físico)
-            db.query(HistoricoUA).filter(HistoricoUA.ua_id.in_(ua_ids)).delete(synchronize_session=False)
+            # SOFT DELETE: Mudamos o status para ESTORNADA em vez de excluir fisicamente
+            db.query(UA).filter(UA.id.in_(ua_ids)).update({"status": "ESTORNADA"}, synchronize_session=False)
             
-            # Remove as UAs
-            db.query(UA).filter(UA.id.in_(ua_ids)).delete(synchronize_session=False)
+            # Registra o evento de estorno no histórico de cada UA
+            for uid in ua_ids:
+                hist = HistoricoUA(
+                    ua_id=uid,
+                    tipo_acao="ESTORNO_RECONFERENCIA",
+                    observacoes=f"UA cancelada para reconferência (Motivo: {motivo or 'Não informado'})",
+                    criado_por=usuario
+                )
+                db.add(hist)
 
         # 4. Reseta as quantidades do item para a nova sessão
         item.qtd_recebida = 0.0
@@ -722,8 +729,20 @@ class RecebimentoService:
         )
         db.add(estorno)
 
-        # Deleta a UA física (Limpeza de estoque conforme solicitado)
-        db.query(UA).filter(UA.ua == ua_codigo).delete()
+        # Soft delete da UA física (Estorno) em vez de exclusão física
+        ua_obj = db.query(UA).filter(UA.ua == ua_codigo).first()
+        if ua_obj:
+            ua_obj.status = "ESTORNADA"
+            
+            # Log de estorno manual no histórico da UA
+            from app.models.historico_ua import HistoricoUA
+            hist = HistoricoUA(
+                ua_id=ua_obj.id,
+                tipo_acao="ESTORNO_MANUAL",
+                observacoes=f"Estorno manual solicitado pelo conferente {usuario}",
+                criado_por=usuario
+            )
+            db.add(hist)
 
         db.flush()
         # Recalcula qtd_recebida do item

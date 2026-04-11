@@ -1019,7 +1019,7 @@ export default function Recebimentos() {
                 </svg>
                 Atenção
               </div>
-              Ao confirmar a reconferência, todas as UAs já utilizadas serão excluídas permanentemente.
+              Ao confirmar a reconferência, todas as UAs utilizadas serão excluídas permanentemente.
             </div>
 
             <div>
