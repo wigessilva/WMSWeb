@@ -65,6 +65,7 @@ export interface Recebimento {
   conclusao: string | null;
   status: string;
   divergencia_financeira?: string | null;
+  dentro_da_tolerancia?: boolean;
   criado_em: string;
   itens: RecebimentoItem[];
 }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -21,6 +21,7 @@ class Recebimento(Base):
 
     status = Column("Status", String(50), default="Importado", nullable=False)
     divergencia_financeira = Column("DivergenciaFinanceira", String(1000), nullable=True)
+    dentro_da_tolerancia = Column("DentroDaTolerancia", Boolean, default=False, nullable=False)
 
     # Auditoria
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

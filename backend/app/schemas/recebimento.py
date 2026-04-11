@@ -91,6 +91,7 @@ class RecebimentoBase(BaseModel):
     autorizado_por: Optional[str] = None
     autorizado_em: Optional[datetime] = None
     divergencia_financeira: Optional[str] = None
+    dentro_da_tolerancia: bool = False
     status: StatusRecebimento = StatusRecebimento.IMPORTADO
 
 class AutorizacaoPayload(BaseModel):

@@ -796,13 +796,14 @@ export default function Recebimentos() {
                           </div>
                           <h4 className="font-bold text-gray-700">Financeiro</h4>
                         </div>
-                        <div className={`text-sm font-bold ${isFinanceiroOK ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-sm font-bold ${recebimentoSelecionado.dentro_da_tolerancia ? 'text-green-600' : (isFinanceiroOK ? 'text-green-600' : 'text-red-600')}`}>
                           {!recebimentoSelecionado.oc ? 'OC Não Localizada' : 
                            recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' : 
+                           recebimentoSelecionado.dentro_da_tolerancia ? 'Preços dentro da tolerância' : 
                            'OC ' + recebimentoSelecionado.oc}
                         </div>
                         {recebimentoSelecionado.divergencia_financeira && (
-                          <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-[10px] text-red-700 font-medium">
+                          <div className={`mt-2 p-2 ${recebimentoSelecionado.dentro_da_tolerancia ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'} border rounded text-[10px] font-medium`}>
                             {recebimentoSelecionado.divergencia_financeira.split(' | ').map((d, idx) => (
                               <div key={idx} className="mb-0.5">• {d}</div>
                             ))}

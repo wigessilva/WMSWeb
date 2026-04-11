@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
 from datetime import datetime
 from ..db.database import Base
 
@@ -22,6 +22,10 @@ class ParametrosMestres(Base):
     bloquear_reprovado = Column("BloquearReprovado", Boolean, default=True, nullable=False)
     bloquear_sem_validade = Column("BloquearSemValidade", Boolean, default=False, nullable=False)
     bloquear_sem_lote = Column("BloquearSemLote", Boolean, default=False, nullable=False)
+
+    # PARÂMETROS DE RECEBIMENTO
+    tolerancia_financeira_tipo = Column("ToleranciaFinanceiraTipo", String(20), default="VALOR", nullable=False)  # VALOR ou PORCENTAGEM
+    tolerancia_financeira_valor = Column("ToleranciaFinanceiraValor", Float, default=0.0, nullable=False)
 
     # AUDITORIA E CONCORRÊNCIA (Padrão ACID)
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

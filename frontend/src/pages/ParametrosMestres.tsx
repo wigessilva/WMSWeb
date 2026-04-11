@@ -23,6 +23,9 @@ export default function ParametrosMestres() {
   const [bloquearSemLote, setBloquearSemLote] = useState(false)
   const [bloquearReprovado, setBloquearReprovado] = useState(true)
 
+  const [toleranciaTipo, setToleranciaTipo] = useState("VALOR")
+  const [toleranciaValor, setToleranciaValor] = useState(0)
+
   const [modalExcecoesAberto, setModalExcecoesAberto] = useState(false)
   const [abaExcecao, setAbaExcecao] = useState<'validade' | 'lote' | 'bloqueios' | 'giro' | 'todas'>('todas')
   const [verTipoExcecao, setVerTipoExcecao] = useState<'produtos' | 'familias'>('produtos')
@@ -45,6 +48,8 @@ export default function ParametrosMestres() {
         setBloquearReprovado(dados.bloquear_reprovado ?? true)
         setBloquearSemValidade(dados.bloquear_sem_validade ?? false)
         setBloquearSemLote(dados.bloquear_sem_lote ?? false)
+        setToleranciaTipo(dados.tolerancia_financeira_tipo || "VALOR")
+        setToleranciaValor(dados.tolerancia_financeira_valor || 0)
       }
     } catch (error) {
       console.error("Erro ao carregar parâmetros:", error)
@@ -271,7 +276,9 @@ export default function ParametrosMestres() {
         bloquear_vencido: bloquearVencido,
         bloquear_reprovado: bloquearReprovado,
         bloquear_sem_validade: bloquearSemValidade,
-        bloquear_sem_lote: bloquearSemLote
+        bloquear_sem_lote: bloquearSemLote,
+        tolerancia_financeira_tipo: toleranciaTipo,
+        tolerancia_financeira_valor: toleranciaValor
       })
       toast.success("Parâmetros mestres atualizados com sucesso!")
     } catch (error) {
@@ -412,6 +419,44 @@ export default function ParametrosMestres() {
                 </span>
               </label>
             )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <h2 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-3 mb-5">
+          Recebimento
+        </h2>
+
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tolerância Financeira (Preço Unitário)</label>
+              <div className="flex space-x-2">
+                <select
+                  value={toleranciaTipo}
+                  onChange={(e) => setToleranciaTipo(e.target.value)}
+                  className="w-1/3 border border-gray-300 p-2.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                >
+                  <option value="VALOR">R$ (Valor)</option>
+                  <option value="PORCENTAGEM">% (Porcentagem)</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={toleranciaValor}
+                  onChange={(e) => setToleranciaValor(Number(e.target.value))}
+                  className="w-2/3 border border-gray-300 p-2.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  placeholder="Ex: 0.50 ou 5"
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-500 italic">
+                {toleranciaTipo === 'VALOR' 
+                  ? "Diferenças de até R$ " + toleranciaValor.toFixed(2) + " por unidade não bloquearão o recebimento."
+                  : "Diferenças de até " + toleranciaValor + "% no preço unitário não bloquearão o recebimento."
+                }
+              </p>
+            </div>
           </div>
         </div>
       </div>

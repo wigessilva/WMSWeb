@@ -7,6 +7,8 @@ export interface ParametrosMestres {
   bloquear_reprovado: boolean;
   bloquear_sem_validade: boolean;
   bloquear_sem_lote: boolean;
+  tolerancia_financeira_tipo: string;
+  tolerancia_financeira_valor: number;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -19,4 +21,6 @@ export interface ParametrosMestresEditar {
   bloquear_reprovado?: boolean;
   bloquear_sem_validade?: boolean;
   bloquear_sem_lote?: boolean;
+  tolerancia_financeira_tipo?: string;
+  tolerancia_financeira_valor?: number;
 }

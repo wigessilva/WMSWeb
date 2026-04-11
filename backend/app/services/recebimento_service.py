@@ -165,6 +165,7 @@ class RecebimentoService:
     # # # AÇÕES MANUAIS DE GESTÃO E AUDITORIA # # #
     @staticmethod
     def _validar_divergencia_precos(db: Session, db_erp: Session, recebimento_id: int):
+        from app.models.parametros_mestres import ParametrosMestres
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento or not recebimento.oc:
             return None
@@ -175,7 +176,14 @@ class RecebimentoService:
         if not itens_oc:
             return None
 
+        # Busca parâmetros mestres para ver a tolerância
+        params = db.query(ParametrosMestres).first()
+        tipo_tol = params.tolerancia_financeira_tipo if params else "VALOR"
+        v_tol = params.tolerancia_financeira_valor if params else 0.0
+
         discrepancias = []
+        houve_discrepancia_fora_tolerancia = False
+
         from app.models.produto import Produto
         from app.models.unidade_produto import UnidadeProduto
 
@@ -189,6 +197,7 @@ class RecebimentoService:
             if not unidade_resolvida:
                 continue
 
+            # item.sku no item de recebimento guarda o ID do produto
             prod = db.query(Produto).filter(Produto.id == item.sku).first()
             if not prod:
                 continue
@@ -227,20 +236,43 @@ class RecebimentoService:
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
             
             if preco_base_xml > preco_base_oc:
-                item.status = StatusRecebimentoItem.DIVERGENTE.value
+                # Calcula a diferença para ver se está na tolerância
+                diff = preco_base_xml - preco_base_oc
+                esta_na_tolerancia = False
+                
+                if preco_oc > 0:
+                    if tipo_tol == "VALOR":
+                        if diff <= v_tol:
+                            esta_na_tolerancia = True
+                    else: # PORCENTAGEM
+                        percentual_diff = (diff / preco_base_oc) * 100
+                        if percentual_diff <= v_tol:
+                            esta_na_tolerancia = True
+
+                if not esta_na_tolerancia:
+                    houve_discrepancia_fora_tolerancia = True
+                    item.status = StatusRecebimentoItem.DIVERGENTE.value
+                
                 preco_xml_na_und_oc = preco_base_xml * fator_oc
                 discrepancias.append(
                     f"{prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
                 )
 
         if discrepancias:
-            recebimento.status = StatusRecebimento.DIVERGENTE.value
+            if houve_discrepancia_fora_tolerancia:
+                recebimento.status = StatusRecebimento.DIVERGENTE.value
+                recebimento.dentro_da_tolerancia = False
+            else:
+                recebimento.dentro_da_tolerancia = True
+                # O status do romaneio não muda para DIVERGENTE se está tudo na tolerância
+            
             recebimento.divergencia_financeira = " | ".join(discrepancias)
         else:
+            recebimento.dentro_da_tolerancia = False
             recebimento.divergencia_financeira = None
         
         db.commit()
-        return bool(discrepancias)
+        return bool(discrepancias and houve_discrepancia_fora_tolerancia)
 
     @staticmethod
     def _registrar_log(db: Session, tabela: str, registro_id: int, acao: str, gatilho: str = "MANUAL", estado_anterior: str = None, estado_novo: str = None, usuario: str = "Sistema", observacao: str = None):

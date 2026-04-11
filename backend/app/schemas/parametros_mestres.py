@@ -10,6 +10,8 @@ class ParametrosMestresBase(BaseModel):
     bloquear_reprovado: bool = True
     bloquear_sem_validade: bool = False
     bloquear_sem_lote: bool = False
+    tolerancia_financeira_tipo: str = "VALOR"
+    tolerancia_financeira_valor: float = 0.0
 
 class ParametrosMestresEditar(BaseModel):
     validade_obrigatoria: Optional[bool] = None
@@ -19,6 +21,8 @@ class ParametrosMestresEditar(BaseModel):
     bloquear_reprovado: Optional[bool] = None
     bloquear_sem_validade: Optional[bool] = None
     bloquear_sem_lote: Optional[bool] = None
+    tolerancia_financeira_tipo: Optional[str] = None
+    tolerancia_financeira_valor: Optional[float] = None
 
 class ParametrosMestresSchema(ParametrosMestresBase):
     id: int

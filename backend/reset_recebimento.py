@@ -24,6 +24,21 @@ def reset_database():
                 BEGIN
                     ALTER TABLE [Recebimentos] ADD [DivergenciaFinanceira] VARCHAR(1000) NULL
                 END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns 
+                               WHERE object_id = OBJECT_ID(N'[dbo].[Recebimentos]') 
+                               AND name = 'DentroDaTolerancia')
+                BEGIN
+                    ALTER TABLE [Recebimentos] ADD [DentroDaTolerancia] BIT DEFAULT 0 NOT NULL
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns 
+                               WHERE object_id = OBJECT_ID(N'[dbo].[ParametrosMestres]') 
+                               AND name = 'ToleranciaFinanceiraTipo')
+                BEGIN
+                    ALTER TABLE [ParametrosMestres] ADD [ToleranciaFinanceiraTipo] VARCHAR(20) DEFAULT 'VALOR' NOT NULL
+                    ALTER TABLE [ParametrosMestres] ADD [ToleranciaFinanceiraValor] FLOAT DEFAULT 0.0 NOT NULL
+                END
             """))
             conn.commit()
         except Exception as e:
