@@ -388,6 +388,10 @@ class RecebimentoService:
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.liberar_conferencia()
+            # Define o início global do processo de conferência ao liberar
+            if not recebimento.inicio:
+                recebimento.inicio = datetime.now()
+                
             event_bus.publish('RECEBIMENTO_AGUARDANDO_CONFERENCIA', {'id': recebimento_id})
             
             # Avança os itens que estavam aguardando para a nova fase
@@ -429,6 +433,11 @@ class RecebimentoService:
             recebimento.iniciar_conferencia()
             if not recebimento.inicio:
                 recebimento.inicio = datetime.now()
+            
+            # Sempre define ou atualiza o início da ATIVIDADE quando alguém assume a tarefa
+            if not recebimento.inicio_conferencia:
+                recebimento.inicio_conferencia = datetime.now()
+                
             recebimento.conferente = conferente_id
             
             # Avança os itens para a fase de conferência
@@ -529,6 +538,8 @@ class RecebimentoService:
         # 5. Se o romaneio estiver em análise ou divergente, volta para aguardando conferência
         if recebimento.status in ["EM_ANALISE", "DIVERGENTE", "CONCLUIDO"]:
             recebimento.status = "AGUARDANDO_CONFERENCIA"
+            # Limpa o início da conferência para que o card mostre "Aguardando..." ou o novo horário quando assumido
+            recebimento.inicio_conferencia = None
             
         RecebimentoService._registrar_log(
             db, tabela="RecebimentoItens", registro_id=item.id,
@@ -639,7 +650,7 @@ class RecebimentoService:
             db.add(sessao)
             db.flush()
 
-        # Cria a Leitura
+        # Prepara a data de validade
         data_val = None
         if leit.data_validade and isinstance(leit.data_validade, str) and leit.data_validade.strip():
             try:
@@ -647,21 +658,45 @@ class RecebimentoService:
             except (ValueError, TypeError):
                 raise ValueError(f"Data de validade inválida. Use DD/MM/AAAA.")
 
-        nova_leitura = RecebimentoLeitura(
-            recebimento_item_id=item_id,
-            qtd=leit.quantidade,
-            und=leit.und,
-            ean=leit.ean,
-            lote=leit.lote,
-            data_validade=data_val,
-            fator_conversao=leit.fator_conversao,
-            unidade_produto_id=leit.unidade_produto_id,
-            descricao_visual=leit.descricao_visual,
-            usuario=usuario,
-            ua=leit.ua,
-            sessao_id=sessao.id
-        )
-        db.add(nova_leitura)
+        # Busca se já existe uma leitura para esta UA nesta mesma sessão (para evitar duplicação em edições)
+        # Filtramos por qtd > 0 para não sobrescrever estornos, se existirem
+        leitura_existente = db.query(RecebimentoLeitura).filter(
+            RecebimentoLeitura.recebimento_item_id == item_id,
+            RecebimentoLeitura.sessao_id == sessao.id,
+            RecebimentoLeitura.ua == leit.ua,
+            RecebimentoLeitura.qtd > 0
+        ).first()
+
+        if leitura_existente:
+            # Atualiza a leitura anterior em vez de criar uma nova (Log de rascunho de sessão)
+            leitura_existente.qtd = leit.quantidade
+            leitura_existente.und = leit.und
+            leitura_existente.ean = leit.ean
+            leitura_existente.lote = leit.lote
+            leitura_existente.data_validade = data_val
+            leitura_existente.fator_conversao = leit.fator_conversao
+            leitura_existente.unidade_produto_id = leit.unidade_produto_id
+            leitura_existente.descricao_visual = leit.descricao_visual
+            leitura_existente.usuario = usuario
+            leitura_existente.data = datetime.now()
+            nova_leitura = leitura_existente
+        else:
+            # Cria uma nova Leitura
+            nova_leitura = RecebimentoLeitura(
+                recebimento_item_id=item_id,
+                qtd=leit.quantidade,
+                und=leit.und,
+                ean=leit.ean,
+                lote=leit.lote,
+                data_validade=data_val,
+                fator_conversao=leit.fator_conversao,
+                unidade_produto_id=leit.unidade_produto_id,
+                descricao_visual=leit.descricao_visual,
+                usuario=usuario,
+                ua=leit.ua,
+                sessao_id=sessao.id
+            )
+            db.add(nova_leitura)
 
         # Upsert da UA
         filial_id = item.destino_id or 1

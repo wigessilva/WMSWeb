@@ -135,6 +135,7 @@ class RecebimentoCriar(RecebimentoBase):
 class RecebimentoSchema(RecebimentoBase):
     id: int
     inicio: Optional[datetime] = None
+    inicio_conferencia: Optional[datetime] = None
     conclusao: Optional[datetime] = None
     criado_em: datetime
     atualizado_em: datetime

@@ -132,7 +132,7 @@ export default function Atividades() {
                     <div>
                       <span className="block text-xs text-gray-500 font-semibold mb-0.5">Início</span>
                       <span className="font-semibold text-gray-700">
-                        {atv.inicio ? new Date(atv.inicio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Aguardando...'}
+                        {atv.inicio_conferencia ? new Date(atv.inicio_conferencia).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Aguardando...'}
                       </span>
                     </div>
                   </div>

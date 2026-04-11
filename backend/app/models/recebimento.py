@@ -17,6 +17,7 @@ class Recebimento(Base):
     autorizado_em = Column("AutorizadoEm", DateTime, nullable=True)
 
     inicio = Column("Inicio", DateTime, nullable=True)
+    inicio_conferencia = Column("InicioConferencia", DateTime, nullable=True)
     conclusao = Column("Conclusao", DateTime, nullable=True)
 
     status = Column("Status", String(50), default="Importado", nullable=False)

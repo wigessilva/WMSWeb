@@ -126,11 +126,23 @@ export default function Conferencia() {
 
   const handleBiparUA = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!codigoUA.trim() || validandoUA) return;
+    const codigoLimpo = codigoUA.trim().toUpperCase();
+    if (!codigoLimpo || validandoUA) return;
+
+    // Validação de Duplicidade (Impede bipar a mesma UA duas vezes no mesmo romaneio)
+    const uaJaExiste = Object.values(uasPorItem).some(uas => 
+      uas.some((u: any) => (u.ua || u.codigo) === codigoLimpo)
+    );
+
+    if (uaJaExiste) {
+      toast.error("A UA já está em uso!");
+      setCodigoUA('');
+      return;
+    }
 
     setValidandoUA(true);
     try {
-      const uaValida = await uaService.buscarPorCodigo(codigoUA.trim().toUpperCase());
+      const uaValida = await uaService.buscarPorCodigo(codigoLimpo);
 
       const itemAtual = recebimento?.itens[itemAtualIndex];
       if (!itemAtual) return;
@@ -172,8 +184,15 @@ export default function Conferencia() {
   };
 
   // Navegação de Itens
-  const proximoItem = () => {
-    if (!recebimento) return;
+  const proximoItem = async () => {
+    if (!recebimento || !itemAtual) return;
+    
+    // Salva a UA atual antes de trocar de item
+    const uas = uasPorItem[itemAtual.id] || [];
+    if (uas[uaAtualIndex]) {
+      try { await salvarLeituraIncremental(uas[uaAtualIndex]); } catch (e) {}
+    }
+
     if (itemAtualIndex < recebimento.itens.length - 1) {
       setItemAtualIndex(prev => prev + 1);
       setUaAtualIndex(0);
@@ -181,7 +200,15 @@ export default function Conferencia() {
     }
   };
 
-  const anteriorItem = () => {
+  const anteriorItem = async () => {
+    if (!recebimento || !itemAtual) return;
+
+    // Salva a UA atual antes de trocar de item
+    const uas = uasPorItem[itemAtual.id] || [];
+    if (uas[uaAtualIndex]) {
+      try { await salvarLeituraIncremental(uas[uaAtualIndex]); } catch (e) {}
+    }
+
     if (itemAtualIndex > 0) {
       setItemAtualIndex(prev => prev - 1);
       setUaAtualIndex(0);
@@ -190,16 +217,31 @@ export default function Conferencia() {
   };
 
   // Navegação de UAs
-  const proximaUA = () => {
+  const proximaUA = async () => {
     const itemAtual = recebimento?.itens[itemAtualIndex];
     if (!itemAtual) return;
     const uas = uasPorItem[itemAtual.id] || [];
+
+    // Salva a UA atual antes de mudar para a próxima
+    if (uas[uaAtualIndex]) {
+      try { await salvarLeituraIncremental(uas[uaAtualIndex]); } catch (e) {}
+    }
+
     if (uaAtualIndex < uas.length - 1) {
       setUaAtualIndex(prev => prev + 1);
     }
   };
 
-  const anteriorUA = () => {
+  const anteriorUA = async () => {
+    const itemAtual = recebimento?.itens[itemAtualIndex];
+    if (!itemAtual) return;
+    const uas = uasPorItem[itemAtual.id] || [];
+
+    // Salva a UA atual antes de voltar
+    if (uas[uaAtualIndex]) {
+      try { await salvarLeituraIncremental(uas[uaAtualIndex]); } catch (e) {}
+    }
+
     if (uaAtualIndex > 0) {
       setUaAtualIndex(prev => prev - 1);
     }

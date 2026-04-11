@@ -76,6 +76,7 @@ export interface Recebimento {
   autorizado_por?: string | null;
   autorizado_em?: string | null;
   inicio: string | null;
+  inicio_conferencia: string | null;
   conclusao: string | null;
   status: string;
   divergencia_financeira?: string | null;

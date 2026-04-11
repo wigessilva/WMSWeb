@@ -14,7 +14,11 @@ router = APIRouter()
 @router.get("/atividades", response_model=List[RecebimentoSchema])
 def listar_atividades_operacionais(db: Session = Depends(get_db)):
     # Retorna notas em aguardando conferência ou em conferência
-    query = db.query(Recebimento).filter(
+    from app.models.recebimento import RecebimentoLeitura
+    query = db.query(Recebimento).options(
+        selectinload(Recebimento.itens).selectinload(RecebimentoItem.produto),
+        selectinload(Recebimento.itens).selectinload(RecebimentoItem.leituras).selectinload(RecebimentoLeitura.sessao)
+    ).filter(
         Recebimento.status.in_(["AGUARDANDO_CONFERENCIA", "EM_CONFERENCIA"])
     )
     return query.order_by(Recebimento.criado_em.desc()).all()
@@ -35,8 +39,10 @@ from sqlalchemy.orm import selectinload
 # --- NOVA ROTA DE LISTAGEM ---
 @router.get("/", response_model=List[RecebimentoSchema])
 def listar_recebimentos(termo: Optional[str] = Query(None, description="Termo de busca geral"), db: Session = Depends(get_db)):
+    from app.models.recebimento import RecebimentoLeitura
     query = db.query(Recebimento).options(
-        selectinload(Recebimento.itens).selectinload(RecebimentoItem.produto)
+        selectinload(Recebimento.itens).selectinload(RecebimentoItem.produto),
+        selectinload(Recebimento.itens).selectinload(RecebimentoItem.leituras).selectinload(RecebimentoLeitura.sessao)
     )
 
     if termo:
