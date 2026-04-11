@@ -14,7 +14,21 @@ def reset_database():
     print("Conectando ao banco de dados...")
     engine = create_engine(url_conexao)
     with engine.connect() as conn:
-        print("Limpando tabelas de recebimento...")
+        print("Garantindo colunas e limpando tabelas de recebimento...")
+        # Tenta adicionar a coluna caso não exista (SQL Server syntax)
+        try:
+            conn.execute(text("""
+                IF NOT EXISTS (SELECT * FROM sys.columns 
+                               WHERE object_id = OBJECT_ID(N'[dbo].[Recebimentos]') 
+                               AND name = 'DivergenciaFinanceira')
+                BEGIN
+                    ALTER TABLE [Recebimentos] ADD [DivergenciaFinanceira] VARCHAR(1000) NULL
+                END
+            """))
+            conn.commit()
+        except Exception as e:
+            print(f"Aviso ao verificar colunas: {e}")
+
         # A ordem respeita as chaves estrangeiras
         conn.execute(text("DELETE FROM RecebimentoLeituras"))
         conn.execute(text("DELETE FROM RecebimentoItens"))

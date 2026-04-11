@@ -90,6 +90,7 @@ class RecebimentoBase(BaseModel):
     conferente: Optional[str] = None
     autorizado_por: Optional[str] = None
     autorizado_em: Optional[datetime] = None
+    divergencia_financeira: Optional[str] = None
     status: StatusRecebimento = StatusRecebimento.IMPORTADO
 
 class AutorizacaoPayload(BaseModel):

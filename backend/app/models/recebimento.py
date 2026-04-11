@@ -20,6 +20,7 @@ class Recebimento(Base):
     conclusao = Column("Conclusao", DateTime, nullable=True)
 
     status = Column("Status", String(50), default="Importado", nullable=False)
+    divergencia_financeira = Column("DivergenciaFinanceira", String(1000), nullable=True)
 
     # Auditoria
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

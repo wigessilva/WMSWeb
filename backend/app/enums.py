@@ -19,3 +19,4 @@ class StatusRecebimento(str, Enum):
     EM_ANALISE = "EM_ANALISE"
     FINALIZADO = "FINALIZADO"
     REJEITADO = "REJEITADO"
+    DIVERGENTE = "DIVERGENTE"

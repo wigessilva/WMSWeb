@@ -103,6 +103,9 @@ class RecebimentoService:
         db.commit()
         db.refresh(db_receb)
 
+        # VALIDAÇÃO DE PREÇO (Se tem OC)
+        RecebimentoService._validar_divergencia_precos(db, db_erp, db_receb.id)
+
         # 3. Roda a máquina de estados para atualizar o status do Romaneio
         return RecebimentoService.atualizar_status_pai(db, db_receb.id)
 
@@ -113,7 +116,15 @@ class RecebimentoService:
             return None
 
         # Se já passou da fase de libertação, as mudanças são manuais, não mexe.
-        status_avancados = [StatusRecebimento.AGUARDANDO_CONFERENCIA.value, StatusRecebimento.LIBERADO.value, StatusRecebimento.EM_CONFERENCIA.value, StatusRecebimento.EM_ANALISE.value, StatusRecebimento.FINALIZADO.value, StatusRecebimento.REJEITADO.value]
+        status_avancados = [
+            StatusRecebimento.AGUARDANDO_CONFERENCIA.value, 
+            StatusRecebimento.LIBERADO.value, 
+            StatusRecebimento.EM_CONFERENCIA.value, 
+            StatusRecebimento.EM_ANALISE.value, 
+            StatusRecebimento.FINALIZADO.value, 
+            StatusRecebimento.REJEITADO.value,
+            StatusRecebimento.DIVERGENTE.value
+        ]
         if recebimento.status in status_avancados:
             return recebimento
 
@@ -152,6 +163,84 @@ class RecebimentoService:
         return recebimento
 
     # # # AÇÕES MANUAIS DE GESTÃO E AUDITORIA # # #
+    @staticmethod
+    def _validar_divergencia_precos(db: Session, db_erp: Session, recebimento_id: int):
+        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        if not recebimento or not recebimento.oc:
+            return None
+
+        # Busca itens da OC no ERP
+        query_itens_erp = text("SELECT * FROM PedidosCompraItens WITH (NOLOCK) WHERE NumeroOC = :oc")
+        itens_oc = db_erp.execute(query_itens_erp, {"oc": recebimento.oc}).mappings().all()
+        if not itens_oc:
+            return None
+
+        discrepancias = []
+        from app.models.produto import Produto
+        from app.models.unidade_produto import UnidadeProduto
+
+        for item in recebimento.itens:
+            if not item.sku:
+                continue
+            
+            # Resolve a unidade
+            unidade_resolvida = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first() or \
+                               db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa.ilike(item.und)).first()
+            if not unidade_resolvida:
+                continue
+
+            prod = db.query(Produto).filter(Produto.id == item.sku).first()
+            if not prod:
+                continue
+
+            # Tenta achar o item na OC pelo SKU (string)
+            item_oc = next((i for i in itens_oc if str(i["Sku"]) == prod.sku), None)
+            if not item_oc:
+                continue
+            
+            preco_oc = float(item_oc["PrecoUnitario"])
+            und_oc_sigla = str(item_oc["Und"]).upper()
+            
+            # Fator OC
+            fator_oc = 1.0
+            und_medida_oc = db.query(UnidadeMedida).filter(UnidadeMedida.sigla == und_oc_sigla).first()
+            if und_medida_oc:
+                up_oc = db.query(UnidadeProduto).filter(
+                    UnidadeProduto.produto_id == prod.id,
+                    UnidadeProduto.unidade_medida_id == und_medida_oc.id
+                ).first()
+                if up_oc:
+                    fator_oc = up_oc.fator_conversao
+            
+            # Fator XML
+            fator_xml = 1.0
+            id_und_xml = unidade_resolvida.id if hasattr(unidade_resolvida, 'id') else unidade_resolvida.unidade_medida_id
+            up_xml = db.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == prod.id,
+                UnidadeProduto.unidade_medida_id == id_und_xml
+            ).first()
+            if up_xml:
+                fator_xml = up_xml.fator_conversao
+            
+            # Compara
+            preco_base_oc = preco_oc / (fator_oc if fator_oc > 0 else 1.0)
+            preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
+            
+            if preco_base_xml > preco_base_oc:
+                preco_xml_na_und_oc = preco_base_xml * fator_oc
+                discrepancias.append(
+                    f"Item {prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
+                )
+
+        if discrepancias:
+            recebimento.status = StatusRecebimento.DIVERGENTE.value
+            recebimento.divergencia_financeira = " | ".join(discrepancias)
+        else:
+            recebimento.divergencia_financeira = None
+        
+        db.commit()
+        return bool(discrepancias)
+
     @staticmethod
     def _registrar_log(db: Session, tabela: str, registro_id: int, acao: str, gatilho: str = "MANUAL", estado_anterior: str = None, estado_novo: str = None, usuario: str = "Sistema", observacao: str = None):
         log = LogTransicao(
@@ -527,6 +616,9 @@ class RecebimentoService:
         
         db_wms.commit()
         db_wms.refresh(recebimento)
+
+        # VALIDAÇÃO DE PREÇO (Após vincular OC)
+        RecebimentoService._validar_divergencia_precos(db_wms, db_erp, recebimento_id)
         
         # Pode estar pronto para liberar agora
         return RecebimentoService.atualizar_status_pai(db_wms, recebimento_id)

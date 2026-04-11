@@ -443,7 +443,9 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5">{rec.inicio ? new Date(rec.inicio).toLocaleString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">
-                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                        rec.status === 'DIVERGENTE' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                      }`}>
                         {rec.status}
                       </span>
                     </td>
@@ -742,7 +744,7 @@ export default function Recebimentos() {
           </div>
 
           {recebimentoSelecionado && (() => {
-            const isFinanceiroOK = !!recebimentoSelecionado.oc;
+            const isFinanceiroOK = !!recebimentoSelecionado.oc && recebimentoSelecionado.status !== 'DIVERGENTE';
             const itensPendentesFisico = recebimentoSelecionado.itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
             const isFisicoOK = itensPendentesFisico.length === 0;
             const isQualidadeOK = recebimentoSelecionado.status !== 'BLOQUEADO';
@@ -794,9 +796,19 @@ export default function Recebimentos() {
                           <h4 className="font-bold text-gray-700">Financeiro</h4>
                         </div>
                         <p className="text-xs text-gray-500 mb-2">Vínculo com Ordem de Compra.</p>
-                        <div className={`text-sm font-bold ${isFinanceiroOK ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {isFinanceiroOK ? 'OC ' + recebimentoSelecionado.oc : 'OC Não Localizada'}
+                        <div className={`text-sm font-bold ${isFinanceiroOK ? 'text-green-600' : 'text-red-600'}`}>
+                          {!recebimentoSelecionado.oc ? 'OC Não Localizada' : 
+                           recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' : 
+                           'OC ' + recebimentoSelecionado.oc}
                         </div>
+                        {recebimentoSelecionado.divergencia_financeira && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-[10px] text-red-700 font-medium">
+                            <span className="font-bold block mb-1 uppercase">Divergências:</span>
+                            {recebimentoSelecionado.divergencia_financeira.split(' | ').map((d, idx) => (
+                              <div key={idx} className="mb-0.5">• {d}</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Card FÍSICO */}

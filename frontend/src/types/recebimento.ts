@@ -8,6 +8,7 @@ export const StatusRecebimento = {
   EM_ANALISE: "EM_ANALISE",
   FINALIZADO: "FINALIZADO",
   REJEITADO: "REJEITADO",
+  DIVERGENTE: "DIVERGENTE",
 } as const;
 
 export type StatusRecebimento = typeof StatusRecebimento[keyof typeof StatusRecebimento];
@@ -63,6 +64,7 @@ export interface Recebimento {
   inicio: string | null;
   conclusao: string | null;
   status: string;
+  divergencia_financeira?: string | null;
   criado_em: string;
   itens: RecebimentoItem[];
 }
