@@ -77,6 +77,20 @@ class RecebimentoItem(Base):
     produto = relationship("Produto")
     destino = relationship("Filial")
     leituras = relationship("RecebimentoLeitura", back_populates="item", cascade="all, delete-orphan")
+    sessoes = relationship("RecebimentoSessoes", back_populates="item", cascade="all, delete-orphan")
+
+class RecebimentoSessoes(Base):
+    __tablename__ = "RecebimentoSessoes"
+
+    id = Column("Id", Integer, primary_key=True, index=True)
+    recebimento_item_id = Column("RecebimentoItemId", Integer, ForeignKey("RecebimentoItens.Id"), nullable=False)
+    numero_sessao = Column("NumeroSessao", Integer, default=1, nullable=False)
+    criado_em = Column("CriadoEm", DateTime, default=datetime.now, nullable=False)
+    criado_por = Column("CriadoPor", String(100), nullable=False)
+    motivo = Column("Motivo", String(255), nullable=True)
+
+    item = relationship("RecebimentoItem", back_populates="sessoes")
+    leituras = relationship("RecebimentoLeitura", back_populates="sessao")
 
 class RecebimentoLeitura(Base):
     __tablename__ = "RecebimentoLeituras"
@@ -90,9 +104,11 @@ class RecebimentoLeitura(Base):
     data_validade = Column("DataValidade", DateTime, nullable=True)
     fator_conversao = Column("FatorConversao", Float, default=1.0)
     unidade_produto_id = Column("UnidadeProdutoId", Integer, nullable=True)
+    sessao_id = Column("SessaoId", Integer, ForeignKey("RecebimentoSessoes.Id"), nullable=True)
     usuario = Column("Usuario", String(100), nullable=False)
     data = Column("Data", DateTime, default=datetime.now, nullable=False)
     ua = Column("UA", String(100), nullable=True)
     descricao_visual = Column("DescricaoVisual", String(255), nullable=True)
 
     item = relationship("RecebimentoItem", back_populates="leituras")
+    sessao = relationship("RecebimentoSessoes", back_populates="leituras")

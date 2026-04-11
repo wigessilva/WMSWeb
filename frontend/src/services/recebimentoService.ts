@@ -120,4 +120,11 @@ export const recebimentoService = {
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/registrar-conferencia?usuario=${user}`, dados);
     return response.data;
   },
+
+  solicitarReconferencia: async (recebimentoId: number, itemId: number, motivo?: string) => {
+    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
+    const response = await api.post(`/${recebimentoId}/itens/${itemId}/solicitar-reconferencia?usuario=${user}${motivo ? `&motivo=${encodeURIComponent(motivo)}` : ''}`);
+    return response.data;
+  },
 };

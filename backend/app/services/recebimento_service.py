@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime
-from ..models.recebimento import Recebimento, RecebimentoItem
+from ..models.recebimento import Recebimento, RecebimentoItem, RecebimentoSessoes, RecebimentoLeitura
 from ..models.historico_xml import HistoricoXML
 from ..models.vinculo_fornecedor import VinculoProdutoFornecedor
 from ..models.unidade_medida import UnidadeMedida
@@ -472,6 +472,54 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
+    def solicitar_reconferencia(db: Session, item_id: int, usuario: str, motivo: str = None):
+        from app.models.ua import UA
+        
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        if not item:
+            raise ValueError("Item não encontrado.")
+            
+        recebimento = item.recebimento
+        if not recebimento:
+            raise ValueError("Romaneio não encontrado.")
+
+        # 1. Incrementa as tentativas
+        item.tentativas += 1
+        
+        # 2. Cria a nova sessão
+        nova_sessao = RecebimentoSessoes(
+            recebimento_item_id=item_id,
+            numero_sessao=item.tentativas,
+            criado_por=usuario,
+            motivo=motivo
+        )
+        db.add(nova_sessao)
+        
+        # 3. Exclui as UAs físicas ligadas a este item (Reset do estoque físico)
+        db.query(UA).filter(UA.produto_id == item.sku, UA.ua.in_(
+            db.query(RecebimentoLeitura.ua).filter(RecebimentoLeitura.recebimento_item_id == item_id)
+        )).delete(synchronize_session=False)
+
+        # 4. Reseta as quantidades do item para a nova sessão
+        item.qtd_recebida = 0.0
+        item.status = "AGUARDANDO_CONFERENCIA"
+        
+        # 5. Se o romaneio estiver em análise ou divergente, volta para aguardando conferência
+        if recebimento.status in ["EM_ANALISE", "DIVERGENTE", "CONCLUIDO"]:
+            recebimento.status = "AGUARDANDO_CONFERENCIA"
+            
+        RecebimentoService._registrar_log(
+            db, tabela="RecebimentoItens", registro_id=item.id,
+            acao=f"Solicitação de Reconferência (Sessão {item.tentativas})",
+            usuario=usuario,
+            observacao=motivo
+        )
+        
+        db.commit()
+        db.refresh(item)
+        return item
+
+    @staticmethod
     def registrar_conferencia_item(db: Session, item_id: int, dados: any, usuario: str):
         item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
         if not item:
@@ -501,7 +549,7 @@ class RecebimentoService:
 
     @staticmethod
     def registrar_leitura(db: Session, item_id: int, leit: any, usuario: str):
-        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem, RecebimentoSessoes
         from app.models.ua import UA
         from app.models.unidade_produto import UnidadeProduto
         from app.models.unidade_medida import UnidadeMedida
@@ -539,6 +587,24 @@ class RecebimentoService:
         elif not leit.descricao_visual or not leit.descricao_visual.strip():
             raise ValueError(f"Para itens sem código de barras, a descrição visual é obrigatória.")
 
+        # Garante que existe uma sessão ativa (Sync com item.tentativas)
+        sessao = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item_id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+
+        if not sessao:
+            sessao = RecebimentoSessoes(
+                recebimento_item_id=item_id,
+                numero_sessao=item.tentativas or 1,
+                criado_por=usuario,
+                motivo="Sessão Automática"
+            )
+            if not item.tentativas:
+                item.tentativas = 1
+            db.add(sessao)
+            db.flush()
+
         # Cria a Leitura
         data_val = None
         if leit.data_validade and isinstance(leit.data_validade, str) and leit.data_validade.strip():
@@ -558,7 +624,8 @@ class RecebimentoService:
             unidade_produto_id=leit.unidade_produto_id,
             descricao_visual=leit.descricao_visual,
             usuario=usuario,
-            ua=leit.ua
+            ua=leit.ua,
+            sessao_id=sessao.id
         )
         db.add(nova_leitura)
 
@@ -600,7 +667,7 @@ class RecebimentoService:
 
     @staticmethod
     def estornar_leitura(db: Session, item_id: int, ua_codigo: str, usuario: str):
-        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem, RecebimentoSessoes
         from app.models.ua import UA
 
         item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
@@ -617,6 +684,12 @@ class RecebimentoService:
         if not ultima_leitura:
             raise ValueError("Nenhuma leitura encontrada para esta UA.")
 
+        # Busca sessão ativa
+        sessao = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item_id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+
         # Cria a leitura negativa (Estorno para auditoria)
         estorno = RecebimentoLeitura(
             recebimento_item_id=item_id,
@@ -629,7 +702,8 @@ class RecebimentoService:
             unidade_produto_id=ultima_leitura.unidade_produto_id,
             descricao_visual=ultima_leitura.descricao_visual,
             usuario=usuario,
-            ua=ua_codigo
+            ua=ua_codigo,
+            sessao_id=sessao.id if sessao else ultima_leitura.sessao_id
         )
         db.add(estorno)
 
@@ -644,11 +718,26 @@ class RecebimentoService:
 
     @staticmethod
     def _recalcular_qtd_item(db: Session, item: RecebimentoItem):
-        from app.models.recebimento import RecebimentoLeitura
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoSessoes
         from app.models.unidade_medida import UnidadeMedida
         from app.models.unidade_produto import UnidadeProduto
 
-        leituras = db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item.id).all()
+        # Apenas somar as leituras da sessão corrente (tentativa atual do item)
+        sessao_ativa = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item.id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+
+        if not sessao_ativa:
+            # Se não há sessão ativa, a quantidade é 0
+            item.qtd_recebida = 0.0
+            db.add(item)
+            return
+
+        leituras = db.query(RecebimentoLeitura).filter(
+            RecebimentoLeitura.recebimento_item_id == item.id,
+            RecebimentoLeitura.sessao_id == sessao_ativa.id
+        ).all()
         total_base = sum(l.qtd * (l.fator_conversao or 1.0) for l in leituras)
         
         fator_nota = 1.0

@@ -215,3 +215,16 @@ def registrar_conferencia_item(
         return RecebimentoService.registrar_conferencia_item(db=db, item_id=item_id, dados=conclusao, usuario=usuario)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{id}/itens/{item_id}/solicitar-reconferencia")
+def solicitar_reconferencia(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    usuario: str = Query(..., description="Nome do supervisor"),
+    motivo: Optional[str] = Query(None, description="Motivo da reconferência"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.solicitar_reconferencia(db=db, item_id=item_id, usuario=usuario, motivo=motivo)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -148,6 +148,30 @@ export default function Recebimentos() {
     }
   }
 
+  const handleSolicitarReconferencia = async (itemId: number) => {
+    if (!recebimentoSelecionado) return;
+    const motivo = prompt("Informe o motivo da reconferência (Opcional):");
+    if (motivo === null) return; // Cancelou o prompt
+
+    if (!confirm("Tem a certeza que deseja solicitar a reconferência deste item? As unidades (UAs) já bipadas para ele serão excluídas.")) return;
+
+    setCarregando(true);
+    try {
+      const rec = await recebimentoService.solicitarReconferencia(recebimentoSelecionado.id, itemId, motivo || undefined);
+      
+      const novosRecebimentos = recebimentos.map(r => r.id === rec.id ? rec : r);
+      setRecebimentos(novosRecebimentos);
+      setRecebimentoSelecionado(rec);
+      
+      toast.success("Reconferência solicitada com sucesso! O item voltou para a fila.");
+    } catch (e: any) {
+      console.error("Erro ao solicitar reconferência:", e);
+      toast.error(e.response?.data?.detail || "Erro ao solicitar reconferência");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   const salvarVinculoSKU = async () => {
     if (!recebimentoSelecionado || !itemSelecionadoParaSKU) return;
     if (!produtoSelecionadoId) {
@@ -893,6 +917,7 @@ export default function Recebimentos() {
                           <th className="px-4 py-3 font-bold border-b border-gray-200 text-center">Progresso</th>
                           <th className="px-4 py-3 font-bold border-b border-gray-200">Status</th>
                           <th className="px-4 py-3 font-bold border-b border-gray-200">Conferente</th>
+                          <th className="px-4 py-3 font-bold border-b border-gray-200 text-center">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="text-gray-600 text-sm">
@@ -925,6 +950,20 @@ export default function Recebimentos() {
                               </td>
                               <td className="px-4 py-3 text-xs italic text-gray-400">
                                 {recebimentoSelecionado.conferente || "Não atribuído"}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {['CONFERIDO', 'DIVERGENTE'].includes(item.status) && temPermissao('RECEBIMENTO.LIBERAR') && (
+                                  <button 
+                                    onClick={() => handleSolicitarReconferencia(item.id)}
+                                    disabled={carregando}
+                                    className="p-1.5 text-[#1a63b6] hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                                    title="Solicitar Reconferência"
+                                  >
+                                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           );
