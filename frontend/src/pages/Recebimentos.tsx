@@ -795,7 +795,6 @@ export default function Recebimentos() {
                           </div>
                           <h4 className="font-bold text-gray-700">Financeiro</h4>
                         </div>
-                        <p className="text-xs text-gray-500 mb-2">Vínculo com Ordem de Compra.</p>
                         <div className={`text-sm font-bold ${isFinanceiroOK ? 'text-green-600' : 'text-red-600'}`}>
                           {!recebimentoSelecionado.oc ? 'OC Não Localizada' : 
                            recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' : 
@@ -803,7 +802,6 @@ export default function Recebimentos() {
                         </div>
                         {recebimentoSelecionado.divergencia_financeira && (
                           <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-[10px] text-red-700 font-medium">
-                            <span className="font-bold block mb-1 uppercase">Divergências:</span>
                             {recebimentoSelecionado.divergencia_financeira.split(' | ').map((d, idx) => (
                               <div key={idx} className="mb-0.5">• {d}</div>
                             ))}
@@ -821,7 +819,6 @@ export default function Recebimentos() {
                           </div>
                           <h4 className="font-bold text-gray-700">Físico</h4>
                         </div>
-                        <p className="text-xs text-gray-500 mb-2">Vínculos de SKUs.</p>
                         <div className={`text-sm font-bold ${isFisicoOK ? 'text-green-600' : 'text-yellow-600'}`}>
                           {isFisicoOK ? 'Vínculos OK' : (
                             <div className="flex flex-col space-y-1">
@@ -863,7 +860,6 @@ export default function Recebimentos() {
                               </div>
                               <h4 className="font-bold text-gray-700">Qualidade</h4>
                             </div>
-                            <p className="text-xs text-gray-500 mb-2">Inspeção técnica.</p>
                             <div className={`text-sm font-bold ${isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600'}`}>
                               {isQualidadeRealOK ? 'Liberado' : (
                                 <div className="flex flex-col space-y-1">

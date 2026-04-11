@@ -227,9 +227,10 @@ class RecebimentoService:
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
             
             if preco_base_xml > preco_base_oc:
+                item.status = StatusRecebimentoItem.DIVERGENTE.value
                 preco_xml_na_und_oc = preco_base_xml * fator_oc
                 discrepancias.append(
-                    f"Item {prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
+                    f"{prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
                 )
 
         if discrepancias:
