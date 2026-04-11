@@ -92,11 +92,32 @@ export const recebimentoService = {
     const usuarioNome = userJson ? JSON.parse(userJson).nome : null;
 
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/vincular-sku`, null, {
-      params: { 
+      params: {
         produto_id: produtoId,
         ...(usuarioNome ? { criado_por: usuarioNome } : {})
       }
     });
+    return response.data;
+  },
+
+  registrarLeitura: async (recebimentoId: number, itemId: number, leitura: any) => {
+    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
+    const response = await api.post(`/${recebimentoId}/itens/${itemId}/registrar-leitura?usuario=${user}`, leitura);
+    return response.data;
+  },
+
+  estornarLeitura: async (recebimentoId: number, itemId: number, ua: string) => {
+    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
+    const response = await api.post(`/${recebimentoId}/itens/${itemId}/estornar-leitura?ua=${ua}&usuario=${user}`);
+    return response.data;
+  },
+
+  registrarConferenciaItem: async (recebimentoId: number, itemId: number, dados: any) => {
+    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
+    const response = await api.post(`/${recebimentoId}/itens/${itemId}/registrar-conferencia?usuario=${user}`, dados);
     return response.data;
   },
 };

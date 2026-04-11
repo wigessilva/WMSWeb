@@ -54,10 +54,33 @@ export default function Conferencia() {
           setRecebimento(atual);
           // Inicializa tentativas para itens que ainda não foram conferidos
           const tents: Record<number, number> = {};
+          const uasMap: Record<number, any[]> = {};
+
           atual.itens.forEach(it => {
             tents[it.id] = it.tentativas || 3;
+            
+            // Retoma UAs bipadas anteriormente
+            if (it.leituras && it.leituras.length > 0) {
+              const estornos = it.leituras.filter(l => l.qtd < 0).map(l => l.ua);
+              const efetivas = it.leituras.filter(l => l.qtd > 0 && !estornos.includes(l.ua));
+              
+              uasMap[it.id] = efetivas.map(l => ({
+                ua: l.ua,
+                quantidade: l.qtd,
+                und: l.und,
+                ean: l.ean,
+                lote: l.lote,
+                data_validade: l.data_validade ? new Date(l.data_validade).toLocaleDateString('pt-BR') : '',
+                fator_conversao: l.fator_conversao,
+                unidade_produto_id: l.unidade_produto_id,
+                descricao_visual: l.descricao_visual,
+                sku: it.sku,
+                produto_id: it.produto_id
+              }));
+            }
           });
           setTentativasPorItem(tents);
+          setUasPorItem(uasMap);
         } else {
           toast.error("Recebimento não encontrado.");
           navigate('/atividades');
@@ -173,6 +196,27 @@ export default function Conferencia() {
   const anteriorUA = () => {
     if (uaAtualIndex > 0) {
       setUaAtualIndex(prev => prev - 1);
+    }
+  };
+
+  const salvarLeituraIncremental = async (ua: any) => {
+    if (!id || !itemAtual) return;
+    try {
+      const payload = {
+        ua: ua.ua,
+        quantidade: ua.quantidade || 0,
+        unidade_produto_id: ua.unidade_produto_id,
+        fator_conversao: ua.fator_conversao || 1,
+        lote: ua.lote || null,
+        data_validade: ua.data_validade || null,
+        und: (unidadesCache[itemAtual.produto_id!] || []).find(und => und.unidade_medida_id === ua.unidade_medida_id)?.unidade_medida_relacao?.sigla || itemAtual.und,
+        ean: ua.ean || null,
+        descricao_visual: ua.descricao_visual || null,
+      };
+      await recebimentoService.registrarLeitura(Number(id), itemAtual.id, payload);
+    } catch (error: any) {
+      console.error("Erro ao salvar leitura incremental:", error);
+      throw error;
     }
   };
 
@@ -323,8 +367,20 @@ export default function Conferencia() {
                 <div className="bg-blue-50 px-6 py-4 flex justify-between items-center border-b border-blue-100">
                   <div className="text-2xl font-black text-[#1e3a8a] tracking-widest">{uaAtual?.ua}</div>
                   <button
-                    onClick={() => setStep('BIPAR_UA')}
-                    className="bg-[#1e3a8a] text-white text-[10px] px-3 py-1.5 font-black uppercase rounded-lg hover:bg-blue-900 transition-colors shadow-md"
+                    onClick={async () => {
+                      if (!uaAtual) return;
+                      setFinalizando(true);
+                      try {
+                        await salvarLeituraIncremental(uaAtual);
+                        setStep('BIPAR_UA');
+                      } catch (e: any) {
+                        toast.error(e.response?.data?.detail || "Erro ao salvar UA.");
+                      } finally {
+                        setFinalizando(false);
+                      }
+                    }}
+                    disabled={finalizando}
+                    className="bg-[#1e3a8a] text-white text-[10px] px-3 py-1.5 font-black uppercase rounded-lg hover:bg-blue-900 transition-colors shadow-md disabled:opacity-50"
                   >
                     Nova UA
                   </button>
@@ -414,9 +470,20 @@ export default function Conferencia() {
                           className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
                           value={uaAtual?.data_validade || ''}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            let val = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+                            if (val.length > 8) val = val.slice(0, 8); // Limita a 8 dígitos
+                            
+                            // Aplica a máscara DD/MM/AAAA
+                            let formatado = val;
+                            if (val.length > 2) {
+                              formatado = val.slice(0, 2) + '/' + val.slice(2);
+                            }
+                            if (val.length > 4) {
+                              formatado = formatado.slice(0, 5) + '/' + formatado.slice(5);
+                            }
+
                             const novasUas = [...uasDoItem];
-                            novasUas[uaAtualIndex] = { ...uaAtual, data_validade: val };
+                            novasUas[uaAtualIndex] = { ...uaAtual, data_validade: formatado };
                             setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
                           }}
                         />
@@ -609,6 +676,10 @@ export default function Conferencia() {
                       // Enviar para o backend
                       setFinalizando(true);
                       try {
+                        // 1. Salva a UA atual antes de finalizar
+                        await salvarLeituraIncremental(uaAtual);
+
+                        // 2. Finaliza o item
                         const payload = {
                           tentativas: 3 - (tentativasPorItem[itemAtual.id] || 3) + 1,
                           status_final: statusFinal,
@@ -616,35 +687,10 @@ export default function Conferencia() {
                           int_material: intMaterial,
                           identificacao: identificacaoCorreta,
                           cert_qual: certQualidade,
-                          leituras: uasDoItem.map(u => ({
-                            ua: u.ua,
-                            quantidade: u.quantidade || 0,
-                            unidade_produto_id: u.unidade_produto_id,
-                            fator_conversao: u.fator_conversao || 1,
-                            lote: u.lote || null,
-                            data_validade: u.data_validade || null,
-                            ean: u.ean || null,
-                            descricao_visual: u.descricao_visual || null,
-                            und: (unidadesCache[itemAtual.produto_id!] || []).find(und => und.unidade_medida_id === u.unidade_medida_id)?.unidade_medida_relacao?.sigla || itemAtual.und
-                          }))
+                          leituras: [] // Backend já tem as leituras salvas incrementalmente
                         };
 
-                        const user = localStorage.getItem('wms_user_login') || 'Coletor';
-                        const response = await fetch(`${localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL}/recebimentos/${id}/itens/${itemAtual.id}/registrar-conferencia?usuario=${user}`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) {
-                          const errorData = await response.json().catch(() => ({}));
-                          const errorMsg = typeof errorData.detail === 'string'
-                            ? errorData.detail
-                            : (errorData.detail ? JSON.stringify(errorData.detail) : "Erro no servidor ao salvar conferência");
-                          throw new Error(errorMsg);
-                        }
-
-                        const itemAtualizado = await response.json();
+                        const itemAtualizado = await recebimentoService.registrarConferenciaItem(Number(id), itemAtual.id, payload);
 
                         toast.success(statusFinal === 'CONFERIDO' ? "Item Conferido com Sucesso!" : "Item Finalizado com Divergência");
 
@@ -696,14 +742,27 @@ export default function Conferencia() {
                     Finalizar
                   </Button>
                   <button
-                    onClick={() => {
-                      const novasUas = uasDoItem.filter((_, i) => i !== uaAtualIndex);
-                      setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
-                      setUaAtualIndex(0);
-                      setStep('BIPAR_UA');
-                      toast.error("UA Descartada");
+                    disabled={finalizando || !uaAtual}
+                    onClick={async () => {
+                      if (!itemAtual || !uaAtual) return;
+                      if (!confirm("Tem certeza que deseja excluir este volume? Será gerado um estorno no sistema.")) return;
+                      
+                      setFinalizando(true);
+                      try {
+                        await recebimentoService.estornarLeitura(Number(id), itemAtual.id, uaAtual.ua);
+                        
+                        const novasUas = uasDoItem.filter((_, i) => i !== uaAtualIndex);
+                        setUasPorItem(prev => ({ ...prev, [itemAtual.id]: novasUas }));
+                        setUaAtualIndex(0);
+                        setStep('BIPAR_UA');
+                        toast.success("Volume Excluído (Estornado)");
+                      } catch (e: any) {
+                        toast.error(e.response?.data?.detail || "Erro ao estornar volume.");
+                      } finally {
+                        setFinalizando(false);
+                      }
                     }}
-                    className="w-full mt-4 text-xs font-black text-red-400 uppercase tracking-widest hover:text-red-500 transition-colors"
+                    className="w-full mt-4 text-xs font-black text-red-400 uppercase tracking-widest hover:text-red-500 transition-colors disabled:opacity-50"
                   >
                     Excluir este Volume
                   </button>

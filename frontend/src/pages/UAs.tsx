@@ -78,7 +78,7 @@ export default function UAs() {
           acoes={[
             { label: "Atualizar", onClick: carregarUAs },
             {
-              label: "Gerar UAs",
+              label: "Gerar",
               onClick: () => setIsModalGerarOpen(true),
             },
           ]}

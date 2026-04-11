@@ -744,29 +744,32 @@ export default function Recebimentos() {
           </div>
 
           {recebimentoSelecionado && (() => {
-            const isFinanceiroOK = !!recebimentoSelecionado.oc && recebimentoSelecionado.status !== 'DIVERGENTE';
+            const isFinanceiroOK = !!recebimentoSelecionado.oc && (recebimentoSelecionado.status !== 'DIVERGENTE' || recebimentoSelecionado.dentro_da_tolerancia);
             const itensPendentesFisico = recebimentoSelecionado.itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
             const conferenciaIniciada = !!recebimentoSelecionado.inicio;
             const isFisicoOK = itensPendentesFisico.length === 0;
             const isQualidadeOK = recebimentoSelecionado.status !== 'BLOQUEADO';
-            const isTudoOK = isFinanceiroOK && isFisicoOK && isQualidadeOK && conferenciaIniciada;
+            
+            // Está PRONTO se financeiro, físico e qualidade estão OK
+            const isPronto = isFinanceiroOK && isFisicoOK && isQualidadeOK;
 
-            let vereditoTexto = "Pronto para Conferência";
-            let vereditoCor = "bg-green-100 text-green-800 border-green-200";
-            let vereditoIcone = (
+            let vereditoTexto = conferenciaIniciada ? "Em Conferência" : "Pronto para Conferência";
+            
+            if (recebimentoSelecionado.status === 'EM_ANALISE') vereditoTexto = "Aguardando Análise Fiscal";
+            if (recebimentoSelecionado.status === 'FINALIZADO') vereditoTexto = "Conferência Concluída";
+            if (recebimentoSelecionado.status === 'REJEITADO') vereditoTexto = "Recebimento Rejeitado";
+            let vereditoCor = isPronto ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200";
+            let vereditoIcone = isPronto ? (
               <svg className="w-6 h-6 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
+            ) : (
+              <svg className="w-6 h-6 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
             );
 
-            if (!isTudoOK) {
-              vereditoCor = "bg-yellow-100 text-yellow-800 border-yellow-200";
-              vereditoIcone = (
-                <svg className="w-6 h-6 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              );
-
+            if (!isPronto) {
               if (!isFinanceiroOK) vereditoTexto = "Verifique as pendências em Financeiro";
               else if (!isFisicoOK) vereditoTexto = "Verifique as pendências em Físico";
               else if (!isQualidadeOK) vereditoTexto = "Verifique as pendências em Qualidade";
@@ -831,10 +834,10 @@ export default function Recebimentos() {
                             </div>
                           )}
                           {conferenciaIniciada && recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
-                            <div key={item.id} className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 text-[10px] text-blue-700">
-                              <span className="font-black uppercase block mb-1">Identificação Visual ({item.sku || item.codigo_fornecedor}):</span>
+                            <div key={item.id} className="mt-2 text-[10px] text-gray-500">
+                              <span className="font-black uppercase block mb-0.5 text-gray-700">Identificação Visual{multiItens ? ` (${item.sku || item.codigo_fornecedor})` : ""}:</span>
                               {item.descricoes_visuais?.map((d, idx) => (
-                                <div key={idx} className="italic">"{d}"</div>
+                                <div key={idx} className="italic pl-2">• "{d}"</div>
                               ))}
                             </div>
                           ))}

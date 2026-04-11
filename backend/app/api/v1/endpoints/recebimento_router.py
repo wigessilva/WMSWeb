@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from typing import List, Optional
 
 from app.db.database import get_db, get_erp_db
-from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload, ConclusaoItemSchema
+from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload, ConclusaoItemSchema, ConferenciaItemLeitura
 from app.services.recebimento_service import RecebimentoService
 from app.models.recebimento import Recebimento, RecebimentoItem
 
@@ -176,6 +176,32 @@ def sugestao_vinculo_sku(
     db_erp: Session = Depends(get_erp_db)
 ):
     return RecebimentoService.sugerir_vinculo_sku(db_wms=db, db_erp=db_erp, recebimento_id=id, item_id=item_id)
+
+@router.post("/{id}/itens/{item_id}/registrar-leitura")
+def registrar_leitura(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    leitura: ConferenciaItemLeitura = Body(...),
+    usuario: str = Query(..., description="Nome do conferente"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.registrar_leitura(db=db, item_id=item_id, leit=leitura, usuario=usuario)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{id}/itens/{item_id}/estornar-leitura")
+def estornar_leitura(
+    id: int = Path(...),
+    item_id: int = Path(...),
+    ua: str = Query(..., description="Código da UA a estornar"),
+    usuario: str = Query(..., description="Nome do conferente"),
+    db: Session = Depends(get_db)
+):
+    try:
+        return RecebimentoService.estornar_leitura(db=db, item_id=item_id, ua_codigo=ua, usuario=usuario)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/{id}/itens/{item_id}/registrar-conferencia")
 def registrar_conferencia_item(

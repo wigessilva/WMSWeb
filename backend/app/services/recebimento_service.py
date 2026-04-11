@@ -187,6 +187,9 @@ class RecebimentoService:
         from app.models.produto import Produto
         from app.models.unidade_produto import UnidadeProduto
 
+        # Conta quantos itens a nota possui no total para decidir se mostra SKU nos cards
+        total_itens_nota = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).count()
+
         for item in recebimento.itens:
             if not item.sku:
                 continue
@@ -260,8 +263,10 @@ class RecebimentoService:
                         item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
                 
                 preco_xml_na_und_oc = preco_base_xml * fator_oc
+                # Remove o prefixo se houver apenas um item para evitar redundância na mensagem
+                prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
                 discrepancias.append(
-                    f"{prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
+                    f"{prefixo}Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
                 )
             else:
                 # Caso o preço xml <= preço oc, e o item estava marcado como divergente, limpamos
@@ -480,17 +485,32 @@ class RecebimentoService:
         item.identificacao = dados.identificacao
         item.cert_qual = dados.cert_qual
 
-        # 2. Limpa leituras anteriores se houver (para permitir re-conferência limpa)
-        from app.models.recebimento import RecebimentoLeitura
-        db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item_id).delete()
+        # No salvamento incremental, a quantidade já foi atualizada a cada UA.
+        # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.
+        if hasattr(dados, 'leituras') and dados.leituras:
+             # Se vier leituras no finalize, apenas validamos se o total bate
+             pass
 
-        total_recebido = 0.0
+        db.commit()
+        db.refresh(item)
         
-        # 3. Processa cada leitura bipada
+        # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
+        RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
+        
+        return item
+
+    @staticmethod
+    def registrar_leitura(db: Session, item_id: int, leit: any, usuario: str):
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem
         from app.models.ua import UA
         from app.models.unidade_produto import UnidadeProduto
-        
-        # Busca parâmetros de controle do produto/família
+        from app.models.unidade_medida import UnidadeMedida
+
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        if not item:
+            raise ValueError("Item não encontrado.")
+
+        # Validação de Lote e Validade conforme regras do produto/família
         produto = item.produto
         familia = produto.familia_relacao if produto else None
         
@@ -502,60 +522,61 @@ class RecebimentoService:
 
         lote_obrigatorio = get_param('lote_obrigatorio') or get_param('bloquear_sem_lote')
         validade_obrigatoria = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
+
+        if lote_obrigatorio and (not leit.lote or not leit.lote.strip()):
+            raise ValueError(f"Lote é obrigatório.")
         
-        for leit in dados.leituras:
-            # VALIDAÇÃO DE LOTE E VALIDADE OBRIGATÓRIOS
-            if lote_obrigatorio and (not leit.lote or not leit.lote.strip()):
-                raise ValueError(f"Lote é obrigatório para o produto {item.descricao}.")
-            
-            if validade_obrigatoria and (not leit.data_validade or not leit.data_validade.strip()):
-                raise ValueError(f"Data de validade é obrigatória para o produto {item.descricao}.")
+        if validade_obrigatoria and (not leit.data_validade or not leit.data_validade.strip()):
+            raise ValueError(f"Data de validade é obrigatória.")
 
-            # VALIDAÇÃO DE GTIN (EAN)
-            if leit.ean:
-                # Busca se o EAN bipado pertence a alguma unidade cadastrada para este produto
-                unidade_ean = db.query(UnidadeProduto).filter(
-                    UnidadeProduto.produto_id == item.sku,
-                    UnidadeProduto.ean == leit.ean
-                ).first()
-                
-                if not unidade_ean:
-                    raise ValueError(f"O GTIN {leit.ean} não corresponde ao produto {item.descricao}.")
-            elif not leit.descricao_visual or not leit.descricao_visual.strip():
-                # Se não tem EAN, a descrição visual é obrigatória
-                raise ValueError(f"Para itens sem código de barras, a descrição visual é obrigatória.")
+        if leit.ean:
+            unidade_ean = db.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == item.sku,
+                UnidadeProduto.ean == leit.ean
+            ).first()
+            if not unidade_ean:
+                raise ValueError(f"O GTIN {leit.ean} não corresponde ao produto.")
+        elif not leit.descricao_visual or not leit.descricao_visual.strip():
+            raise ValueError(f"Para itens sem código de barras, a descrição visual é obrigatória.")
 
-            # Calcula a quantidade convertida para a unidade da nota
-            qtd_convertida = leit.quantidade * leit.fator_conversao
-            total_recebido += qtd_convertida
+        # Cria a Leitura
+        data_val = None
+        if leit.data_validade and isinstance(leit.data_validade, str) and leit.data_validade.strip():
+            try:
+                data_val = datetime.strptime(leit.data_validade.strip(), "%d/%m/%Y")
+            except (ValueError, TypeError):
+                raise ValueError(f"Data de validade inválida. Use DD/MM/AAAA.")
 
-            # Cria o registro da leitura para auditoria
-            nova_leitura = RecebimentoLeitura(
-                recebimento_item_id=item_id,
-                qtd=leit.quantidade,
-                und=leit.und,
-                ean=leit.ean,
-                descricao_visual=leit.descricao_visual,
-                usuario=usuario,
-                ua=leit.ua
-            )
-            db.add(nova_leitura)
+        nova_leitura = RecebimentoLeitura(
+            recebimento_item_id=item_id,
+            qtd=leit.quantidade,
+            und=leit.und,
+            ean=leit.ean,
+            lote=leit.lote,
+            data_validade=data_val,
+            fator_conversao=leit.fator_conversao,
+            unidade_produto_id=leit.unidade_produto_id,
+            descricao_visual=leit.descricao_visual,
+            usuario=usuario,
+            ua=leit.ua
+        )
+        db.add(nova_leitura)
 
-            # CRIA A UA FÍSICA NO SISTEMA
-            # Precisamos de uma filial_id. Pegamos do destino do item ou fallback.
-            filial_id = item.destino_id or 1
-            
-            # Validação segura da data de validade
-            data_val = None
-            if leit.data_validade and isinstance(leit.data_validade, str) and leit.data_validade.strip():
-                try:
-                    data_val = datetime.strptime(leit.data_validade.strip(), "%d/%m/%Y")
-                except (ValueError, TypeError):
-                    if validade_obrigatoria:
-                        raise ValueError(f"Data de validade inválida para o produto {item.descricao}. Formato esperado: DD/MM/AAAA.")
-                    data_val = None
-
-            nova_ua_obj = UA(
+        # Upsert da UA
+        filial_id = item.destino_id or 1
+        ua_existente = db.query(UA).filter(UA.ua == leit.ua).first()
+        if ua_existente:
+            ua_existente.produto_id = item.sku
+            ua_existente.lote = leit.lote
+            ua_existente.data_validade = data_val
+            ua_existente.quantidade = leit.quantidade
+            ua_existente.unidade_produto_id = leit.unidade_produto_id
+            ua_existente.fator_conversao = leit.fator_conversao
+            ua_existente.status = "Aguardando Armazenamento"
+            ua_existente.descricao_visual = leit.descricao_visual
+            ua_existente.atualizado_por = usuario
+        else:
+            nova_ua = UA(
                 ua=leit.ua,
                 filial_id=filial_id,
                 produto_id=item.sku,
@@ -569,27 +590,68 @@ class RecebimentoService:
                 descricao_visual=leit.descricao_visual,
                 criado_por=usuario
             )
-            # Se a UA já existe (bipada como UA virgem), atualizamos. Senão, criamos.
-            ua_existente = db.query(UA).filter(UA.ua == leit.ua).first()
-            if ua_existente:
-                ua_existente.produto_id = nova_ua_obj.produto_id
-                ua_existente.lote = nova_ua_obj.lote
-                ua_existente.data_validade = nova_ua_obj.data_validade
-                ua_existente.quantidade = nova_ua_obj.quantidade
-                ua_existente.unidade_produto_id = nova_ua_obj.unidade_produto_id
-                ua_existente.fator_conversao = nova_ua_obj.fator_conversao
-                ua_existente.status = nova_ua_obj.status
-                ua_existente.descricao_visual = nova_ua_obj.descricao_visual
-                ua_existente.atualizado_por = usuario
-            else:
-                db.add(nova_ua_obj)
+            db.add(nova_ua)
 
-        # 4. Atualiza a quantidade total recebida no item
-        # Precisamos converter o total_recebido (que está na unidade base) para a unidade da nota
+        db.flush()
+        # Recalcula qtd_recebida do item
+        RecebimentoService._recalcular_qtd_item(db, item)
+        db.commit()
+        return nova_leitura
+
+    @staticmethod
+    def estornar_leitura(db: Session, item_id: int, ua_codigo: str, usuario: str):
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoItem
+        from app.models.ua import UA
+
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        if not item:
+            raise ValueError("Item não encontrado.")
+
+        # Busca a última leitura positiva desta UA para estornar
+        ultima_leitura = db.query(RecebimentoLeitura).filter(
+            RecebimentoLeitura.recebimento_item_id == item_id,
+            RecebimentoLeitura.ua == ua_codigo,
+            RecebimentoLeitura.qtd > 0
+        ).order_by(RecebimentoLeitura.data.desc()).first()
+
+        if not ultima_leitura:
+            raise ValueError("Nenhuma leitura encontrada para esta UA.")
+
+        # Cria a leitura negativa (Estorno para auditoria)
+        estorno = RecebimentoLeitura(
+            recebimento_item_id=item_id,
+            qtd=-ultima_leitura.qtd,
+            und=ultima_leitura.und,
+            ean=ultima_leitura.ean,
+            lote=ultima_leitura.lote,
+            data_validade=ultima_leitura.data_validade,
+            fator_conversao=ultima_leitura.fator_conversao,
+            unidade_produto_id=ultima_leitura.unidade_produto_id,
+            descricao_visual=ultima_leitura.descricao_visual,
+            usuario=usuario,
+            ua=ua_codigo
+        )
+        db.add(estorno)
+
+        # Deleta a UA física (Limpeza de estoque conforme solicitado)
+        db.query(UA).filter(UA.ua == ua_codigo).delete()
+
+        db.flush()
+        # Recalcula qtd_recebida do item
+        RecebimentoService._recalcular_qtd_item(db, item)
+        db.commit()
+        return estorno
+
+    @staticmethod
+    def _recalcular_qtd_item(db: Session, item: RecebimentoItem):
+        from app.models.recebimento import RecebimentoLeitura
+        from app.models.unidade_medida import UnidadeMedida
         from app.models.unidade_produto import UnidadeProduto
-        fator_nota = 1.0
+
+        leituras = db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item.id).all()
+        total_base = sum(l.qtd * (l.fator_conversao or 1.0) for l in leituras)
         
-        # Busca a unidade de medida interna correspondente à sigla da nota
+        fator_nota = 1.0
         und_medida_nota = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first()
         if und_medida_nota:
             up_nota = db.query(UnidadeProduto).filter(
@@ -599,16 +661,8 @@ class RecebimentoService:
             if up_nota:
                 fator_nota = up_nota.fator_conversao
         
-        # Salva a quantidade convertida para a unidade da nota (arredondando para 4 casas decimais)
-        item.qtd_recebida = round(total_recebido / (fator_nota if fator_nota > 0 else 1.0), 4)
-
-        db.commit()
-        db.refresh(item)
-        
-        # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
-        RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
-        
-        return item
+        item.qtd_recebida = round(total_base / (fator_nota if fator_nota > 0 else 1.0), 4)
+        db.add(item)
 
     @staticmethod
     def atualizar_status_pos_conferencia(db: Session, recebimento_id: int):
@@ -718,6 +772,8 @@ class RecebimentoService:
 
                 if resultado_erp:
                     rec.oc = historico.xped_original
+                    # Força a revalidação de preços agora que temos a OC
+                    RecebimentoService._validar_divergencia_precos(db_wms, db_erp, rec.id)
                     atualizados += 1
 
         if atualizados > 0:

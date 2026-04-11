@@ -3,6 +3,23 @@ from typing import List, Optional
 from datetime import datetime
 from app.enums import StatusRecebimento, StatusRecebimentoItem
 
+class RecebimentoLeituraSchema(BaseModel):
+    id: int
+    ua: str
+    qtd: float
+    und: str
+    ean: Optional[str] = None
+    lote: Optional[str] = None
+    data_validade: Optional[datetime] = None
+    fator_conversao: float
+    unidade_produto_id: Optional[int] = None
+    descricao_visual: Optional[str] = None
+    usuario: str
+    data: datetime
+
+    class Config:
+        from_attributes = True
+
 # # FORMULÁRIOS DOS ITENS
 class RecebimentoItemBase(BaseModel):
     descricao: str
@@ -36,6 +53,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     produto_id: Optional[int] = None
     tentativas: int = 0
     descricoes_visuais: List[str] = []
+    leituras: List[RecebimentoLeituraSchema] = []
     
     # Parâmetros de conferência do produto
     lote_obrigatorio: Optional[bool] = None

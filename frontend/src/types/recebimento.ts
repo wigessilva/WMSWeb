@@ -23,6 +23,18 @@ export const StatusRecebimentoItem = {
 
 export type StatusRecebimentoItem = typeof StatusRecebimentoItem[keyof typeof StatusRecebimentoItem];
 
+export interface RecebimentoLeitura {
+  ua: string;
+  qtd: number;
+  und: string;
+  ean: string | null;
+  lote: string | null;
+  data_validade: string | null;
+  fator_conversao: number;
+  unidade_produto_id: number;
+  descricao_visual: string | null;
+}
+
 export interface RecebimentoItem {
   id: number;
   recebimento_id: number;
@@ -45,6 +57,7 @@ export interface RecebimentoItem {
   status: string;
   tentativas: number;
   descricoes_visuais?: string[];
+  leituras?: RecebimentoLeitura[];
   
   // Parâmetros de conferência do produto (para validação)
   lote_obrigatorio?: boolean;
