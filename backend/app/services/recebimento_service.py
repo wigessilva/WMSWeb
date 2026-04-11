@@ -308,6 +308,10 @@ class RecebimentoService:
         # 1. Atualiza as tentativas e o status do item
         item.tentativas = dados.tentativas
         item.status = dados.status_final
+        item.int_embalagem = dados.int_embalagem
+        item.int_material = dados.int_material
+        item.identificacao = dados.identificacao
+        item.cert_qual = dados.cert_qual
 
         # 2. Limpa leituras anteriores se houver (para permitir re-conferência limpa)
         from app.models.recebimento import RecebimentoLeitura
@@ -317,15 +321,29 @@ class RecebimentoService:
         
         # 3. Processa cada leitura bipada
         from app.models.ua import UA
-        from app.services.ua_service import UAService
-        
-        filial_id = item.destino_id or 1
-
-        # 3. Processa cada leitura bipada
-        from app.models.ua import UA
         from app.models.unidade_produto import UnidadeProduto
         
+        # Busca parâmetros de controle do produto/família
+        produto = item.produto
+        familia = produto.familia_relacao if produto else None
+        
+        def get_param(name):
+            val = getattr(produto, name, None) if produto else None
+            if val is None and familia:
+                val = getattr(familia, name, None)
+            return val
+
+        lote_obrigatorio = get_param('lote_obrigatorio') or get_param('bloquear_sem_lote')
+        validade_obrigatoria = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
+        
         for leit in dados.leituras:
+            # VALIDAÇÃO DE LOTE E VALIDADE OBRIGATÓRIOS
+            if lote_obrigatorio and (not leit.lote or not leit.lote.strip()):
+                raise ValueError(f"Lote é obrigatório para o produto {item.descricao}.")
+            
+            if validade_obrigatoria and (not leit.data_validade or not leit.data_validade.strip()):
+                raise ValueError(f"Data de validade é obrigatória para o produto {item.descricao}.")
+
             # VALIDAÇÃO DE GTIN (EAN)
             if leit.ean:
                 # Busca se o EAN bipado pertence a alguma unidade cadastrada para este produto
@@ -357,9 +375,6 @@ class RecebimentoService:
             db.add(nova_leitura)
 
             # CRIA A UA FÍSICA NO SISTEMA
-            # Se a conferência foi concluída, a UA nasce no estado "Bom" e status "Aguardando Armazenamento"
-            # (conforme a regra de negócio discutida)
-            
             # Precisamos de uma filial_id. Pegamos do destino do item ou fallback.
             filial_id = item.destino_id or 1
             
@@ -369,6 +384,8 @@ class RecebimentoService:
                 try:
                     data_val = datetime.strptime(leit.data_validade.strip(), "%d/%m/%Y")
                 except (ValueError, TypeError):
+                    if validade_obrigatoria:
+                        raise ValueError(f"Data de validade inválida para o produto {item.descricao}. Formato esperado: DD/MM/AAAA.")
                     data_val = None
 
             nova_ua_obj = UA(

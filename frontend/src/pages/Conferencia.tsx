@@ -38,6 +38,12 @@ export default function Conferencia() {
   const [tentativasPorItem, setTentativasPorItem] = useState<Record<number, number>>({});
   const [finalizando, setFinalizando] = useState(false);
 
+  // Estados de Qualidade (Seção de Qualidade)
+  const [intEmbalagem, setIntEmbalagem] = useState('Sim');
+  const [intMaterial, setIntMaterial] = useState('Sim');
+  const [identificacaoCorreta, setIdentificacaoCorreta] = useState('Sim');
+  const [certQualidade, setCertQualidade] = useState('Sim');
+
   useEffect(() => {
     async function carregarDados() {
       if (!id) return;
@@ -474,6 +480,35 @@ export default function Conferencia() {
                         </div>
                       </div>
                     </div>
+
+                    {/* SEÇÃO DE QUALIDADE */}
+                    <div className="bg-white border-2 border-amber-50 rounded-[2rem] p-6 space-y-4 shadow-sm">
+                      <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest pl-2 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                        Inspeção de Qualidade
+                      </label>
+                      <div className="grid grid-cols-1 gap-3">
+                        {[
+                          { label: 'Embalagem Íntegra?', state: intEmbalagem, setState: setIntEmbalagem },
+                          { label: 'Material Íntegro?', state: intMaterial, setState: setIntMaterial },
+                          { label: 'Identificação Correta?', state: identificacaoCorreta, setState: setIdentificacaoCorreta },
+                          { label: 'Certificado Qualidade?', state: certQualidade, setState: setCertQualidade }
+                        ].map((q, i) => (
+                          <div key={i} className="flex items-center justify-between bg-amber-50/30 p-3 rounded-2xl border border-amber-100">
+                            <span className="text-xs font-bold text-gray-700">{q.label}</span>
+                            <select
+                              value={q.state}
+                              onChange={(e) => q.setState(e.target.value)}
+                              className={`text-sm font-black rounded-lg px-3 py-1 border-2 focus:outline-none transition-colors ${q.state === 'Sim' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
+                                }`}
+                            >
+                              <option value="Sim">Sim</option>
+                              <option value="Não">Não</option>
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -542,7 +577,7 @@ export default function Conferencia() {
                         }
 
                         if (temVencimentoCurto) {
-                          const prosseguir = window.confirm(`Atenção: Este produto possui volumes com vencimento abaixo do mínimo permitido (${itemAtual.vencimento_minimo} dias). Deseja finalizar assim mesmo enviando para ANÁLISE DO FISCAL?`);
+                          const prosseguir = window.confirm(`Atenção: há volumes com vencimento abaixo do mínimo permitido (${itemAtual.vencimento_minimo} dias). Deseja finalizar e enviar para análise?`);
                           if (!prosseguir) return;
                           statusFinal = 'DIVERGENTE';
                         }
@@ -577,6 +612,10 @@ export default function Conferencia() {
                         const payload = {
                           tentativas: 3 - (tentativasPorItem[itemAtual.id] || 3) + 1,
                           status_final: statusFinal,
+                          int_embalagem: intEmbalagem,
+                          int_material: intMaterial,
+                          identificacao: identificacaoCorreta,
+                          cert_qual: certQualidade,
                           leituras: uasDoItem.map(u => ({
                             ua: u.ua,
                             quantidade: u.quantidade || 0,
@@ -597,7 +636,14 @@ export default function Conferencia() {
                           body: JSON.stringify(payload)
                         });
 
-                        if (!response.ok) throw new Error("Erro no servidor");
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({}));
+                          const errorMsg = typeof errorData.detail === 'string'
+                            ? errorData.detail
+                            : (errorData.detail ? JSON.stringify(errorData.detail) : "Erro no servidor ao salvar conferência");
+                          throw new Error(errorMsg);
+                        }
+
                         const itemAtualizado = await response.json();
 
                         toast.success(statusFinal === 'CONFERIDO' ? "Item Conferido com Sucesso!" : "Item Finalizado com Divergência");
@@ -639,9 +685,9 @@ export default function Conferencia() {
                             navigate('/atividades');
                           }
                         }
-                      } catch (error) {
+                      } catch (error: any) {
                         console.error(error);
-                        toast.error("Erro ao salvar conferência.");
+                        toast.error(error.message || "Erro ao salvar conferência.");
                       } finally {
                         setFinalizando(false);
                       }

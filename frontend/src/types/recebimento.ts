@@ -36,10 +36,10 @@ export interface RecebimentoItem {
   data_fabricacao: string | null;
   data_validade: string | null;
   data_vencimento: string | null;
-  integridade_embalagem: boolean | null;
-  integridade_material: boolean | null;
-  identificacao: boolean | null;
-  certificado_qualidade: boolean | null;
+  int_embalagem: string | null;
+  int_material: string | null;
+  identificacao: string | null;
+  cert_qual: string | null;
   destino: string | null;
   status: string;
   tentativas: number;

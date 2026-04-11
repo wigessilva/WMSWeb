@@ -19,7 +19,7 @@ class RecebimentoItemBase(BaseModel):
     int_embalagem: Optional[str] = None
     int_material: Optional[str] = None
     identificacao: Optional[str] = None
-    certif_qual: Optional[str] = None
+    cert_qual: Optional[str] = None
     destino_id: Optional[int] = None
     status: StatusRecebimentoItem = StatusRecebimentoItem.PENDENTE_VINCULO
 
@@ -73,7 +73,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
 
                 ret['lote_obrigatorio'] = get_param('lote_obrigatorio')
                 ret['bloquear_sem_lote'] = get_param('bloquear_sem_lote')
-                ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade')
+                ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
                 ret['vencimento_minimo'] = get_param('vencimento_minimo')
             
             return ret
@@ -126,4 +126,8 @@ class ConferenciaItemLeitura(BaseModel):
 class ConclusaoItemSchema(BaseModel):
     tentativas: int
     status_final: str # 'CONFERIDO' ou 'DIVERGENTE'
+    int_embalagem: str
+    int_material: str
+    identificacao: str
+    cert_qual: str
     leituras: List[ConferenciaItemLeitura]

@@ -62,7 +62,7 @@ class RecebimentoItem(Base):
     int_embalagem = Column("IntEmbalagem", String(20), nullable=True)
     int_material = Column("IntMaterial", String(20), nullable=True)
     identificacao = Column("Identificacao", String(100), nullable=True)
-    certif_qual = Column("CertifQual", String(10), nullable=True)
+    cert_qual = Column("CertifQual", String(10), nullable=True)
 
     # Direcionamento (Cross-docking para outra filial, por exemplo)
     destino_id = Column("DestinoId", Integer, ForeignKey("Filiais.Id"), nullable=True)

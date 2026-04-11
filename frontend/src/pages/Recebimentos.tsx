@@ -499,10 +499,10 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{item.data_vencimento || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.integridade_embalagem !== null ? (item.integridade_embalagem ? "Sim" : "Não") : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.integridade_material !== null ? (item.integridade_material ? "Sim" : "Não") : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? (item.identificacao ? "Sim" : "Não") : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.certificado_qualidade !== null ? (item.certificado_qualidade ? "Sim" : "Não") : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.int_embalagem !== null ? item.int_embalagem : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.int_material !== null ? item.int_material : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? item.identificacao : "-"}</td>
+                    <td className="px-3 py-1.5 text-center">{item.cert_qual !== null ? item.cert_qual : "-"}</td>
                     <td className="px-3 py-1.5">{item.destino || "-"}</td>
                     <td className="px-3 py-1.5">
                       <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
@@ -830,20 +830,41 @@ export default function Recebimentos() {
                       </div>
 
                       {/* Card QUALIDADE */}
-                      <div className={`p-4 rounded-xl border bg-white shadow-sm transition-all ${!isQualidadeOK ? 'border-yellow-300 ring-1 ring-yellow-300' : 'border-gray-100'}`}>
-                        <div className="flex items-center mb-3">
-                          <div className={`p-2 rounded-lg mr-2 ${isQualidadeOK ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
+                      {(() => {
+                        const problemas = new Set<string>();
+                        recebimentoSelecionado.itens.forEach(item => {
+                          if (item.int_embalagem === 'Não') problemas.add("Embalagem não íntegra");
+                          if (item.cert_qual === 'Não') problemas.add("Sem certificado de qualidade");
+                          if (item.int_material === 'Não') problemas.add("Material danificado");
+                          if (item.identificacao === 'Não') problemas.add("Identificação incorreta");
+                        });
+                        const temProblema = problemas.size > 0;
+                        const isQualidadeRealOK = isQualidadeOK && !temProblema;
+
+                        return (
+                          <div className={`p-4 rounded-xl border bg-white shadow-sm transition-all ${!isQualidadeRealOK ? 'border-yellow-300 ring-1 ring-yellow-300' : 'border-gray-100'}`}>
+                            <div className="flex items-center mb-3">
+                              <div className={`p-2 rounded-lg mr-2 ${isQualidadeRealOK ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                              </div>
+                              <h4 className="font-bold text-gray-700">Qualidade</h4>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">Inspeção técnica.</p>
+                            <div className={`text-sm font-bold ${isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600'}`}>
+                              {isQualidadeRealOK ? 'Liberado' : (
+                                <div className="flex flex-col space-y-1">
+                                  {recebimentoSelecionado.status === 'BLOQUEADO' && <span>Nota Bloqueada</span>}
+                                  {Array.from(problemas).map((p, idx) => (
+                                    <span key={idx}>{p}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <h4 className="font-bold text-gray-700">Qualidade</h4>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-2">Inspeção técnica.</p>
-                        <div className={`text-sm font-bold ${isQualidadeOK ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {isQualidadeOK ? 'Liberado' : 'Nota Bloqueada'}
-                        </div>
-                      </div>
+                        );
+                      })()}
                     </div>
 
                   </>
