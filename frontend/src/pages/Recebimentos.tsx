@@ -888,11 +888,42 @@ export default function Recebimentos() {
                       {/* Card QUALIDADE */}
                       {(() => {
                         const problemas = new Set<string>();
+                        const totalItens = recebimentoSelecionado.itens.length;
+
                         recebimentoSelecionado.itens.forEach(item => {
                           if (item.int_embalagem === 'Não') problemas.add("Embalagem não íntegra");
                           if (item.cert_qual === 'Não') problemas.add("Sem certificado de qualidade");
                           if (item.int_material === 'Não') problemas.add("Material danificado");
                           if (item.identificacao === 'Não') problemas.add("Identificação incorreta");
+
+                          // Validação de Vencimento Mínimo (Shelf Life)
+                          if (item.vencimento_minimo && item.leituras) {
+                            const tentativaAtual = item.tentativas || 1;
+                            const leiturasSessao = item.leituras.filter(l => (l.numero_sessao || 1) === tentativaAtual);
+
+                            for (const l of leiturasSessao) {
+                              if (l.data_validade) {
+                                try {
+                                  // No JSON do backend, data_validade vem como string ISO
+                                  const dataVal = new Date(l.data_validade);
+                                  const hoje = new Date();
+                                  hoje.setHours(0, 0, 0, 0);
+                                  
+                                  const diffTime = dataVal.getTime() - hoje.getTime();
+                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                  if (diffDays < item.vencimento_minimo) {
+                                    const msg = `Produto vence em ${diffDays} dias, abaixo do mínimo permitido (${item.vencimento_minimo} dias)`;
+                                    const prefixo = totalItens > 1 ? `${item.sku || item.codigo_fornecedor}: ` : "";
+                                    problemas.add(`${prefixo}${msg}`);
+                                    break; // Mostra apenas um alerta de vencimento por item
+                                  }
+                                } catch (e) {
+                                  console.error("Erro ao validar vencimento:", e);
+                                }
+                              }
+                            }
+                          }
                         });
                         const temProblema = problemas.size > 0;
                         const isQualidadeRealOK = isQualidadeOK && !temProblema;
@@ -1019,7 +1050,7 @@ export default function Recebimentos() {
                 </svg>
                 Atenção
               </div>
-              Ao confirmar a reconferência, todas as UAs utilizadas serão excluídas permanentemente.
+              Ao confirmar a reconferência, todas as UAs utilizadas serão permanentemente excluídas.
             </div>
 
             <div>

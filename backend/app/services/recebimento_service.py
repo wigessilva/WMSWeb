@@ -555,6 +555,18 @@ class RecebimentoService:
         item.identificacao = dados.identificacao
         item.cert_qual = dados.cert_qual
 
+        # Sincroniza o Lote e Validade finais para visualização sumarizada no Painel
+        if dados.leituras and len(dados.leituras) > 0:
+            from datetime import datetime
+            prim_leit = dados.leituras[0]
+            if prim_leit.lote:
+                item.lote = prim_leit.lote
+            if prim_leit.data_validade:
+                try:
+                    item.val = datetime.strptime(prim_leit.data_validade, "%d/%m/%Y")
+                except:
+                    pass
+
         # No salvamento incremental, a quantidade já foi atualizada a cada UA.
         # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.
         if hasattr(dados, 'leituras') and dados.leituras:
