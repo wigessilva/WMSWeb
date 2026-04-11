@@ -234,10 +234,12 @@ class RecebimentoService:
             # Compara
             preco_base_oc = preco_oc / (fator_oc if fator_oc > 0 else 1.0)
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
+
+            preco_xml_na_und_oc = preco_base_xml * fator_oc
             
-            if preco_base_xml > preco_base_oc:
+            if preco_xml_na_und_oc > preco_oc:
                 # Calcula a diferença para ver se está na tolerância
-                diff = preco_base_xml - preco_base_oc
+                diff = preco_xml_na_und_oc - preco_oc
                 esta_na_tolerancia = False
                 
                 if preco_oc > 0:
@@ -245,18 +247,26 @@ class RecebimentoService:
                         if diff <= v_tol:
                             esta_na_tolerancia = True
                     else: # PORCENTAGEM
-                        percentual_diff = (diff / preco_base_oc) * 100
+                        percentual_diff = (diff / preco_oc) * 100
                         if percentual_diff <= v_tol:
                             esta_na_tolerancia = True
 
                 if not esta_na_tolerancia:
                     houve_discrepancia_fora_tolerancia = True
                     item.status = StatusRecebimentoItem.DIVERGENTE.value
+                else:
+                    # Se estava divergente mas agora está na tolerância, voltamos o item para o fluxo normal
+                    if item.status == StatusRecebimentoItem.DIVERGENTE.value:
+                        item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
                 
                 preco_xml_na_und_oc = preco_base_xml * fator_oc
                 discrepancias.append(
                     f"{prod.sku}: Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
                 )
+            else:
+                # Caso o preço xml <= preço oc, e o item estava marcado como divergente, limpamos
+                if item.status == StatusRecebimentoItem.DIVERGENTE.value:
+                    item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
 
         if discrepancias:
             if houve_discrepancia_fora_tolerancia:
@@ -264,15 +274,50 @@ class RecebimentoService:
                 recebimento.dentro_da_tolerancia = False
             else:
                 recebimento.dentro_da_tolerancia = True
-                # O status do romaneio não muda para DIVERGENTE se está tudo na tolerância
+                # Se o romaneio estava DIVERGENTE mas agora está na tolerância, volta para IMPORTADO
+                if recebimento.status == StatusRecebimento.DIVERGENTE.value:
+                    recebimento.status = StatusRecebimento.IMPORTADO.value
             
             recebimento.divergencia_financeira = " | ".join(discrepancias)
         else:
             recebimento.dentro_da_tolerancia = False
             recebimento.divergencia_financeira = None
+            # Se não há nenhuma discrepância e estava marcado como divergente, volta para o fluxo
+            if recebimento.status == StatusRecebimento.DIVERGENTE.value:
+                recebimento.status = StatusRecebimento.IMPORTADO.value
         
         db.commit()
         return bool(discrepancias and houve_discrepancia_fora_tolerancia)
+
+    @staticmethod
+    def revalidar_precos_pendentes(db: Session):
+        from app.db.database import SessionLocalERP
+        db_erp = SessionLocalERP()
+        try:
+            statuses_para_revalidar = [
+                StatusRecebimento.IMPORTADO.value,
+                StatusRecebimento.PENDENTE.value,
+                StatusRecebimento.DIVERGENTE.value,
+                StatusRecebimento.AGUARDANDO_LIBERACAO.value
+            ]
+            recebimentos = db.query(Recebimento).filter(
+                Recebimento.status.in_(statuses_para_revalidar)
+            ).all()
+            
+            for rec in recebimentos:
+                # Chama a validação individual (que já atualiza status e log)
+                RecebimentoService._validar_divergencia_precos(db, db_erp, rec.id)
+                # Recalcula o status pai para garantir que ele volte para AGUARDANDO_LIBERACAO 
+                # ou PENDENTE conforme as regras de negócio
+                RecebimentoService.atualizar_status_pai(db, rec.id)
+                
+            db.commit()
+        except Exception as e:
+            # Em caso de erro, apenas loga e deixa os status atuais
+            import logging
+            logging.error(f"Erro ao revalidar preços pendentes: {e}")
+        finally:
+            db_erp.close()
 
     @staticmethod
     def _registrar_log(db: Session, tabela: str, registro_id: int, acao: str, gatilho: str = "MANUAL", estado_anterior: str = None, estado_novo: str = None, usuario: str = "Sistema", observacao: str = None):
@@ -700,6 +745,13 @@ class RecebimentoService:
         # O recalculo delegará a avaliação das unidades pendentes na próxima linha.
         db.commit()
 
+        from app.db.database import SessionLocalERP
+        db_erp = SessionLocalERP()
+        try:
+            RecebimentoService._validar_divergencia_precos(db, db_erp, recebimento_id)
+        finally:
+            db_erp.close()
+
         # Aciona o motor central que recalcula itens e cabeçalho
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
@@ -790,10 +842,20 @@ class RecebimentoService:
 
         db.commit()
         
-        # Atualiza status pai das notas paralelas que também foram vinculadas por repetição
-        for rec_id in recebimentos_afetados:
-            if rec_id != recebimento_id:
-                RecebimentoService.atualizar_status_pai(db, rec_id)
+        from app.db.database import SessionLocalERP
+        db_erp = SessionLocalERP()
+        try:
+            # Valida os preços para as notas afetadas antes de atualizar o status pai
+            for rec_id in recebimentos_afetados:
+                RecebimentoService._validar_divergencia_precos(db, db_erp, rec_id)
+                if rec_id != recebimento_id:
+                    RecebimentoService.atualizar_status_pai(db, rec_id)
+            
+            # Garante que a nota clicada também seja validada
+            if recebimento_id not in recebimentos_afetados:
+                RecebimentoService._validar_divergencia_precos(db, db_erp, recebimento_id)
+        finally:
+            db_erp.close()
 
         # Atualiza a nota clicada e a devolve pra tela
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)

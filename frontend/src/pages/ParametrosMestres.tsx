@@ -438,8 +438,8 @@ export default function ParametrosMestres() {
                   onChange={(e) => setToleranciaTipo(e.target.value)}
                   className="w-1/3 border border-gray-300 p-2.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
                 >
-                  <option value="VALOR">R$ (Valor)</option>
-                  <option value="PORCENTAGEM">% (Porcentagem)</option>
+                  <option value="VALOR">Valor</option>
+                  <option value="PORCENTAGEM">Porcentagem</option>
                 </select>
                 <input
                   type="number"
@@ -451,7 +451,7 @@ export default function ParametrosMestres() {
                 />
               </div>
               <p className="mt-2 text-xs text-gray-500 italic">
-                {toleranciaTipo === 'VALOR' 
+                {toleranciaTipo === 'VALOR'
                   ? "Diferenças de até R$ " + toleranciaValor.toFixed(2) + " por unidade não bloquearão o recebimento."
                   : "Diferenças de até " + toleranciaValor + "% no preço unitário não bloquearão o recebimento."
                 }
@@ -463,61 +463,60 @@ export default function ParametrosMestres() {
 
       {/* Modal de Exceções */}
       <Modal isOpen={modalExcecoesAberto}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl max-h-[95vh] flex flex-col">
+        <div className="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl max-h-[95vh] flex flex-col">
 
-            {/* Fechar */}
-            <div className="flex justify-end mb-2">
-              <button onClick={() => setModalExcecoesAberto(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-            </div>
+          {/* Fechar */}
+          <div className="flex justify-end mb-2">
+            <button onClick={() => setModalExcecoesAberto(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+          </div>
 
-            {/* Abas no Padrão do Sistema */}
-            <div className="flex border-b border-gray-200 mb-4">
-              {(['validade', 'lote', 'bloqueios', 'giro', 'todas'] as const).map((aba) => (
-                <button
-                  key={aba}
-                  onClick={() => setAbaExcecao(aba)}
-                  className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors capitalize ${
-                    abaExcecao === aba
+          {/* Abas no Padrão do Sistema */}
+          <div className="flex border-b border-gray-200 mb-4">
+            {(['validade', 'lote', 'bloqueios', 'giro', 'todas'] as const).map((aba) => (
+              <button
+                key={aba}
+                onClick={() => setAbaExcecao(aba)}
+                className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors capitalize ${abaExcecao === aba
                     ? 'border-[#1a63b6] text-[#1a63b6]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
-                >
-                  {aba}
-                </button>
-              ))}
-            </div>
-
-            {/* Alternador de Tipo Embaixo das Abas */}
-            <div className="flex mb-4">
-              <button
-                type="button"
-                onClick={() => setVerTipoExcecao(verTipoExcecao === 'produtos' ? 'familias' : 'produtos')}
-                className="px-4 py-2 text-sm font-medium text-[#1a63b6] bg-blue-50 rounded hover:bg-blue-100 transition-colors"
               >
-                {verTipoExcecao === 'produtos' ? 'Famílias >' : '< Produtos'}
+                {aba}
               </button>
-            </div>
-
-            {/* Área da Tabela */}
-            <div className="flex-1 overflow-auto border border-gray-200 rounded">
-              {carregandoExcecoes ? (
-                <div className="h-64 flex items-center justify-center bg-gray-50">
-                  <p className="text-gray-500">Carregando exceções...</p>
-                </div>
-              ) : (
-                renderTabelaExcecoes()
-              )}
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-gray-200 flex justify-end">
-              <button
-                onClick={() => setModalExcecoesAberto(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
+            ))}
           </div>
+
+          {/* Alternador de Tipo Embaixo das Abas */}
+          <div className="flex mb-4">
+            <button
+              type="button"
+              onClick={() => setVerTipoExcecao(verTipoExcecao === 'produtos' ? 'familias' : 'produtos')}
+              className="px-4 py-2 text-sm font-medium text-[#1a63b6] bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+            >
+              {verTipoExcecao === 'produtos' ? 'Famílias >' : '< Produtos'}
+            </button>
+          </div>
+
+          {/* Área da Tabela */}
+          <div className="flex-1 overflow-auto border border-gray-200 rounded">
+            {carregandoExcecoes ? (
+              <div className="h-64 flex items-center justify-center bg-gray-50">
+                <p className="text-gray-500">Carregando exceções...</p>
+              </div>
+            ) : (
+              renderTabelaExcecoes()
+            )}
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-gray-200 flex justify-end">
+            <button
+              onClick={() => setModalExcecoesAberto(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
       </Modal>
 
     </div>
