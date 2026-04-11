@@ -58,12 +58,15 @@ export default function Conferencia() {
 
           atual.itens.forEach(it => {
             tents[it.id] = it.tentativas || 3;
-            
-            // Retoma UAs bipadas anteriormente
+
+            // Retoma UAs bipadas anteriormente (apenas da sessão atual)
             if (it.leituras && it.leituras.length > 0) {
-              const estornos = it.leituras.filter(l => l.qtd < 0).map(l => l.ua);
-              const efetivas = it.leituras.filter(l => l.qtd > 0 && !estornos.includes(l.ua));
+              const tentativaAtual = it.tentativas || 1;
+              const leiturasSessao = it.leituras.filter(l => l.numero_sessao === tentativaAtual);
               
+              const estornos = leiturasSessao.filter(l => l.qtd < 0).map(l => l.ua);
+              const efetivas = leiturasSessao.filter(l => l.qtd > 0 && !estornos.includes(l.ua));
+
               uasMap[it.id] = efetivas.map(l => ({
                 ua: l.ua,
                 quantidade: l.qtd,
@@ -74,6 +77,7 @@ export default function Conferencia() {
                 fator_conversao: l.fator_conversao,
                 unidade_produto_id: l.unidade_produto_id,
                 descricao_visual: l.descricao_visual,
+                sem_gtin: !!l.descricao_visual && !l.ean,
                 sku: it.sku,
                 produto_id: it.produto_id
               }));
@@ -138,11 +142,13 @@ export default function Conferencia() {
       // Adiciona a UA ao item atual
       const novaUa = {
         ...uaValida,
+        ua: (uaValida as any).codigo || (uaValida as any).ua || codigoUA.trim().toUpperCase(),
         sku: itemAtual.sku,
         produto_id: itemAtual.produto_id,
         fator_conversao: unidadePadrao?.fator_conversao || 1,
         unidade_medida_id: unidadePadrao?.unidade_medida_id,
-        unidade_produto_id: unidadePadrao?.id
+        unidade_produto_id: unidadePadrao?.id,
+        sem_gtin: !!(uaValida as any).descricao_visual && !(uaValida as any).ean
       };
 
       const novasUasDoItem = [...(uasPorItem[itemAtual.id] || []), novaUa];
@@ -203,13 +209,16 @@ export default function Conferencia() {
     if (!id || !itemAtual) return;
     try {
       const payload = {
-        ua: ua.ua,
+        ua: ua.ua || ua.codigo,
         quantidade: ua.quantidade || 0,
         unidade_produto_id: ua.unidade_produto_id,
         fator_conversao: ua.fator_conversao || 1,
         lote: ua.lote || null,
         data_validade: ua.data_validade || null,
-        und: (unidadesCache[itemAtual.produto_id!] || []).find(und => und.unidade_medida_id === ua.unidade_medida_id)?.unidade_medida_relacao?.sigla || itemAtual.und,
+        und: (unidadesCache[itemAtual.produto_id!] || []).find(und =>
+          (ua.unidade_medida_id && und.unidade_medida_id === ua.unidade_medida_id) ||
+          (ua.unidade_produto_id && und.id === ua.unidade_produto_id)
+        )?.unidade_medida_relacao?.sigla || ua.und || itemAtual.und,
         ean: ua.ean || null,
         descricao_visual: ua.descricao_visual || null,
       };
@@ -237,9 +246,12 @@ export default function Conferencia() {
 
   const totalBase = uasDoItem.reduce((acc, curr: any) => acc + (Number(curr.quantidade) || 0) * (curr.fator_conversao || 1), 0);
   const unidadesProd = itemAtual ? (unidadesCache[itemAtual.produto_id!] || []) : [];
-  const unidadeAtiva = unidadesProd.find(u => u.unidade_medida_id === uaAtual?.unidade_medida_id);
-  const fatorAtivo = unidadeAtiva?.fator_conversao || 1;
-  const siglaAtiva = unidadeAtiva?.unidade_medida_relacao?.sigla || itemAtual?.und || '';
+  const unidadeAtiva = unidadesProd.find(u =>
+    (uaAtual?.unidade_medida_id && u.unidade_medida_id === uaAtual.unidade_medida_id) ||
+    (uaAtual?.unidade_produto_id && u.id === uaAtual.unidade_produto_id)
+  );
+  const fatorAtivo = unidadeAtiva?.fator_conversao || uaAtual?.fator_conversao || 1;
+  const siglaAtiva = unidadeAtiva?.unidade_medida_relacao?.sigla || uaAtual?.und || itemAtual?.und || '';
   const totalExibicao = totalBase / (fatorAtivo || 1);
 
   return (
@@ -359,6 +371,23 @@ export default function Conferencia() {
 
                 <div className="flex-1"></div>
 
+                {uasDoItem.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setUaAtualIndex(0);
+                      setStep('CONFERENCIA');
+                    }}
+                    className="w-full py-5 px-6 bg-blue-50 text-[#1e3a8a] border-2 border-blue-200 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-blue-100 transition-all flex items-center justify-center space-x-3 shadow-sm mb-4 group"
+                  >
+                    <div className="bg-[#1e3a8a] text-white p-1 rounded-lg group-hover:scale-110 transition-transform">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm">Continuar Conferência ({uasDoItem.length} UA{uasDoItem.length > 1 ? 's' : ''})</span>
+                  </button>
+                )}
+
                 <div className="w-full h-1 bg-gray-100 rounded-full opacity-50"></div>
               </div>
             ) : (
@@ -374,7 +403,13 @@ export default function Conferencia() {
                         await salvarLeituraIncremental(uaAtual);
                         setStep('BIPAR_UA');
                       } catch (e: any) {
-                        toast.error(e.response?.data?.detail || "Erro ao salvar UA.");
+                        let msg = "Erro ao salvar UA.";
+                        if (e.response?.data?.detail) {
+                          msg = Array.isArray(e.response.data.detail)
+                            ? e.response.data.detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join(', ')
+                            : e.response.data.detail;
+                        }
+                        toast.error(msg);
                       } finally {
                         setFinalizando(false);
                       }
@@ -497,17 +532,25 @@ export default function Conferencia() {
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Unidade</label>
                         <select
                           className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all appearance-none"
-                          value={uaAtual?.unidade_medida_id || ''}
+                          value={uaAtual?.unidade_medida_id || unidadeAtiva?.unidade_medida_id || ''}
                           onChange={(e) => {
                             const undId = Number(e.target.value);
                             const undObj = (unidadesCache[itemAtual!.produto_id!] || []).find(u => u.unidade_medida_id === undId);
                             if (undObj) {
                               const novasUas = [...uasDoItem];
+
+                              // Conversão automática da quantidade para a nova unidade selecionada
+                              const fatorAntigo = uaAtual?.fator_conversao || 1;
+                              const fatorNovo = undObj.fator_conversao || 1;
+                              const qtdAtual = uaAtual?.quantidade || 0;
+                              const novaQtd = (qtdAtual * fatorAntigo) / fatorNovo;
+
                               novasUas[uaAtualIndex] = {
                                 ...uaAtual,
                                 unidade_medida_id: undId,
                                 fator_conversao: undObj.fator_conversao,
-                                unidade_produto_id: undObj.id
+                                unidade_produto_id: undObj.id,
+                                quantidade: novaQtd
                               };
                               setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
                             }
@@ -530,7 +573,7 @@ export default function Conferencia() {
                           onChange={(e) => {
                             let val = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
                             if (val.length > 8) val = val.slice(0, 8); // Limita a 8 dígitos
-                            
+
                             // Aplica a máscara DD/MM/AAAA
                             let formatado = val;
                             if (val.length > 2) {
@@ -747,11 +790,11 @@ export default function Conferencia() {
                     onClick={async () => {
                       if (!itemAtual || !uaAtual) return;
                       if (!confirm("Tem certeza que deseja excluir este volume? Será gerado um estorno no sistema.")) return;
-                      
+
                       setFinalizando(true);
                       try {
                         await recebimentoService.estornarLeitura(Number(id), itemAtual.id, uaAtual.ua);
-                        
+
                         const novasUas = uasDoItem.filter((_, i) => i !== uaAtualIndex);
                         setUasPorItem(prev => ({ ...prev, [itemAtual.id]: novasUas }));
                         setUaAtualIndex(0);

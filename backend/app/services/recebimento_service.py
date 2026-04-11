@@ -613,7 +613,7 @@ class RecebimentoService:
                 recebimento_item_id=item_id,
                 numero_sessao=item.tentativas or 1,
                 criado_por=usuario,
-                motivo="Sessão Automática"
+                motivo=None
             )
             if not item.tentativas:
                 item.tentativas = 1

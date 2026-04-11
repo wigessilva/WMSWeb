@@ -22,6 +22,7 @@ export interface UA {
   ean?: string | null;
   descricao_visual?: string | null;
   sem_gtin?: boolean; // Campo auxiliar para UI de conferência
+  und?: string | null; // Campo auxiliar para UI de conferência
   criado_em: string;
   atualizado_em: string;
 }

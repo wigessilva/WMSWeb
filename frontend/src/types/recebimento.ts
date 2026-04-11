@@ -33,6 +33,7 @@ export interface RecebimentoLeitura {
   fator_conversao: number;
   unidade_produto_id: number;
   descricao_visual: string | null;
+  numero_sessao: number | null;
 }
 
 export interface RecebimentoItem {

@@ -1019,11 +1019,11 @@ export default function Recebimentos() {
                 </svg>
                 Atenção
               </div>
-              Ao confirmar a reconferência, todas as Unidades (UAs) já bipadas para este item serão **excluídas** permanentemente para permitir a nova contagem.
+              Ao confirmar a reconferência, todas as UAs já utilizadas serão excluídas permanentemente.
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo da Reconferência (Opcional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo (Opcional)</label>
               <textarea
                 value={motivoReconferencia}
                 onChange={(e) => setMotivoReconferencia(e.target.value)}
@@ -1035,7 +1035,7 @@ export default function Recebimentos() {
 
           <div className="flex justify-end space-x-3 mt-4">
             <Button variant="secondary" onClick={() => setModalReconferenciaAberto(false)}>Cancelar</Button>
-            <Button variant="primary" loading={carregando} onClick={confirmarReconferencia}>Confirmar Reconferência</Button>
+            <Button variant="primary" loading={carregando} onClick={confirmarReconferencia}>Confirmar</Button>
           </div>
         </div>
       </Modal>

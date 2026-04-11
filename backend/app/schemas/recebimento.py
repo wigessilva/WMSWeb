@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, model_validator
+from typing import List, Optional, Any
 from datetime import datetime
 from app.enums import StatusRecebimento, StatusRecebimentoItem
 
@@ -16,6 +16,17 @@ class RecebimentoLeituraSchema(BaseModel):
     descricao_visual: Optional[str] = None
     usuario: str
     data: datetime
+    numero_sessao: Optional[int] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def convert_orm(cls, data: Any) -> Any:
+        if not isinstance(data, dict) and hasattr(data, "__table__"):
+            ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+            sessao = getattr(data, 'sessao', None)
+            ret['numero_sessao'] = sessao.numero_sessao if sessao else None
+            return ret
+        return data
 
     class Config:
         from_attributes = True
@@ -43,8 +54,6 @@ class RecebimentoItemBase(BaseModel):
 class RecebimentoItemCriar(RecebimentoItemBase):
     pass
 
-from typing import Any
-from pydantic import model_validator
 
 class RecebimentoItemSchema(RecebimentoItemBase):
     id: int
@@ -68,9 +77,13 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             produto = getattr(data, 'produto', None)
             sku_real = produto.sku if produto else None
             
-            # Pega as descrições visuais únicas de todas as leituras
+            # Pega as descrições visuais únicas da sessão ATUAL (tentativas)
             leituras = getattr(data, 'leituras', [])
-            desc_visuais = list(set([l.descricao_visual for l in leituras if getattr(l, 'descricao_visual', None)]))
+            tentativa_atual = getattr(data, 'tentativas', 1)
+            desc_visuais = list(set([
+                l.descricao_visual for l in leituras 
+                if getattr(l, 'descricao_visual', None) and getattr(l.sessao, 'numero_sessao', 0) == tentativa_atual
+            ]))
 
             # Copia os campos do ORM, filtrando nomes internos do SQLAlchemy
             ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
