@@ -591,7 +591,7 @@ export default function Conferencia() {
                       const fatorNota = undNota?.fator_conversao || 1;
                       const qtdEsperadaBase = itemAtual.qtd_nota * fatorNota;
 
-                      if (statusFinal !== 'DIVERGENTE' && Math.abs(totalBipado - qtdEsperadaBase) > 0.01) {
+                      if (Math.abs(totalBipado - qtdEsperadaBase) > 0.01) {
                         const tentsRestantes = (tentativasPorItem[itemAtual.id] || 3) - 1;
                         if (tentsRestantes > 0) {
                           setTentativasPorItem(prev => ({ ...prev, [itemAtual.id]: tentsRestantes }));

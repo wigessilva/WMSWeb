@@ -173,7 +173,7 @@ export default function Recebimentos() {
       setProdutoSelecionadoId(null);
       setProdutosSugeridos([]);
       setSugestaoMensagem(null);
-      
+
       // Recarrega a lista para mostrar atualizações em cascata sem precisar de F5
       carregarRecebimentos();
     } catch (error: any) {
@@ -202,7 +202,7 @@ export default function Recebimentos() {
 
   const handleLiberar = async () => {
     if (!recebimentoSelecionado) return;
-    
+
     // Se não tem OC vinculada e não está previamente autorizado, chama autorização.
     if (!recebimentoSelecionado.oc && !recebimentoSelecionado.autorizado_por) {
       toast.error("O romaneio não tem OC. Libere com credenciais de supervisor.", { duration: 4000 });
@@ -217,7 +217,7 @@ export default function Recebimentos() {
       const rec = await recebimentoService.liberar(recebimentoSelecionado.id);
       setRecebimentoSelecionado(rec);
       setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
-      toast.success("Conferência liberada. Disponível no coletor!");
+      toast.success("Conferência liberada!");
     } catch (e: any) {
       toast.error(e.response?.data?.detail || "Erro ao liberar");
     } finally {
@@ -696,10 +696,10 @@ export default function Recebimentos() {
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-4">Este romaneio não possui uma Ordem de Compra. Uma pessoa autorizada precisa validar a liberação.</p>
               <div className="space-y-4">
-                <Input 
-                  label="Login do Responsável" 
-                  value={autorizadorLogin} 
-                  onChange={(e) => setAutorizadorLogin(e.target.value)} 
+                <Input
+                  label="Login do Responsável"
+                  value={autorizadorLogin}
+                  onChange={(e) => setAutorizadorLogin(e.target.value)}
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
@@ -763,7 +763,7 @@ export default function Recebimentos() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               );
-              
+
               if (!isFinanceiroOK) vereditoTexto = "Verifique as pendências em Financeiro";
               else if (!isFisicoOK) vereditoTexto = "Verifique as pendências em Físico";
               else if (!isQualidadeOK) vereditoTexto = "Verifique as pendências em Qualidade";
@@ -897,8 +897,8 @@ export default function Recebimentos() {
                               <td className="px-4 py-3">
                                 <div className="flex items-center space-x-2">
                                   <div className="w-full bg-gray-200 rounded-full h-2 min-w-[80px]">
-                                    <div 
-                                      className={`h-2 rounded-full transition-all duration-500 ${progresso === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                                    <div
+                                      className={`h-2 rounded-full transition-all duration-500 ${progresso === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
                                       style={{ width: `${progresso}%` }}
                                     ></div>
                                   </div>
@@ -906,11 +906,10 @@ export default function Recebimentos() {
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                  item.status === 'CONFERIDO' ? 'bg-green-100 text-green-700' :
-                                  item.status === 'DIVERGENTE' ? 'bg-red-100 text-red-700' :
-                                  'bg-blue-100 text-blue-700'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.status === 'CONFERIDO' ? 'bg-green-100 text-green-700' :
+                                    item.status === 'DIVERGENTE' ? 'bg-red-100 text-red-700' :
+                                      'bg-blue-100 text-blue-700'
+                                  }`}>
                                   {item.status}
                                 </span>
                               </td>
