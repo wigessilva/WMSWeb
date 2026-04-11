@@ -746,9 +746,10 @@ export default function Recebimentos() {
           {recebimentoSelecionado && (() => {
             const isFinanceiroOK = !!recebimentoSelecionado.oc && recebimentoSelecionado.status !== 'DIVERGENTE';
             const itensPendentesFisico = recebimentoSelecionado.itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
+            const conferenciaIniciada = !!recebimentoSelecionado.inicio;
             const isFisicoOK = itensPendentesFisico.length === 0;
             const isQualidadeOK = recebimentoSelecionado.status !== 'BLOQUEADO';
-            const isTudoOK = isFinanceiroOK && isFisicoOK && isQualidadeOK;
+            const isTudoOK = isFinanceiroOK && isFisicoOK && isQualidadeOK && conferenciaIniciada;
 
             let vereditoTexto = "Pronto para Conferência";
             let vereditoCor = "bg-green-100 text-green-800 border-green-200";
@@ -819,22 +820,23 @@ export default function Recebimentos() {
                           </div>
                           <h4 className="font-bold text-gray-700">Físico</h4>
                         </div>
-                        <div className={`text-sm font-bold ${isFisicoOK ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {isFisicoOK ? 'Vínculos OK' : (
+                        <div className={`text-sm font-bold ${conferenciaIniciada ? (isFisicoOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
+                          {!conferenciaIniciada ? 'Aguardando conferência...' : 
+                           isFisicoOK ? 'Quantidades batem' : (
                             <div className="flex flex-col space-y-1">
                               {itensPendentesFisico.map(item => (
                                 <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
                               ))}
-                              {recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
-                                <div key={item.id} className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 text-[10px] text-blue-700">
-                                  <span className="font-black uppercase block mb-1">Identificação Visual:</span>
-                                  {item.descricoes_visuais?.map((d, idx) => (
-                                    <div key={idx} className="italic">"{d}"</div>
-                                  ))}
-                                </div>
-                              ))}
                             </div>
                           )}
+                          {conferenciaIniciada && recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
+                            <div key={item.id} className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 text-[10px] text-blue-700">
+                              <span className="font-black uppercase block mb-1">Identificação Visual ({item.sku || item.codigo_fornecedor}):</span>
+                              {item.descricoes_visuais?.map((d, idx) => (
+                                <div key={idx} className="italic">"{d}"</div>
+                              ))}
+                            </div>
+                          ))}
                         </div>
                       </div>
 
@@ -860,8 +862,9 @@ export default function Recebimentos() {
                               </div>
                               <h4 className="font-bold text-gray-700">Qualidade</h4>
                             </div>
-                            <div className={`text-sm font-bold ${isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600'}`}>
-                              {isQualidadeRealOK ? 'Liberado' : (
+                            <div className={`text-sm font-bold ${conferenciaIniciada ? (isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
+                              {!conferenciaIniciada ? 'Aguardando conferência...' : 
+                               isQualidadeRealOK ? 'Nenhum problema de qualidade apontado' : (
                                 <div className="flex flex-col space-y-1">
                                   {recebimentoSelecionado.status === 'BLOQUEADO' && <span>Nota Bloqueada</span>}
                                   {Array.from(problemas).map((p, idx) => (
@@ -896,11 +899,6 @@ export default function Recebimentos() {
                               <td className="px-4 py-3 font-medium text-[#1a63b6]">{item.sku || "---"}</td>
                               <td className="px-4 py-3">
                                 <div className="font-medium text-gray-900">{item.descricao}</div>
-                                {item.descricoes_visuais && item.descricoes_visuais.length > 0 && (
-                                  <div className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-1 font-bold italic border border-amber-100">
-                                    Obs: {item.descricoes_visuais.join('; ')}
-                                  </div>
-                                )}
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center space-x-2">
