@@ -54,6 +54,11 @@ export default function Recebimentos() {
   const [autorizadorSenha, setAutorizadorSenha] = useState("");
   const [carregandoAutorizacao, setCarregandoAutorizacao] = useState(false);
 
+  // Estados para Reconferência Customizada
+  const [modalReconferenciaAberto, setModalReconferenciaAberto] = useState(false);
+  const [itemIdParaReconferencia, setItemIdParaReconferencia] = useState<number | null>(null);
+  const [motivoReconferencia, setMotivoReconferencia] = useState("");
+
 
 
   const carregarRecebimentos = async (termo?: string) => {
@@ -148,22 +153,35 @@ export default function Recebimentos() {
     }
   }
 
-  const handleSolicitarReconferencia = async (itemId: number) => {
-    if (!recebimentoSelecionado) return;
-    const motivo = prompt("Informe o motivo da reconferência (Opcional):");
-    if (motivo === null) return; // Cancelou o prompt
+  const handleSolicitarReconferencia = (itemId: number) => {
+    setItemIdParaReconferencia(itemId);
+    setMotivoReconferencia("");
+    setModalReconferenciaAberto(true);
+  }
 
-    if (!confirm("Tem a certeza que deseja solicitar a reconferência deste item? As unidades (UAs) já bipadas para ele serão excluídas.")) return;
+  const confirmarReconferencia = async () => {
+    if (!recebimentoSelecionado || !itemIdParaReconferencia) return;
 
     setCarregando(true);
     try {
-      const rec = await recebimentoService.solicitarReconferencia(recebimentoSelecionado.id, itemId, motivo || undefined);
-      
-      const novosRecebimentos = recebimentos.map(r => r.id === rec.id ? rec : r);
-      setRecebimentos(novosRecebimentos);
-      setRecebimentoSelecionado(rec);
-      
+      await recebimentoService.solicitarReconferencia(
+        recebimentoSelecionado.id,
+        itemIdParaReconferencia,
+        motivoReconferencia || undefined
+      );
+
+      // Recarrega a lista para obter o objeto Recebimento completo com os itens atualizados
+      const recebimentosAtualizados = await recebimentoService.listar();
+      setRecebimentos(recebimentosAtualizados);
+
+      // Atualiza o recebimento selecionado com os dados frescos do servidor
+      const recAtualizado = recebimentosAtualizados.find(r => r.id === recebimentoSelecionado.id);
+      if (recAtualizado) {
+        setRecebimentoSelecionado(recAtualizado);
+      }
+
       toast.success("Reconferência solicitada com sucesso! O item voltou para a fila.");
+      setModalReconferenciaAberto(false);
     } catch (e: any) {
       console.error("Erro ao solicitar reconferência:", e);
       toast.error(e.response?.data?.detail || "Erro ao solicitar reconferência");
@@ -467,9 +485,8 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5">{rec.inicio ? new Date(rec.inicio).toLocaleString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{rec.conclusao ? new Date(rec.conclusao).toLocaleString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        rec.status === 'DIVERGENTE' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${rec.status === 'DIVERGENTE' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
                         {rec.status}
                       </span>
                     </td>
@@ -773,12 +790,12 @@ export default function Recebimentos() {
             const conferenciaIniciada = !!recebimentoSelecionado.inicio;
             const isFisicoOK = itensPendentesFisico.length === 0;
             const isQualidadeOK = recebimentoSelecionado.status !== 'BLOQUEADO';
-            
+
             // Está PRONTO se financeiro, físico e qualidade estão OK
             const isPronto = isFinanceiroOK && isFisicoOK && isQualidadeOK;
 
             let vereditoTexto = conferenciaIniciada ? "Em Conferência" : "Pronto para Conferência";
-            
+
             if (recebimentoSelecionado.status === 'EM_ANALISE') vereditoTexto = "Aguardando Análise Fiscal";
             if (recebimentoSelecionado.status === 'FINALIZADO') vereditoTexto = "Conferência Concluída";
             if (recebimentoSelecionado.status === 'REJEITADO') vereditoTexto = "Recebimento Rejeitado";
@@ -824,10 +841,10 @@ export default function Recebimentos() {
                           <h4 className="font-bold text-gray-700">Financeiro</h4>
                         </div>
                         <div className={`text-sm font-bold ${recebimentoSelecionado.dentro_da_tolerancia ? 'text-green-600' : (isFinanceiroOK ? 'text-green-600' : 'text-red-600')}`}>
-                          {!recebimentoSelecionado.oc ? 'OC Não Localizada' : 
-                           recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' : 
-                           recebimentoSelecionado.dentro_da_tolerancia ? 'Preços dentro da tolerância' : 
-                           'OC ' + recebimentoSelecionado.oc}
+                          {!recebimentoSelecionado.oc ? 'OC Não Localizada' :
+                            recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' :
+                              recebimentoSelecionado.dentro_da_tolerancia ? 'Preços dentro da tolerância' :
+                                'OC ' + recebimentoSelecionado.oc}
                         </div>
                         {recebimentoSelecionado.divergencia_financeira && (
                           <div className={`mt-2 p-2 ${recebimentoSelecionado.dentro_da_tolerancia ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'} border rounded text-[10px] font-medium`}>
@@ -849,14 +866,14 @@ export default function Recebimentos() {
                           <h4 className="font-bold text-gray-700">Físico</h4>
                         </div>
                         <div className={`text-sm font-bold ${conferenciaIniciada ? (isFisicoOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
-                          {!conferenciaIniciada ? 'Aguardando conferência...' : 
-                           isFisicoOK ? 'Quantidades batem' : (
-                            <div className="flex flex-col space-y-1">
-                              {itensPendentesFisico.map(item => (
-                                <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
-                              ))}
-                            </div>
-                          )}
+                          {!conferenciaIniciada ? 'Aguardando conferência...' :
+                            isFisicoOK ? 'Quantidades batem' : (
+                              <div className="flex flex-col space-y-1">
+                                {itensPendentesFisico.map(item => (
+                                  <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
+                                ))}
+                              </div>
+                            )}
                           {conferenciaIniciada && recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
                             <div key={item.id} className="mt-2 text-[10px] text-gray-500">
                               <span className="font-black uppercase block mb-0.5 text-gray-700">Identificação Visual{multiItens ? ` (${item.sku || item.codigo_fornecedor})` : ""}:</span>
@@ -891,15 +908,15 @@ export default function Recebimentos() {
                               <h4 className="font-bold text-gray-700">Qualidade</h4>
                             </div>
                             <div className={`text-sm font-bold ${conferenciaIniciada ? (isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
-                              {!conferenciaIniciada ? 'Aguardando conferência...' : 
-                               isQualidadeRealOK ? 'Nenhum problema de qualidade apontado' : (
-                                <div className="flex flex-col space-y-1">
-                                  {recebimentoSelecionado.status === 'BLOQUEADO' && <span>Nota Bloqueada</span>}
-                                  {Array.from(problemas).map((p, idx) => (
-                                    <span key={idx}>{p}</span>
-                                  ))}
-                                </div>
-                              )}
+                              {!conferenciaIniciada ? 'Aguardando conferência...' :
+                                isQualidadeRealOK ? 'Nenhum problema de qualidade apontado' : (
+                                  <div className="flex flex-col space-y-1">
+                                    {recebimentoSelecionado.status === 'BLOQUEADO' && <span>Nota Bloqueada</span>}
+                                    {Array.from(problemas).map((p, idx) => (
+                                      <span key={idx}>{p}</span>
+                                    ))}
+                                  </div>
+                                )}
                             </div>
                           </div>
                         );
@@ -942,8 +959,8 @@ export default function Recebimentos() {
                               </td>
                               <td className="px-4 py-3">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.status === 'CONFERIDO' ? 'bg-green-100 text-green-700' :
-                                    item.status === 'DIVERGENTE' ? 'bg-red-100 text-red-700' :
-                                      'bg-blue-100 text-blue-700'
+                                  item.status === 'DIVERGENTE' ? 'bg-red-100 text-red-700' :
+                                    'bg-blue-100 text-blue-700'
                                   }`}>
                                   {item.status}
                                 </span>
@@ -953,7 +970,7 @@ export default function Recebimentos() {
                               </td>
                               <td className="px-4 py-3 text-center">
                                 {['CONFERIDO', 'DIVERGENTE'].includes(item.status) && temPermissao('RECEBIMENTO.LIBERAR') && (
-                                  <button 
+                                  <button
                                     onClick={() => handleSolicitarReconferencia(item.id)}
                                     disabled={carregando}
                                     className="p-1.5 text-[#1a63b6] hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
@@ -979,6 +996,47 @@ export default function Recebimentos() {
               </div>
             );
           })()}
+        </div>
+      </Modal>
+      {/* MODAL SOLICITAR RECONFERÊNCIA */}
+      <Modal isOpen={modalReconferenciaAberto}>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-[#1a63b6] flex items-center">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Solicitar Reconferência
+            </h3>
+            <button onClick={() => setModalReconferenciaAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r text-yellow-800 text-sm">
+              <div className="flex items-center font-bold mb-1">
+                <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Atenção
+              </div>
+              Ao confirmar a reconferência, todas as Unidades (UAs) já bipadas para este item serão **excluídas** permanentemente para permitir a nova contagem.
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo da Reconferência (Opcional)</label>
+              <textarea
+                value={motivoReconferencia}
+                onChange={(e) => setMotivoReconferencia(e.target.value)}
+                placeholder="Ex: Divergência na contagem física, avaria, etc."
+                className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] h-24 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button variant="secondary" onClick={() => setModalReconferenciaAberto(false)}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} onClick={confirmarReconferencia}>Confirmar Reconferência</Button>
+          </div>
         </div>
       </Modal>
     </div>

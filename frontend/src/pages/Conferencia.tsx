@@ -393,6 +393,64 @@ export default function Conferencia() {
                     <p className="text-sm font-bold text-blue-600 italic">SKU: {itemAtual?.sku}</p>
                   </div>
 
+                  {/* SEÇÃO DE IDENTIFICAÇÃO DO PRODUTO */}
+                  <div className="bg-white border-2 border-blue-50 rounded-[2rem] p-6 space-y-4 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Identificação</label>
+                      <label className="flex items-center space-x-2 cursor-pointer group">
+                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-tight group-hover:text-blue-800 transition-colors">Sem GTIN?</span>
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 rounded-lg border-2 border-blue-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          checked={!!uaAtual?.sem_gtin}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            const novasUas = [...uasDoItem];
+                            novasUas[uaAtualIndex] = {
+                              ...uaAtual,
+                              sem_gtin: val,
+                              ean: val ? '' : (uaAtual.ean || ''),
+                              descricao_visual: val ? (uaAtual.descricao_visual || '') : ''
+                            };
+                            setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="relative">
+                        {!uaAtual?.sem_gtin ? (
+                          <input
+                            type="text"
+                            placeholder="BIPE OU DIGITE O GTIN"
+                            className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200"
+                            value={uaAtual?.ean || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const novasUas = [...uasDoItem];
+                              novasUas[uaAtualIndex] = { ...uaAtual, ean: val };
+                              setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                            }}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="DESCRIÇÃO VISUAL"
+                            className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200 animate-in fade-in zoom-in-95 duration-300"
+                            value={uaAtual?.descricao_visual || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const novasUas = [...uasDoItem];
+                              novasUas[uaAtualIndex] = { ...uaAtual, descricao_visual: val };
+                              setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 gap-4">
                     <div className="bg-emerald-600 text-white p-5 rounded-[2rem] shadow-lg shadow-emerald-200">
                       <label className="text-[9px] font-black uppercase tracking-widest block opacity-70 mb-1">Total Bipado</label>
@@ -490,63 +548,6 @@ export default function Conferencia() {
                       </div>
                     </div>
 
-                    {/* SEÇÃO DE IDENTIFICAÇÃO DO PRODUTO */}
-                    <div className="bg-white border-2 border-blue-50 rounded-[2rem] p-6 space-y-4 shadow-sm">
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Identificação</label>
-                        <label className="flex items-center space-x-2 cursor-pointer group">
-                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-tight group-hover:text-blue-800 transition-colors">Sem GTIN?</span>
-                          <input
-                            type="checkbox"
-                            className="w-5 h-5 rounded-lg border-2 border-blue-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                            checked={!!uaAtual?.sem_gtin}
-                            onChange={(e) => {
-                              const val = e.target.checked;
-                              const novasUas = [...uasDoItem];
-                              novasUas[uaAtualIndex] = {
-                                ...uaAtual,
-                                sem_gtin: val,
-                                ean: val ? '' : (uaAtual.ean || ''),
-                                descricao_visual: val ? (uaAtual.descricao_visual || '') : ''
-                              };
-                              setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
-                            }}
-                          />
-                        </label>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="relative">
-                          {!uaAtual?.sem_gtin ? (
-                            <input
-                              type="text"
-                              placeholder="BIPE OU DIGITE O GTIN"
-                              className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200"
-                              value={uaAtual?.ean || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                const novasUas = [...uasDoItem];
-                                novasUas[uaAtualIndex] = { ...uaAtual, ean: val };
-                                setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
-                              }}
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              placeholder="DESCRIÇÃO VISUAL"
-                              className="w-full bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 font-black text-xl text-blue-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-blue-200 animate-in fade-in zoom-in-95 duration-300"
-                              value={uaAtual?.descricao_visual || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                const novasUas = [...uasDoItem];
-                                novasUas[uaAtualIndex] = { ...uaAtual, descricao_visual: val };
-                                setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
-                              }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </div>
 
                     {/* SEÇÃO DE QUALIDADE */}
                     <div className="bg-white border-2 border-amber-50 rounded-[2rem] p-6 space-y-4 shadow-sm">

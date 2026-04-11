@@ -496,9 +496,24 @@ class RecebimentoService:
         db.add(nova_sessao)
         
         # 3. Exclui as UAs físicas ligadas a este item (Reset do estoque físico)
-        db.query(UA).filter(UA.produto_id == item.sku, UA.ua.in_(
-            db.query(RecebimentoLeitura.ua).filter(RecebimentoLeitura.recebimento_item_id == item_id)
-        )).delete(synchronize_session=False)
+        # Precisamos considerar o histórico para evitar erros de integridade
+        from app.models.historico_ua import HistoricoUA
+        
+        # Busca os IDs das UAs que serão removidas
+        uas_para_remover = db.query(UA.id).filter(
+            UA.produto_id == item.sku, 
+            UA.ua.in_(
+                db.query(RecebimentoLeitura.ua).filter(RecebimentoLeitura.recebimento_item_id == item_id)
+            )
+        ).all()
+        ua_ids = [u[0] for u in uas_para_remover]
+
+        if ua_ids:
+            # Remove o histórico primeiro (Auditoria do estoque físico)
+            db.query(HistoricoUA).filter(HistoricoUA.ua_id.in_(ua_ids)).delete(synchronize_session=False)
+            
+            # Remove as UAs
+            db.query(UA).filter(UA.id.in_(ua_ids)).delete(synchronize_session=False)
 
         # 4. Reseta as quantidades do item para a nova sessão
         item.qtd_recebida = 0.0
