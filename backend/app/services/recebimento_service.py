@@ -895,9 +895,16 @@ class RecebimentoService:
             db.add(item)
             return
 
-        leituras = db.query(RecebimentoLeitura).filter(
+        # Apenas somar as leituras da sessão corrente (tentativa atual do item)
+        # filtrando UAs que foram estornadas (rejeitadas na conclusão ou canceladas)
+        from app.models.ua import UA
+        
+        leituras = db.query(RecebimentoLeitura).select_from(RecebimentoLeitura).outerjoin(
+            UA, RecebimentoLeitura.ua == UA.ua
+        ).filter(
             RecebimentoLeitura.recebimento_item_id == item.id,
-            RecebimentoLeitura.sessao_id == sessao_ativa.id
+            RecebimentoLeitura.sessao_id == sessao_ativa.id,
+            (UA.status != "ESTORNADA") | (UA.ua == None)
         ).all()
         total_base = sum(l.qtd * (l.fator_conversao or 1.0) for l in leituras)
         
@@ -993,7 +1000,11 @@ class RecebimentoService:
                     # UAs aceitas vão para o estoque aguardando armazenamento
                     ua.status = "Aguardando Armazenamento"
 
-        # 3. Finaliza o Romaneio via FSM
+        # 3. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições
+        for item in recebimento.itens:
+            RecebimentoService._recalcular_qtd_item(db, item)
+
+        # 4. Finaliza o Romaneio via FSM
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.concluir()
