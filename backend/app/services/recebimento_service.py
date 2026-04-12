@@ -583,6 +583,65 @@ class RecebimentoService:
         db.commit()
         db.refresh(item)
         
+        # --- NOVO WORKFLOW DE STATUS DE UAs ---
+        # 4. Avalia a "Perfeição" do item para liberar as UAs
+        from app.models.recebimento import RecebimentoLeitura
+        from app.models.ua import UA
+        import datetime
+
+        sessao = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item.id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+
+        if sessao:
+            readings = db.query(RecebimentoLeitura).filter(
+                RecebimentoLeitura.recebimento_item_id == item.id,
+                RecebimentoLeitura.sessao_id == sessao.id
+            ).all()
+
+            if readings:
+                ua_codes = [r.ua for r in readings]
+                
+                # Check Perfection
+                is_perfect = True
+                
+                # a) Quantidade bate?
+                if item.status != "CONFERIDO":
+                    is_perfect = False
+                
+                if is_perfect:
+                    # b) Qualidade e Validade de cada UA
+                    produto = item.produto
+                    familia = produto.familia_relacao if produto else None
+                    
+                    def get_p(name):
+                        val = getattr(produto, name, None) if produto else None
+                        if val is None and familia:
+                            val = getattr(familia, name, None)
+                        return val
+
+                    venc_min_dias = get_p('vencimento_minimo') or 0
+                    hoje = datetime.date.today()
+
+                    for r in readings:
+                        # Qualidade
+                        if "Não" in [r.int_embalagem, r.int_material, r.identificacao, r.cert_qual]:
+                            is_perfect = False
+                            break
+                        
+                        # Shelf-life (Vencimento Mínimo)
+                        if r.data_validade:
+                            if (r.data_validade.date() - hoje).days < venc_min_dias:
+                                is_perfect = False
+                                break
+                
+                # Atualização de Todas as UAs do Item
+                new_ua_status = "Aguardando Armazenamento" if is_perfect else "Em Análise"
+                if ua_codes:
+                    db.query(UA).filter(UA.ua.in_(ua_codes)).update({"status": new_ua_status}, synchronize_session=False)
+                    db.commit()
+
         # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
         RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
         
@@ -716,7 +775,7 @@ class RecebimentoService:
             ua_existente.quantidade = leit.quantidade
             ua_existente.unidade_produto_id = leit.unidade_produto_id
             ua_existente.fator_conversao = leit.fator_conversao
-            ua_existente.status = "Aguardando Armazenamento"
+            ua_existente.status = "Em Conferência"
             ua_existente.descricao_visual = leit.descricao_visual
             ua_existente.atualizado_por = usuario
 
@@ -736,7 +795,7 @@ class RecebimentoService:
                 quantidade=leit.quantidade,
                 unidade_produto_id=leit.unidade_produto_id,
                 fator_conversao=leit.fator_conversao,
-                status="Aguardando Armazenamento",
+                status="Em Conferência",
                 estado="Ruim" if leit.int_material == "Não" else "Bom",
                 observacoes="Material avariado" if leit.int_material == "Não" else None,
                 descricao_visual=leit.descricao_visual,
@@ -909,6 +968,21 @@ class RecebimentoService:
             raise ValueError("O romaneio precisa ser concluído na doca e estar em análise para ser finalizado.")
 
         # Aqui no futuro entrará a lógica de gerar o stock (criar as UAs físicas)
+        # Liberação das UAs que ficaram em análise durante a conferência
+        from app.models.recebimento import RecebimentoItem, RecebimentoLeitura
+        from app.models.ua import UA
+
+        uas_para_liberar = db.query(UA).join(
+            RecebimentoLeitura, UA.ua == RecebimentoLeitura.ua
+        ).join(
+            RecebimentoItem, RecebimentoLeitura.recebimento_item_id == RecebimentoItem.id
+        ).filter(
+            RecebimentoItem.recebimento_id == recebimento_id,
+            UA.status == "Em Análise"
+        ).all()
+
+        for ua in uas_para_liberar:
+            ua.status = "Aguardando Armazenamento"
 
         recebimento.status = StatusRecebimento.FINALIZADO.value
         recebimento.conclusao = datetime.now()
