@@ -246,11 +246,16 @@ export default function Recebimentos() {
 
     // Se não tem OC vinculada e não está previamente autorizado, chama autorização.
     if (!recebimentoSelecionado.oc && !recebimentoSelecionado.autorizado_por) {
-      toast.error("O romaneio não tem OC. Libere com credenciais de supervisor.", { duration: 4000 });
-      setAutorizadorLogin("");
-      setAutorizadorSenha("");
-      setModalAutorizacaoAberto(true);
-      return;
+      // Se for uma nota que contém APENAS itens de bonificação, permite liberar sem OC
+      const apenasBonificacao = recebimentoSelecionado.itens.every(it => it.is_bonificacao);
+      
+      if (!apenasBonificacao) {
+        toast.error("O romaneio não tem OC. Libere com credenciais de supervisor.", { duration: 4000 });
+        setAutorizadorLogin("");
+        setAutorizadorSenha("");
+        setModalAutorizacaoAberto(true);
+        return;
+      }
     }
 
     setCarregando(true);
@@ -881,6 +886,16 @@ export default function Recebimentos() {
                               ))}
                             </div>
                           ))}
+                          {/* Aviso de Bonificação */}
+                          {recebimentoSelecionado.itens.some(i => i.is_bonificacao) && (
+                            <div className="mt-2 text-[11px] text-green-600 font-bold uppercase tracking-tight">
+                              {recebimentoSelecionado.itens.filter(i => i.is_bonificacao).map((item, _, array) => (
+                                <div key={item.id}>
+                                  {array.length > 1 ? `${item.sku}: Item de bonificação` : "Item de bonificação"}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 

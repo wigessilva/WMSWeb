@@ -71,6 +71,8 @@ class RecebimentoItem(Base):
     destino_id = Column("DestinoId", Integer, ForeignKey("Filiais.Id"), nullable=True)
 
     status = Column("Status", String(50), default="Pendente", nullable=False)
+    cfop = Column("CFOP", String(10), nullable=True)
+    is_bonificacao = Column("IsBonificacao", Boolean, default=False, nullable=True)
     tentativas = Column("Tentativas", Integer, default=0, nullable=False)
 
     # Relacionamentos

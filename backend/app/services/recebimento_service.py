@@ -88,6 +88,13 @@ class RecebimentoService:
                 if prod:
                     descricao_final = prod.descricao
 
+            # Bonificação: CFOPs padrão (1910, 1911, 2910, 2911, 5910, 5911, 6910, 6911)
+            f_bonificacao = False
+            if item_dados.cfop:
+                cfop_limpo = item_dados.cfop.replace(".", "")
+                if cfop_limpo in ["1910", "1911", "2910", "2911", "5910", "5911", "6910", "6911"]:
+                    f_bonificacao = True
+
             novo_item = RecebimentoItem(
                 recebimento_id=db_receb.id,
                 descricao=descricao_final,
@@ -96,7 +103,9 @@ class RecebimentoService:
                 und=item_dados.und,
                 codigo_fornecedor=item_dados.codigo_fornecedor,
                 sku=sku_encontrado,
-                status=status_item
+                status=status_item,
+                cfop=item_dados.cfop,
+                is_bonificacao=f_bonificacao
             )
             db.add(novo_item)
 
@@ -191,6 +200,10 @@ class RecebimentoService:
         total_itens_nota = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).count()
 
         for item in recebimento.itens:
+            # Pula itens de bonificação na validação de 3-way match
+            if item.is_bonificacao:
+                continue
+
             if not item.sku:
                 continue
             
@@ -382,7 +395,10 @@ class RecebimentoService:
             raise ValueError("Romaneio não encontrado.")
 
         if not recebimento.oc and not recebimento.autorizado_por:
-            raise ValueError("Não é possível liberar um romaneio sem OC e sem autorização do supervisor.")
+            # Se for uma nota que contém APENAS itens de bonificação, permite liberar sem OC
+            apenas_bonificacao = all(it.is_bonificacao for it in recebimento.itens)
+            if not apenas_bonificacao:
+                raise ValueError("Não é possível liberar um romaneio sem OC e sem autorização do supervisor.")
 
         estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)

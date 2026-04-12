@@ -48,6 +48,7 @@ class RecebimentoItemBase(BaseModel):
     fab: Optional[datetime] = None
     val: Optional[datetime] = None
     vencimento: Optional[str] = None
+    cfop: Optional[str] = None
     int_embalagem: Optional[str] = None
     int_material: Optional[str] = None
     identificacao: Optional[str] = None
@@ -67,6 +68,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     tentativas: int = 0
     descricoes_visuais: List[str] = []
     leituras: List[RecebimentoLeituraSchema] = []
+    is_bonificacao: Optional[bool] = False
     
     # Parâmetros de conferência do produto
     lote_obrigatorio: Optional[bool] = None
