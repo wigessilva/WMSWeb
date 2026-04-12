@@ -583,11 +583,10 @@ class RecebimentoService:
         db.commit()
         db.refresh(item)
         
-        # --- NOVO WORKFLOW DE STATUS DE UAs ---
-        # 4. Avalia a "Perfeição" do item para liberar as UAs
+        # --- WORKFLOW SIMPLIFICADO DE STATUS DE UAs ---
+        # 4. Ao finalizar a conferência do item, movemos todas as UAs da sessão para "Em Análise"
         from app.models.recebimento import RecebimentoLeitura
         from app.models.ua import UA
-        import datetime
 
         sessao = db.query(RecebimentoSessoes).filter(
             RecebimentoSessoes.recebimento_item_id == item.id,
@@ -602,47 +601,10 @@ class RecebimentoService:
 
             if readings:
                 ua_codes = [r.ua for r in readings]
-                
-                # Check Perfection
-                is_perfect = True
-                
-                # a) Quantidade bate?
-                is_qty_ok = (item.status == "CONFERIDO")
-                
-                # b) Parâmetros de Qualidade e Validade
-                produto = item.produto
-                familia = produto.familia_relacao if produto else None
-                
-                def get_p(name):
-                    val = getattr(produto, name, None) if produto else None
-                    if val is None and familia:
-                        val = getattr(familia, name, None)
-                    return val
-
-                venc_min_dias = get_p('vencimento_minimo') or 0
-                hoje = datetime.date.today()
-
-                for r in readings:
-                    # Avalia se ESTA leitura específica é perfeita
-                    status_da_ua = "Aguardando Armazenamento"
-                    
-                    # Se a quantidade global do item não bater, tudo fica em análise
-                    if not is_qty_ok:
-                        status_da_ua = "Em Análise"
-                    else:
-                        # Se quantidade bate, verificamos qualidade e validade desta UA específica
-                        # Qualidade
-                        if "Não" in [r.int_embalagem, r.int_material, r.identificacao, r.cert_qual]:
-                            status_da_ua = "Em Análise"
-                        
-                        # Shelf-life (Vencimento Mínimo)
-                        if status_da_ua == "Aguardando Armazenamento" and r.data_validade:
-                            if (r.data_validade.date() - hoje).days < venc_min_dias:
-                                status_da_ua = "Em Análise"
-                    
-                    # Atualiza a UA correspondente
-                    db.query(UA).filter(UA.ua == r.ua).update({"status": status_da_ua}, synchronize_session=False)
-                
+                db.query(UA).filter(UA.ua.in_(ua_codes)).update(
+                    {"status": "Em Análise"},
+                    synchronize_session=False
+                )
                 db.commit()
 
         # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
@@ -984,7 +946,7 @@ class RecebimentoService:
             RecebimentoItem, RecebimentoLeitura.recebimento_item_id == RecebimentoItem.id
         ).filter(
             RecebimentoItem.recebimento_id == recebimento_id,
-            UA.status == "Em Análise"
+            UA.status.in_(["Em Conferência", "Em Análise"])
         ).all()
 
         for ua in uas_para_liberar:
