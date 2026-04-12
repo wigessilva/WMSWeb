@@ -193,6 +193,11 @@ export default function UAs() {
               placeholder="0"
               className="w-full border-2 border-gray-200 p-3 rounded-lg text-lg font-bold focus:border-blue-500 focus:outline-none transition-colors"
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !gerando && quantidadeGerar && Number(quantidadeGerar) > 0) {
+                  handleGerarUAs();
+                }
+              }}
             />
           </div>
 

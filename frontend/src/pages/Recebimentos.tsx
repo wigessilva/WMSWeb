@@ -8,7 +8,6 @@ import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
-import type { VinculoUnidade } from '../types/vinculoUnidade'
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
 import { toast } from 'react-hot-toast'
@@ -1005,7 +1004,7 @@ export default function Recebimentos() {
                                     onClick={() => handleSolicitarReconferencia(item.id)}
                                     disabled={carregando}
                                     className="p-1.5 text-[#1a63b6] hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-                                    title="Solicitar Reconferência"
+                                    title="Reconferência"
                                   >
                                     <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

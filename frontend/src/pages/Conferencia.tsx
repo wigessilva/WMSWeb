@@ -31,6 +31,14 @@ export default function Conferencia() {
   const [codigoUA, setCodigoUA] = useState('');
   const [validandoUA, setValidandoUA] = useState(false);
 
+  // Auto-focus e seleção do input de UA quando entrar no passo BIPAR_UA
+  useEffect(() => {
+    if (step === 'BIPAR_UA' && !validandoUA && inputUARef.current) {
+      inputUARef.current.focus();
+      inputUARef.current.select();
+    }
+  }, [step, validandoUA]);
+
   // Cache de unidades por produto_id
   const [unidadesCache, setUnidadesCache] = useState<Record<number, any[]>>({});
 
@@ -402,10 +410,12 @@ export default function Conferencia() {
                       type="text"
                       value={codigoUA}
                       onChange={(e) => setCodigoUA(e.target.value)}
+                      onFocus={(e) => e.target.select()}
                       placeholder="DIGITE OU BIPE"
-                      className="w-full bg-gray-50 border-4 border-gray-100 rounded-3xl p-8 text-5xl font-black text-center tracking-[0.1em] focus:border-[#1e3a8a] focus:bg-white focus:outline-none transition-all shadow-inner placeholder:text-gray-200"
+                      className="w-full bg-gray-50 border-4 border-gray-100 rounded-3xl p-8 text-5xl font-black text-center tracking-[0.1em] focus:border-[#1e3a8a] focus:bg-white focus:outline-none transition-all shadow-inner placeholder:text-gray-200 uppercase"
                       disabled={validandoUA}
                       autoComplete="off"
+                      autoFocus
                     />
                     {validandoUA && (
                       <div className="absolute inset-0 bg-white/80 rounded-3xl flex items-center justify-center">
