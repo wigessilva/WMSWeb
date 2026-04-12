@@ -34,6 +34,10 @@ export interface RecebimentoLeitura {
   unidade_produto_id: number;
   descricao_visual: string | null;
   numero_sessao: number | null;
+  int_embalagem: string | null;
+  int_material: string | null;
+  identificacao: string | null;
+  cert_qual: string | null;
 }
 
 export interface RecebimentoItem {

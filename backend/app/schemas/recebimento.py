@@ -17,6 +17,10 @@ class RecebimentoLeituraSchema(BaseModel):
     usuario: str
     data: datetime
     numero_sessao: Optional[int] = None
+    int_embalagem: Optional[str] = None
+    int_material: Optional[str] = None
+    identificacao: Optional[str] = None
+    cert_qual: Optional[str] = None
 
     @model_validator(mode='before')
     @classmethod
@@ -156,6 +160,10 @@ class ConferenciaItemLeitura(BaseModel):
     und: str # Sigla da unidade usada no momento do bipe
     ean: Optional[str] = None
     descricao_visual: Optional[str] = None
+    int_embalagem: Optional[str] = "Sim"
+    int_material: Optional[str] = "Sim"
+    identificacao: Optional[str] = "Sim"
+    cert_qual: Optional[str] = "Sim"
 
 class ConclusaoItemSchema(BaseModel):
     tentativas: int

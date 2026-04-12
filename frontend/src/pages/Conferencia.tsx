@@ -38,11 +38,6 @@ export default function Conferencia() {
   const [tentativasPorItem, setTentativasPorItem] = useState<Record<number, number>>({});
   const [finalizando, setFinalizando] = useState(false);
 
-  // Estados de Qualidade (Seção de Qualidade)
-  const [intEmbalagem, setIntEmbalagem] = useState('Sim');
-  const [intMaterial, setIntMaterial] = useState('Sim');
-  const [identificacaoCorreta, setIdentificacaoCorreta] = useState('Sim');
-  const [certQualidade, setCertQualidade] = useState('Sim');
 
   useEffect(() => {
     async function carregarDados() {
@@ -79,7 +74,11 @@ export default function Conferencia() {
                 descricao_visual: l.descricao_visual,
                 sem_gtin: !!l.descricao_visual && !l.ean,
                 sku: it.sku,
-                produto_id: it.produto_id
+                produto_id: it.produto_id,
+                int_embalagem: l.int_embalagem || 'Sim',
+                int_material: l.int_material || 'Sim',
+                identificacao: l.identificacao || 'Sim',
+                cert_qual: l.cert_qual || 'Sim'
               }));
             }
           });
@@ -160,7 +159,11 @@ export default function Conferencia() {
         fator_conversao: unidadePadrao?.fator_conversao || 1,
         unidade_medida_id: unidadePadrao?.unidade_medida_id,
         unidade_produto_id: unidadePadrao?.id,
-        sem_gtin: !!(uaValida as any).descricao_visual && !(uaValida as any).ean
+        sem_gtin: !!(uaValida as any).descricao_visual && !(uaValida as any).ean,
+        int_embalagem: 'Sim',
+        int_material: 'Sim',
+        identificacao: 'Sim',
+        cert_qual: 'Sim'
       };
 
       const novasUasDoItem = [...(uasPorItem[itemAtual.id] || []), novaUa];
@@ -263,6 +266,10 @@ export default function Conferencia() {
         )?.unidade_medida_relacao?.sigla || ua.und || itemAtual.und,
         ean: ua.ean || null,
         descricao_visual: ua.descricao_visual || null,
+        int_embalagem: ua.int_embalagem || 'Sim',
+        int_material: ua.int_material || 'Sim',
+        identificacao: ua.identificacao || 'Sim',
+        cert_qual: ua.cert_qual || 'Sim',
       };
       await recebimentoService.registrarLeitura(Number(id), itemAtual.id, payload);
     } catch (error: any) {
@@ -642,17 +649,22 @@ export default function Conferencia() {
                       </label>
                       <div className="grid grid-cols-1 gap-3">
                         {[
-                          { label: 'Embalagem Íntegra?', state: intEmbalagem, setState: setIntEmbalagem },
-                          { label: 'Material Íntegro?', state: intMaterial, setState: setIntMaterial },
-                          { label: 'Identificação Correta?', state: identificacaoCorreta, setState: setIdentificacaoCorreta },
-                          { label: 'Certificado Qualidade?', state: certQualidade, setState: setCertQualidade }
+                          { label: 'Embalagem Íntegra?', key: 'int_embalagem' },
+                          { label: 'Material Íntegro?', key: 'int_material' },
+                          { label: 'Identificação Correta?', key: 'identificacao' },
+                          { label: 'Certificado Qualidade?', key: 'cert_qual' }
                         ].map((q, i) => (
                           <div key={i} className="flex items-center justify-between bg-amber-50/30 p-3 rounded-2xl border border-amber-100">
                             <span className="text-xs font-bold text-gray-700">{q.label}</span>
                             <select
-                              value={q.state}
-                              onChange={(e) => q.setState(e.target.value)}
-                              className={`text-sm font-black rounded-lg px-3 py-1 border-2 focus:outline-none transition-colors ${q.state === 'Sim' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
+                              value={(uaAtual as any)?.[q.key] || 'Sim'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const novasUas = [...uasDoItem];
+                                novasUas[uaAtualIndex] = { ...uaAtual, [q.key]: val };
+                                setUasPorItem(prev => ({ ...prev, [itemAtual!.id]: novasUas }));
+                              }}
+                              className={`text-sm font-black rounded-lg px-3 py-1 border-2 focus:outline-none transition-colors ${((uaAtual as any)?.[q.key] || 'Sim') === 'Sim' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
                                 }`}
                             >
                               <option value="Sim">Sim</option>
@@ -769,10 +781,10 @@ export default function Conferencia() {
                         const payload = {
                           tentativas: 3 - (tentativasPorItem[itemAtual.id] || 3) + 1,
                           status_final: statusFinal,
-                          int_embalagem: intEmbalagem,
-                          int_material: intMaterial,
-                          identificacao: identificacaoCorreta,
-                          cert_qual: certQualidade,
+                          int_embalagem: 'Sim',
+                          int_material: 'Sim',
+                          identificacao: 'Sim',
+                          cert_qual: 'Sim',
                           leituras: [] // Backend já tem as leituras salvas incrementalmente
                         };
 

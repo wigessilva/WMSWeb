@@ -677,6 +677,10 @@ class RecebimentoService:
             leitura_existente.fator_conversao = leit.fator_conversao
             leitura_existente.unidade_produto_id = leit.unidade_produto_id
             leitura_existente.descricao_visual = leit.descricao_visual
+            leitura_existente.int_embalagem = leit.int_embalagem
+            leitura_existente.int_material = leit.int_material
+            leitura_existente.identificacao = leit.identificacao
+            leitura_existente.cert_qual = leit.cert_qual
             leitura_existente.usuario = usuario
             leitura_existente.data = datetime.now()
             nova_leitura = leitura_existente
@@ -694,7 +698,11 @@ class RecebimentoService:
                 descricao_visual=leit.descricao_visual,
                 usuario=usuario,
                 ua=leit.ua,
-                sessao_id=sessao.id
+                sessao_id=sessao.id,
+                int_embalagem=leit.int_embalagem,
+                int_material=leit.int_material,
+                identificacao=leit.identificacao,
+                cert_qual=leit.cert_qual
             )
             db.add(nova_leitura)
 
@@ -772,7 +780,11 @@ class RecebimentoService:
             descricao_visual=ultima_leitura.descricao_visual,
             usuario=usuario,
             ua=ua_codigo,
-            sessao_id=sessao.id if sessao else ultima_leitura.sessao_id
+            sessao_id=sessao.id if sessao else ultima_leitura.sessao_id,
+            int_embalagem=ultima_leitura.int_embalagem,
+            int_material=ultima_leitura.int_material,
+            identificacao=ultima_leitura.identificacao,
+            cert_qual=ultima_leitura.cert_qual
         )
         db.add(estorno)
 

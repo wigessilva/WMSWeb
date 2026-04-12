@@ -110,6 +110,12 @@ class RecebimentoLeitura(Base):
     data = Column("Data", DateTime, default=datetime.now, nullable=False)
     ua = Column("UA", String(100), nullable=True)
     descricao_visual = Column("DescricaoVisual", String(255), nullable=True)
+    
+    # Inspeção de Qualidade (Individualizado por UA)
+    int_embalagem = Column("IntEmbalagem", String(20), nullable=True)
+    int_material = Column("IntMaterial", String(20), nullable=True)
+    identificacao = Column("Identificacao", String(100), nullable=True)
+    cert_qual = Column("CertifQual", String(10), nullable=True)
 
     item = relationship("RecebimentoItem", back_populates="leituras")
     sessao = relationship("RecebimentoSessoes", back_populates="leituras")
