@@ -53,8 +53,11 @@ export const recebimentoService = {
     return response.data;
   },
 
-  concluirDoca: async (id: number): Promise<Recebimento> => {
-    const response = await api.post(`/${id}/concluir-doca`);
+  concluirDoca: async (id: number, rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] }): Promise<Recebimento> => {
+    const response = await api.post(`/${id}/concluir-doca`, {
+      uas_rejeitadas: rejeitados.uas,
+      itens_rejeitados: rejeitados.itens
+    });
     return response.data;
   },
 

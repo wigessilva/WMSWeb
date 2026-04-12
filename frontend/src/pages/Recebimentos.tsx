@@ -8,6 +8,7 @@ import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
+import { ConclusaoRecebimentoModal } from '../components/ConclusaoRecebimentoModal'
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
 import { toast } from 'react-hot-toast'
@@ -55,6 +56,7 @@ export default function Recebimentos() {
 
   // Estados para Reconferência Customizada
   const [modalReconferenciaAberto, setModalReconferenciaAberto] = useState(false);
+  const [modalConclusaoAberto, setModalConclusaoAberto] = useState(false);
   const [itemIdParaReconferencia, setItemIdParaReconferencia] = useState<number | null>(null);
   const [motivoReconferencia, setMotivoReconferencia] = useState("");
 
@@ -327,14 +329,51 @@ export default function Recebimentos() {
 
   const handleConcluir = async () => {
     if (!recebimentoSelecionado) return;
+    
+    // Análise rápida de exceções antes de abrir o modal
+    const temQualidadeRuim = recebimentoSelecionado.itens.some(item => 
+      item.leituras?.some(l => 
+        l.int_embalagem === 'Não' || l.int_material === 'Não' || l.identificacao === 'Não' || l.cert_qual === 'Não'
+      )
+    );
+
+    const temDivergenciaQtd = recebimentoSelecionado.itens.some(item => 
+      Math.abs((item.qtd_recebida || 0) - item.qtd_nota) > 0.0001
+    );
+
+    const temVencidos = recebimentoSelecionado.itens.some(item => 
+      item.leituras?.some(l => {
+        if (!l.data_validade) return false;
+        const dataVal = new Date(l.data_validade);
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const diffDays = Math.ceil((dataVal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays < (item.vencimento_minimo || 0);
+      })
+    );
+
+    if (temQualidadeRuim || temDivergenciaQtd || temVencidos) {
+      setModalConclusaoAberto(true);
+      return;
+    }
+
+    // Se não há exceções, apenas confirmação simples
+    if (!confirm("Deseja concluir o recebimento desta nota?")) return;
+
+    efetivarConclusao();
+  }
+
+  const efetivarConclusao = async (rejeitados?: { uas: string[], itens: number[] }) => {
+    if (!recebimentoSelecionado) return;
     setCarregando(true);
     try {
-      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id);
+      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados);
       setRecebimentoSelecionado(rec);
       setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
+      setModalConclusaoAberto(false);
       toast.success("Recebimento concluído com sucesso!");
     } catch (e: any) {
-      toast.error(e.response?.data?.detail || "Erro ao concluir doca");
+      toast.error(e.response?.data?.detail || "Erro ao concluir recebimento");
     } finally {
       setCarregando(false);
     }
@@ -1084,6 +1123,14 @@ export default function Recebimentos() {
           </div>
         </div>
       </Modal>
+
+      <ConclusaoRecebimentoModal 
+        isOpen={modalConclusaoAberto}
+        onClose={() => setModalConclusaoAberto(false)}
+        onConfirm={(rej) => efetivarConclusao(rej)}
+        recebimento={recebimentoSelecionado}
+        loading={carregando}
+      />
     </div>
   )
 }

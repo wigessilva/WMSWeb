@@ -183,3 +183,7 @@ class ConclusaoItemSchema(BaseModel):
     identificacao: str
     cert_qual: str
     leituras: List[ConferenciaItemLeitura]
+
+class ConclusaoDocaPayload(BaseModel):
+    uas_rejeitadas: List[str] = []
+    itens_rejeitados: List[int] = []

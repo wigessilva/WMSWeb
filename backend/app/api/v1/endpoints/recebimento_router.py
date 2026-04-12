@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from typing import List, Optional
 
 from app.db.database import get_db, get_erp_db
-from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload, ConclusaoItemSchema, ConferenciaItemLeitura
+from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, AutorizacaoPayload, ConclusaoItemSchema, ConferenciaItemLeitura, ConclusaoDocaPayload
 from app.services.recebimento_service import RecebimentoService
 from app.models.recebimento import Recebimento, RecebimentoItem
 
@@ -106,9 +106,18 @@ def rejeitar_romaneio(id: int = Path(...), db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/{id}/concluir-doca", response_model=RecebimentoSchema)
-def concluir_doca(id: int = Path(...), db: Session = Depends(get_db)):
+def concluir_doca(
+    payload: ConclusaoDocaPayload,
+    id: int = Path(...), 
+    db: Session = Depends(get_db)
+):
     try:
-        return RecebimentoService.concluir_doca(db=db, recebimento_id=id)
+        return RecebimentoService.concluir_doca(
+            db=db, 
+            recebimento_id=id, 
+            uas_rejeitadas=payload.uas_rejeitadas,
+            itens_rejeitados=payload.itens_rejeitados
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

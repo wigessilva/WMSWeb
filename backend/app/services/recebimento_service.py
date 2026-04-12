@@ -1,3 +1,4 @@
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime
@@ -944,16 +945,59 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
-    def concluir_doca(db: Session, recebimento_id: int):
+    def concluir_doca(db: Session, recebimento_id: int, uas_rejeitadas: List[str] = [], itens_rejeitados: List[int] = []):
+        from app.models.recebimento import Recebimento, RecebimentoItem, RecebimentoLeitura
+        from app.models.ua import UA
+        from app.models.historico_ua import HistoricoUA
+
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
 
+        # 1. Identifica todas as UAs a serem rejeitadas
+        rejeitadas_set = set(uas_rejeitadas)
+        
+        # Se algum item foi rejeitado inteiramente, adiciona as suas UAs à lista de rejeição
+        if itens_rejeitados:
+            leituras_itens_rejeitados = db.query(RecebimentoLeitura).filter(
+                RecebimentoLeitura.recebimento_item_id.in_(itens_rejeitados)
+            ).all()
+            for l in leituras_itens_rejeitados:
+                if l.ua:
+                    rejeitadas_set.add(l.ua)
+
+        # 2. Processa todas as UAs vinculadas a este romaneio
+        # Busca todas as leituras do romaneio para encontrar as UAs físicas correspondentes
+        leituras_romaneio = db.query(RecebimentoLeitura).join(RecebimentoItem).filter(
+            RecebimentoItem.recebimento_id == recebimento_id
+        ).all()
+        
+        codigos_ua_romaneio = list(set([l.ua for l in leituras_romaneio if l.ua]))
+        
+        if codigos_ua_romaneio:
+            uas_fisicas = db.query(UA).filter(UA.ua.in_(codigos_ua_romaneio)).all()
+            
+            for ua in uas_fisicas:
+                if ua.ua in rejeitadas_set:
+                    ua.status = "ESTORNADA"
+                    hist = HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="REJEICAO_NA_CONCLUSAO",
+                        observacoes="Rejeitado pelo usuário durante a conclusão do recebimento (Gestão por Exceção).",
+                        criado_por=recebimento.conferente or "Sistema"
+                    )
+                    db.add(hist)
+                else:
+                    # UAs aceitas vão para o estoque aguardando armazenamento
+                    ua.status = "Aguardando Armazenamento"
+
+        # 3. Finaliza o Romaneio via FSM
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.concluir()
+            recebimento.conclusao = datetime.now()
         except Exception as e:
-            raise ValueError("Apenas romaneios com conferências ativas podem ser concluídos.")
+            raise ValueError(f"Não foi possível concluir o romaneio: {str(e)}")
 
         db.commit()
         db.refresh(recebimento)
