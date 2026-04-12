@@ -51,24 +51,26 @@ export function ConclusaoRecebimentoModal({
             return normalized === 'não' || normalized === 'nao' || normalized === 'n';
           };
 
-          let prob = "";
-          if (checkProblem(l.int_material)) prob = "Material danificado";
-          else if (checkProblem(l.int_embalagem)) prob = "Embalagem não íntegra";
-          else if (checkProblem(l.identificacao)) prob = "Identificação incorreta";
-          else if (checkProblem(l.cert_qual)) prob = "Sem certificado de qualidade";
+          const probList: string[] = [];
+          if (checkProblem(l.int_material)) probList.push("Material danificado");
+          if (checkProblem(l.int_embalagem)) probList.push("Embalagem não íntegra");
+          if (checkProblem(l.identificacao)) probList.push("Identificação incorreta");
+          if (checkProblem(l.cert_qual)) probList.push("Sem certificado de qualidade");
 
-          if (!prob && l.data_validade) {
+          if (l.data_validade) {
             const dataVal = new Date(l.data_validade);
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
             const diffDays = Math.ceil((dataVal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
 
             if (diffDays <= 0) {
-              prob = "Produto Vencido";
+              probList.push("Produto Vencido");
             } else if (item.vencimento_minimo && diffDays < item.vencimento_minimo) {
-              prob = `Shelf-life baixo (${diffDays} dias)`;
+              probList.push(`Shelf-life baixo (${diffDays} dias)`);
             }
           }
+
+          const prob = probList.join(", ");
 
           if (prob) {
             uasRuins.push({

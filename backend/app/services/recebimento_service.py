@@ -607,9 +607,23 @@ class RecebimentoService:
 
         # No salvamento incremental, a quantidade já foi atualizada a cada UA.
         # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.
-        if hasattr(dados, 'leituras') and dados.leituras:
-             # Se vier leituras no finalize, apenas validamos se o total bate
-             pass
+        # Recalcula e persiste a quantidade recebida total baseada nas leituras da sessão
+        from sqlalchemy import func
+        from app.models.recebimento import RecebimentoLeitura, RecebimentoSessoes
+        
+        sessao_vinculo = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item.id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+
+        if sessao_vinculo:
+            total_bipado = db.query(
+                func.sum(RecebimentoLeitura.qtd * RecebimentoLeitura.fator_conversao)
+            ).filter(
+                RecebimentoLeitura.sessao_id == sessao_vinculo.id
+            ).scalar() or 0
+            
+            item.qtd_recebida = total_bipado
 
         db.commit()
         db.refresh(item)
