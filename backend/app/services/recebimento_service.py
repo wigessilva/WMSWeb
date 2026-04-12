@@ -607,23 +607,8 @@ class RecebimentoService:
 
         # No salvamento incremental, a quantidade já foi atualizada a cada UA.
         # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.
-        # Recalcula e persiste a quantidade recebida total baseada nas leituras da sessão
-        from sqlalchemy import func
-        from app.models.recebimento import RecebimentoLeitura, RecebimentoSessoes
-        
-        sessao_vinculo = db.query(RecebimentoSessoes).filter(
-            RecebimentoSessoes.recebimento_item_id == item.id,
-            RecebimentoSessoes.numero_sessao == item.tentativas
-        ).first()
-
-        if sessao_vinculo:
-            total_bipado = db.query(
-                func.sum(RecebimentoLeitura.qtd * RecebimentoLeitura.fator_conversao)
-            ).filter(
-                RecebimentoLeitura.sessao_id == sessao_vinculo.id
-            ).scalar() or 0
-            
-            item.qtd_recebida = total_bipado
+        # Recalcula e persiste a quantidade recebida total de forma inteligente (busca a última sessão)
+        RecebimentoService._recalcular_qtd_item(db, item)
 
         db.commit()
         db.refresh(item)
@@ -897,16 +882,19 @@ class RecebimentoService:
         from app.models.unidade_medida import UnidadeMedida
         from app.models.unidade_produto import UnidadeProduto
 
-        # Apenas somar as leituras da sessão corrente (tentativa atual do item)
+        # Busca a ÚLTIMA sessão disponível para este item
+        # Isso evita que o contador de tentativas (que sobe no frontend em caso de erro)
+        # mascare os dados de leituras gravados nas sessões iniciais.
         sessao_ativa = db.query(RecebimentoSessoes).filter(
-            RecebimentoSessoes.recebimento_item_id == item.id,
-            RecebimentoSessoes.numero_sessao == item.tentativas
-        ).first()
+            RecebimentoSessoes.recebimento_item_id == item.id
+        ).order_by(RecebimentoSessoes.numero_sessao.desc()).first()
 
         if not sessao_ativa:
-            # Se não há sessão ativa, a quantidade é 0
-            item.qtd_recebida = 0.0
-            db.add(item)
+            # Se nunca houve bipe, a quantidade é 0
+            # Mas vamos validar se deletamos ou mantemos (por segurança, se não há bipes, é 0)
+            if item.qtd_recebida != 0:
+                item.qtd_recebida = 0.0
+                db.add(item)
             return
 
         # Apenas somar as leituras da sessão corrente (tentativa atual do item)
@@ -1014,11 +1002,14 @@ class RecebimentoService:
                     # UAs aceitas vão para o estoque aguardando armazenamento
                     ua.status = "Aguardando Armazenamento"
 
-        # 3. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições
+        # 3. Força a sincronização com o banco antes de recalcular
+        db.flush()
+
+        # 4. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições
         for item in recebimento.itens:
             RecebimentoService._recalcular_qtd_item(db, item)
 
-        # 4. Finaliza o Romaneio via FSM
+        # 5. Finaliza o Romaneio via FSM
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.concluir()
