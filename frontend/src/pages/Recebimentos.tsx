@@ -467,7 +467,7 @@ export default function Recebimentos() {
             ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') && temPermissao('RECEBIMENTO.CONFERIR') ? [
               { label: "Cancelar Conferência", onClick: handleCancelarLiberacao }
             ] : []),
-            ...(recebimentoSelecionado && ['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'].includes(recebimentoSelecionado.status) && recebimentoSelecionado.itens.every(i => i.status === 'CONFERIDO' || i.status === 'DIVERGENTE') && temPermissao('RECEBIMENTO.FINALIZAR') ? [
+            ...(recebimentoSelecionado && recebimentoSelecionado.status === 'EM_ANALISE' && temPermissao('RECEBIMENTO.FINALIZAR') ? [
               { label: "Concluir", onClick: handleConcluir, className: "text-blue-600 font-bold" }
             ] : []),
             ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status) && temPermissao('RECEBIMENTO.REJEITAR') ? [

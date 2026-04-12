@@ -625,18 +625,20 @@ class RecebimentoService:
         ).first()
 
         if sessao:
-            readings = db.query(RecebimentoLeitura).filter(
+            # Busca todas as UAs únicas vinculadas a este item nesta tentativa (sessão)
+            ua_codes = db.query(RecebimentoLeitura.ua).filter(
                 RecebimentoLeitura.recebimento_item_id == item.id,
                 RecebimentoLeitura.sessao_id == sessao.id
-            ).all()
+            ).distinct().all()
+            
+            ua_codes_list = [ua[0] for ua in ua_codes if ua[0]]
 
-            if readings:
-                ua_codes = [r.ua for r in readings]
-                db.query(UA).filter(UA.ua.in_(ua_codes)).update(
+            if ua_codes_list:
+                db.query(UA).filter(UA.ua.in_(ua_codes_list)).update(
                     {"status": "Em Análise"},
                     synchronize_session=False
                 )
-                db.commit()
+                db.commit() # Garante a persistência dos status das UAs
 
         # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
         RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
