@@ -434,10 +434,6 @@ class RecebimentoService:
             if not recebimento.inicio:
                 recebimento.inicio = datetime.now()
             
-            # Sempre define ou atualiza o início da ATIVIDADE quando alguém assume a tarefa
-            if not recebimento.inicio_conferencia:
-                recebimento.inicio_conferencia = datetime.now()
-                
             recebimento.conferente = conferente_id
             
             # Avança os itens para a fase de conferência
@@ -603,6 +599,10 @@ class RecebimentoService:
         if not item:
             raise ValueError("Item não encontrado.")
 
+        # Marca o início real da conferência (no Romaneio) apenas no primeiro bibe
+        if item.recebimento and not item.recebimento.inicio_conferencia:
+            item.recebimento.inicio_conferencia = datetime.now()
+
         # Validação de Lote e Validade conforme regras do produto/família
         produto = item.produto
         familia = produto.familia_relacao if produto else None
@@ -719,6 +719,13 @@ class RecebimentoService:
             ua_existente.status = "Aguardando Armazenamento"
             ua_existente.descricao_visual = leit.descricao_visual
             ua_existente.atualizado_por = usuario
+
+            # Regra de Qualidade Automática
+            if leit.int_material == "Não":
+                ua_existente.estado = "Ruim"
+                ua_existente.observacoes = "Material avariado"
+            else:
+                ua_existente.estado = "Bom"
         else:
             nova_ua = UA(
                 ua=leit.ua,
@@ -730,7 +737,8 @@ class RecebimentoService:
                 unidade_produto_id=leit.unidade_produto_id,
                 fator_conversao=leit.fator_conversao,
                 status="Aguardando Armazenamento",
-                estado="Bom",
+                estado="Ruim" if leit.int_material == "Não" else "Bom",
+                observacoes="Material avariado" if leit.int_material == "Não" else None,
                 descricao_visual=leit.descricao_visual,
                 criado_por=usuario
             )
