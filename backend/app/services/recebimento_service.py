@@ -12,6 +12,20 @@ from ..core.event_bus import event_bus
 from ..domain.recebimento_fsm import RecebimentoFSM, RecebimentoItemFSM
 from ..models.log_transicao import LogTransicao
 from ..models.usuario import Usuario
+from ..models.produto import Produto
+from ..models.filial import Filial
+from ..models.perfil import Perfil
+from ..models.permissao import Permissao
+from ..models.unidade_produto import UnidadeProduto
+from ..models.parametros_mestres import ParametrosMestres
+from ..models.familia import Familia
+from ..models.area import Area
+from ..models.estrutura_fisica import EstruturaFisica
+from ..models.finalidade_endereco import FinalidadeEndereco
+from ..models.endereco import Endereco
+from ..models.ua import UA
+from ..models.historico_ua import HistoricoUA
+from ..models.configuracao_integracao import ConfiguracaoIntegracao
 
 
 class RecebimentoService:
