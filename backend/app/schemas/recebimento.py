@@ -81,12 +81,19 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             produto = getattr(data, 'produto', None)
             sku_real = produto.sku if produto else None
             
-            # Pega as descrições visuais únicas da sessão ATUAL (tentativas)
-            leituras = getattr(data, 'leituras', [])
+            # Filtra as leituras para retornar apenas a tentativa (sessão) ATUAL
+            leituras_orm = getattr(data, 'leituras', [])
             tentativa_atual = getattr(data, 'tentativas', 1)
+            
+            leituras_filtradas = [
+                l for l in leituras_orm 
+                if getattr(l.sessao, 'numero_sessao', 0) == tentativa_atual
+            ]
+
+            # Pega as descrições visuais únicas da sessão ATUAL
             desc_visuais = list(set([
-                l.descricao_visual for l in leituras 
-                if getattr(l, 'descricao_visual', None) and getattr(l.sessao, 'numero_sessao', 0) == tentativa_atual
+                l.descricao_visual for l in leituras_filtradas 
+                if getattr(l, 'descricao_visual', None)
             ]))
 
             # Copia os campos do ORM, filtrando nomes internos do SQLAlchemy
@@ -94,6 +101,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             ret['sku'] = sku_real
             ret['produto_id'] = getattr(data, 'sku', None) # No banco o campo Sku é o ID
             ret['descricoes_visuais'] = desc_visuais
+            ret['leituras'] = leituras_filtradas # Sobrescreve com a lista filtrada
 
             # Adiciona os parâmetros do produto para validação no frontend (com herança da família)
             if produto:

@@ -607,40 +607,43 @@ class RecebimentoService:
                 is_perfect = True
                 
                 # a) Quantidade bate?
-                if item.status != "CONFERIDO":
-                    is_perfect = False
+                is_qty_ok = (item.status == "CONFERIDO")
                 
-                if is_perfect:
-                    # b) Qualidade e Validade de cada UA
-                    produto = item.produto
-                    familia = produto.familia_relacao if produto else None
+                # b) Parâmetros de Qualidade e Validade
+                produto = item.produto
+                familia = produto.familia_relacao if produto else None
+                
+                def get_p(name):
+                    val = getattr(produto, name, None) if produto else None
+                    if val is None and familia:
+                        val = getattr(familia, name, None)
+                    return val
+
+                venc_min_dias = get_p('vencimento_minimo') or 0
+                hoje = datetime.date.today()
+
+                for r in readings:
+                    # Avalia se ESTA leitura específica é perfeita
+                    status_da_ua = "Aguardando Armazenamento"
                     
-                    def get_p(name):
-                        val = getattr(produto, name, None) if produto else None
-                        if val is None and familia:
-                            val = getattr(familia, name, None)
-                        return val
-
-                    venc_min_dias = get_p('vencimento_minimo') or 0
-                    hoje = datetime.date.today()
-
-                    for r in readings:
+                    # Se a quantidade global do item não bater, tudo fica em análise
+                    if not is_qty_ok:
+                        status_da_ua = "Em Análise"
+                    else:
+                        # Se quantidade bate, verificamos qualidade e validade desta UA específica
                         # Qualidade
                         if "Não" in [r.int_embalagem, r.int_material, r.identificacao, r.cert_qual]:
-                            is_perfect = False
-                            break
+                            status_da_ua = "Em Análise"
                         
                         # Shelf-life (Vencimento Mínimo)
-                        if r.data_validade:
+                        if status_da_ua == "Aguardando Armazenamento" and r.data_validade:
                             if (r.data_validade.date() - hoje).days < venc_min_dias:
-                                is_perfect = False
-                                break
+                                status_da_ua = "Em Análise"
+                    
+                    # Atualiza a UA correspondente
+                    db.query(UA).filter(UA.ua == r.ua).update({"status": status_da_ua}, synchronize_session=False)
                 
-                # Atualização de Todas as UAs do Item
-                new_ua_status = "Aguardando Armazenamento" if is_perfect else "Em Análise"
-                if ua_codes:
-                    db.query(UA).filter(UA.ua.in_(ua_codes)).update({"status": new_ua_status}, synchronize_session=False)
-                    db.commit()
+                db.commit()
 
         # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
         RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
@@ -769,6 +772,9 @@ class RecebimentoService:
         filial_id = item.destino_id or 1
         ua_existente = db.query(UA).filter(UA.ua == leit.ua).first()
         if ua_existente:
+            if ua_existente.status == "ESTORNADA":
+                raise ValueError(f"A UA {leit.ua} foi estornada e não pode ser reutilizada. Utilize uma nova etiqueta.")
+            
             ua_existente.produto_id = item.sku
             ua_existente.lote = leit.lote
             ua_existente.data_validade = data_val

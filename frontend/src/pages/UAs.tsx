@@ -12,7 +12,7 @@ export default function UAs() {
 
   // Controle do Modal de Geração
   const [isModalGerarOpen, setIsModalGerarOpen] = useState(false)
-  const [quantidadeGerar, setQuantidadeGerar] = useState(10)
+  const [quantidadeGerar, setQuantidadeGerar] = useState<number | "">("")
   const [gerando, setGerando] = useState(false)
 
   // Pega a filial do utilizador logado
@@ -33,15 +33,16 @@ export default function UAs() {
   }
 
   const handleGerarUAs = async () => {
-    if (quantidadeGerar <= 0) {
+    const qtdParaGerar = Number(quantidadeGerar) || 0
+    if (qtdParaGerar <= 0) {
       toast.error("Informe uma quantidade válida")
       return
     }
 
     setGerando(true)
     try {
-      await uaService.criarEmLote(quantidadeGerar, filialId)
-      toast.success(`${quantidadeGerar} UAs geradas com sucesso!`)
+      await uaService.criarEmLote(qtdParaGerar, filialId)
+      toast.success(`${qtdParaGerar} UAs geradas com sucesso!`)
       setIsModalGerarOpen(false)
       carregarUAs() // Atualiza a lista para mostrar as novas UAs
     } catch (error) {
@@ -185,7 +186,11 @@ export default function UAs() {
               type="number"
               min="1"
               value={quantidadeGerar}
-              onChange={(e) => setQuantidadeGerar(parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const val = e.target.value
+                setQuantidadeGerar(val === "" ? "" : parseInt(val) || 0)
+              }}
+              placeholder="0"
               className="w-full border-2 border-gray-200 p-3 rounded-lg text-lg font-bold focus:border-blue-500 focus:outline-none transition-colors"
               autoFocus
             />
@@ -201,7 +206,7 @@ export default function UAs() {
             </button>
             <button
               onClick={handleGerarUAs}
-              disabled={gerando || quantidadeGerar <= 0}
+              disabled={gerando || !quantidadeGerar || Number(quantidadeGerar) <= 0}
               className="flex-1 px-4 py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               {gerando ? (
