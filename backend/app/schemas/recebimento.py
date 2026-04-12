@@ -83,14 +83,31 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             produto = getattr(data, 'produto', None)
             sku_real = produto.sku if produto else None
             
-            # Filtra as leituras para retornar apenas a tentativa (sessão) ATUAL
+            # Filtra as leituras para retornar apenas a ÚLTIMA sessão disponível
+            # Isso evita que discrepâncias entre o contador de tentativas do item 
+            # e o Id da sessão masquem os dados de conferência.
             leituras_orm = getattr(data, 'leituras', [])
-            tentativa_atual = getattr(data, 'tentativas', 1)
             
-            leituras_filtradas = [
-                l for l in leituras_orm 
-                if getattr(l.sessao, 'numero_sessao', 0) == tentativa_atual
-            ]
+            if leituras_orm:
+                # Busca o maior número de sessão presente nas leituras deste item
+                max_sessao = 0
+                for l in leituras_orm:
+                    s_obj = getattr(l, 'sessao', None)
+                    n_s = getattr(s_obj, 'numero_sessao', 0) if s_obj else 0
+                    if n_s > max_sessao:
+                        max_sessao = n_s
+                
+                # Se não achou número de sessão nos objetos, mas há leituras, 
+                # pode ser que a sessão não esteja carregada. Nesse caso, retornamos todas.
+                if max_sessao == 0:
+                    leituras_filtradas = leituras_orm
+                else:
+                    leituras_filtradas = [
+                        l for l in leituras_orm 
+                        if (getattr(l.sessao, 'numero_sessao', 0) if getattr(l, 'sessao', None) else 0) == max_sessao
+                    ]
+            else:
+                leituras_filtradas = []
 
             # Pega as descrições visuais únicas da sessão ATUAL
             desc_visuais = list(set([
