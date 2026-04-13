@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { Tooltip } from './Tooltip';
 import type { Recebimento } from '../types/recebimento';
 
 interface ConclusaoRecebimentoModalProps {
@@ -185,21 +186,22 @@ export function ConclusaoRecebimentoModal({
                       {qtdEfetiva > item.qtd_nota && (
                         <div className="grid grid-cols-2 gap-1.5 bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-64">
                           {[
-                            { id: 'TRUNCAR', label: 'Aceitar Nota' },
-                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra' },
-                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item' },
-                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver' }
+                            { id: 'TRUNCAR', label: 'Aceitar Nota', desc: 'Ajusta o recebimento para bater exatamente com a nota, ignorando a sobra física.' },
+                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra', desc: 'Libera a quantidade da nota e move apenas o excedente para o estoque bloqueado.' },
+                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item', desc: 'Coloca todo o saldo recebido deste item em quarentena para análise detalhada.' },
+                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver', desc: 'Mantém apenas a quantidade da nota e gera um processo de devolução para os itens extras.' }
                           ].map((opt) => (
                             <button
                               key={opt.id}
                               onClick={() => setResolucoesSobra(prev => ({ ...prev, [item.item_id]: opt.id }))}
-                              className={`px-2 py-2 text-[9px] font-bold uppercase rounded-md transition-all text-center leading-tight ${
+                              className={`px-2 py-2 text-[9px] font-bold uppercase rounded-md transition-all leading-tight flex items-center justify-between group/btn ${
                                 resolucoesSobra[item.item_id] === opt.id
                                   ? 'bg-wms-sidebar text-white shadow-sm'
                                   : 'text-gray-500 hover:bg-white hover:text-gray-700'
                               }`}
                             >
-                              {opt.label}
+                              <span className="flex-1 text-center">{opt.label}</span>
+                              <Tooltip text={opt.desc} />
                             </button>
                           ))}
                         </div>
