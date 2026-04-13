@@ -967,6 +967,9 @@ class RecebimentoService:
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
 
+        novas_uas_geradas = []
+
+
         # 1. Processa resoluções de sobra antes da conclusão física
         for item_id_str, resolucao in resolucoes_sobra.items():
             item_id = int(item_id_str)
@@ -1038,15 +1041,43 @@ class RecebimentoService:
                 for ua in uas_fisicas_item:
                     if excesso_base <= 0:
                         break
+                    
                     ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
-                    ua.status = "Bloqueada"
-                    ua.observacoes = "Divergência de sobra: excedente à nota"
-                    excesso_base -= ua_base_qty
+                    reducao_base = min(ua_base_qty, excesso_base)
+
+                    if reducao_base >= ua_base_qty - 0.0001:
+                        # Bloqueia a UA inteira
+                        ua.status = "Bloqueada"
+                        ua.observacoes = "Divergência de sobra: excedente à nota"
+                        excesso_base -= ua_base_qty
+                    else:
+                        # Split: reduz a original e cria uma nova bloqueada
+                        nova_qtd_orig = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
+                        ua.quantidade = round(nova_qtd_orig, 4)
+                        
+                        nova_ua_code = RecebimentoService._gerar_proxima_ua(db)
+                        nova_ua = UA(
+                            ua=nova_ua_code,
+                            filial_id=ua.filial_id,
+                            produto_id=ua.produto_id,
+                            lote=ua.lote,
+                            data_validade=ua.data_validade,
+                            quantidade=round(reducao_base / (ua.fator_conversao or 1.0), 4),
+                            unidade_produto_id=ua.unidade_produto_id,
+                            fator_conversao=ua.fator_conversao,
+                            status="Bloqueada",
+                            estado=ua.estado,
+                            observacoes="Divergência de sobra: excedente à nota (Split)",
+                            criado_por=recebimento.conferente or "Sistema"
+                        )
+                        db.add(nova_ua)
+                        novas_uas_geradas.append(nova_ua_code)
+                        excesso_base -= reducao_base
                     
                     db.add(HistoricoUA(
                         ua_id=ua.id,
                         tipo_acao="BLOQUEIO_SOBRA",
-                        observacoes="UA bloqueada por exceder a quantidade da nota fiscal.",
+                        observacoes="UA processada por exceder a quantidade da nota fiscal (pode ter sofrido split).",
                         criado_por=recebimento.conferente or "Sistema"
                     ))
 
@@ -1065,14 +1096,42 @@ class RecebimentoService:
                 for ua in uas_fisicas_item:
                     if excesso_base <= 0:
                         break
+                    
                     ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
-                    ua.status = "ESTORNADA"
-                    excesso_base -= ua_base_qty
+                    reducao_base = min(ua_base_qty, excesso_base)
+
+                    if reducao_base >= ua_base_qty - 0.0001:
+                        # Estorna a UA inteira
+                        ua.status = "ESTORNADA"
+                        excesso_base -= ua_base_qty
+                    else:
+                        # Split: reduz a original e cria uma nova estornada
+                        nova_qtd_orig = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
+                        ua.quantidade = round(nova_qtd_orig, 4)
+                        
+                        nova_ua_code = RecebimentoService._gerar_proxima_ua(db)
+                        nova_ua = UA(
+                            ua=nova_ua_code,
+                            filial_id=ua.filial_id,
+                            produto_id=ua.produto_id,
+                            lote=ua.lote,
+                            data_validade=ua.data_validade,
+                            quantidade=round(reducao_base / (ua.fator_conversao or 1.0), 4),
+                            unidade_produto_id=ua.unidade_produto_id,
+                            fator_conversao=ua.fator_conversao,
+                            status="ESTORNADA",
+                            estado=ua.estado,
+                            observacoes="Sobra estornada fisicamente (Split)",
+                            criado_por=recebimento.conferente or "Sistema"
+                        )
+                        db.add(nova_ua)
+                        novas_uas_geradas.append(nova_ua_code)
+                        excesso_base -= reducao_base
                     
                     db.add(HistoricoUA(
                         ua_id=ua.id,
                         tipo_acao="ESTORNO_SOBRA",
-                        observacoes="UA estornada por ser excedente à nota fiscal.",
+                        observacoes="UA processada por ser excedente à nota fiscal (pode ter sofrido split).",
                         criado_por=recebimento.conferente or "Sistema"
                     ))
 
@@ -1131,7 +1190,8 @@ class RecebimentoService:
 
         db.commit()
         db.refresh(recebimento)
-        return recebimento
+        return {"recebimento": recebimento, "novas_uas": novas_uas_geradas}
+
 
 
     @staticmethod
@@ -1448,3 +1508,24 @@ class RecebimentoService:
                 return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: item com quantidade e preços correspondentes."}
 
         return {"sugestao": None, "mensagem": "Múltiplos itens compatíveis."}
+
+    @staticmethod
+    def _gerar_proxima_ua(db: Session):
+        from sqlalchemy import func
+        from app.models.ua import UA
+        
+        # Busca a maior UA que comece com 'UA' e tenha apenas dígitos depois das letras
+        max_ua = db.query(func.max(UA.ua)).filter(UA.ua.like('UA%')).scalar()
+        
+        if not max_ua:
+            return "UA0000001"
+        
+        try:
+            # Extrai o número (ex: UA0000123 -> 123)
+            num_str = max_ua[2:]
+            num = int(num_str)
+            proximo_num = num + 1
+            return f"UA{proximo_num:07d}"
+        except (ValueError, IndexError):
+            # Fallback se o formato estiver estranho
+            return "UA0000001"

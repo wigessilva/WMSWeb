@@ -370,11 +370,19 @@ export default function Recebimentos() {
     if (!recebimentoSelecionado) return;
     setCarregando(true);
     try {
-      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados, resolucoes_sobra);
+      const data = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados, resolucoes_sobra);
+      const rec = data.recebimento;
+      const novasUas = data.novas_uas;
+
       setRecebimentoSelecionado(rec);
       setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
       setModalConclusaoAberto(false);
-      toast.success("Recebimento concluído com sucesso!");
+      
+      if (novasUas && novasUas.length > 0) {
+        toast.success(`Concluído! Foram geradas novas UAs para sobras: ${novasUas.join(', ')}`, { duration: 6000 });
+      } else {
+        toast.success("Recebimento concluído com sucesso!");
+      }
     } catch (e: any) {
       toast.error(e.response?.data?.detail || "Erro ao concluir recebimento");
     } finally {

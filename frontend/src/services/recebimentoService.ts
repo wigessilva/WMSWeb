@@ -57,7 +57,7 @@ export const recebimentoService = {
     id: number, 
     rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] },
     resolucoes_sobra: Record<number, string> = {}
-  ): Promise<Recebimento> => {
+  ): Promise<{ recebimento: Recebimento, novas_uas: string[] }> => {
     const response = await api.post(`/${id}/concluir-doca`, {
       uas_rejeitadas: rejeitados.uas,
       itens_rejeitados: rejeitados.itens,

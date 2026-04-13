@@ -162,12 +162,12 @@ export function ConclusaoRecebimentoModal({
               const qtdEfetiva = calcularQtdEfetiva(item);
 
               return (
-                <div key={item.item_id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div key={item.item_id} className="bg-white border border-gray-200 rounded-xl shadow-sm">
                   {/* Item Body */}
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-wms-sidebar">{item.sku}</span>
+                        <span className="text-sm font-bold text-[#1a63b6]">{item.sku}</span>
                         <span className="text-gray-300">|</span>
                         <h4 className="text-sm font-bold text-gray-800 truncate">{item.descricao}</h4>
                       </div>
@@ -184,23 +184,22 @@ export function ConclusaoRecebimentoModal({
 
                       {/* Resoluções de Sobra */}
                       {qtdEfetiva > item.qtd_nota && (
-                        <div className="grid grid-cols-2 gap-1.5 bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-64">
+                        <div className="flex items-center space-x-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
                           {[
-                            { id: 'TRUNCAR', label: 'Aceitar Nota', desc: 'Ajusta o recebimento para bater exatamente com a nota, ignorando a sobra física.' },
-                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra', desc: 'Libera a quantidade da nota e move apenas o excedente para o estoque bloqueado.' },
-                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item', desc: 'Coloca todo o saldo recebido deste item em quarentena para análise detalhada.' },
-                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver', desc: 'Mantém apenas a quantidade da nota e gera um processo de devolução para os itens extras.' }
+                            { id: 'TRUNCAR', label: 'Ajustar à Nota', desc: 'Ajusta o recebimento para bater exatamente com a nota, ignorando a sobra física.' },
+                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra', desc: 'Libera a quantidade da nota e deixa o excedente bloqueado.' },
+                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item', desc: 'Bloqueia todo o saldo recebido do item.' },
+                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver', desc: 'Estorna as unidades excedentes' }
                           ].map((opt) => (
                             <button
                               key={opt.id}
                               onClick={() => setResolucoesSobra(prev => ({ ...prev, [item.item_id]: opt.id }))}
-                              className={`px-2 py-2 text-[9px] font-bold uppercase rounded-md transition-all leading-tight flex items-center justify-between group/btn ${
-                                resolucoesSobra[item.item_id] === opt.id
-                                  ? 'bg-wms-sidebar text-white shadow-sm'
+                              className={`px-3 py-1.5 text-[8.5px] font-bold uppercase rounded-md transition-all whitespace-nowrap flex items-center space-x-1.5 group/btn ${resolucoesSobra[item.item_id] === opt.id
+                                  ? 'bg-[#1a63b6] text-white shadow-sm'
                                   : 'text-gray-500 hover:bg-white hover:text-gray-700'
-                              }`}
+                                }`}
                             >
-                              <span className="flex-1 text-center">{opt.label}</span>
+                              <span>{opt.label}</span>
                               <Tooltip text={opt.desc} />
                             </button>
                           ))}
@@ -224,15 +223,16 @@ export function ConclusaoRecebimentoModal({
                           >
                             <input
                               type="checkbox"
-                              className="w-4 h-4 rounded text-wms-sidebar focus:ring-wms-sidebar mr-3 border-gray-300 transition-all cursor-pointer"
+                              className="w-4 h-4 rounded text-[#1a63b6] focus:ring-[#1a63b6] mr-3 border-gray-300 transition-all cursor-pointer"
                               checked={qualidadeAprovados[ua.ua]}
                               onChange={() => setQualidadeAprovados(prev => ({ ...prev, [ua.ua]: !prev[ua.ua] }))}
                             />
-                            <div className="flex-1 flex justify-between items-center">
-                              <span className="text-sm font-bold text-gray-700">{ua.ua}</span>
-                              <div className="flex flex-col space-y-1 items-end">
+                            <div className="flex-1 flex items-center">
+                              <span className="text-sm font-bold text-gray-700 min-w-[80px]">{ua.ua}</span>
+                              <div className="w-px h-6 bg-gray-200 mx-4 shrink-0" />
+                              <div className="flex flex-wrap gap-1.5 py-1">
                                 {ua.problemas.map((p, idx) => (
-                                  <span key={idx} className="text-[9px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded uppercase whitespace-nowrap">
+                                  <span key={idx} className="text-[9px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded uppercase">
                                     {p}
                                   </span>
                                 ))}
@@ -273,7 +273,7 @@ export function ConclusaoRecebimentoModal({
           <button
             onClick={handleFinalizar}
             disabled={loading}
-            className="px-8 py-2 rounded-lg bg-wms-sidebar text-white font-bold text-sm hover:opacity-90 shadow-md transition-all flex items-center disabled:opacity-50"
+            className="px-8 py-2 rounded-lg bg-[#1a63b6] text-white font-bold text-sm hover:opacity-90 shadow-md transition-all flex items-center disabled:opacity-50"
           >
             {loading && (
               <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">

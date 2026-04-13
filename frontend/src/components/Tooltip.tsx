@@ -13,10 +13,10 @@ export function Tooltip({ text }: TooltipProps) {
       </div>
       
       {/* Tooltip Box */}
-      <div className="absolute top-full right-0 mt-2 hidden group-hover:block w-48 p-2.5 bg-gray-900/95 text-white text-[10px] font-medium rounded-lg shadow-2xl z-50 pointer-events-none backdrop-blur-sm border border-white/10 normal-case tracking-normal">
+      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2.5 bg-gray-900/95 text-white text-[10px] font-medium rounded-lg shadow-2xl z-50 pointer-events-none backdrop-blur-sm border border-white/10 normal-case tracking-normal whitespace-normal">
         {text}
-        {/* Arrow (aligned to the right at the top of the box) */}
-        <div className="absolute bottom-full right-1 border-4 border-transparent border-b-gray-900/95"></div>
+        {/* Arrow (aligned to the right at the bottom of the box) */}
+        <div className="absolute top-full right-1 border-4 border-transparent border-t-gray-900/95"></div>
       </div>
     </div>
   );
