@@ -116,8 +116,10 @@ def concluir_doca(
             db=db, 
             recebimento_id=id, 
             uas_rejeitadas=payload.uas_rejeitadas,
-            itens_rejeitados=payload.itens_rejeitados
+            itens_rejeitados=payload.itens_rejeitados,
+            resolucoes_sobra=payload.resolucoes_sobra
         )
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

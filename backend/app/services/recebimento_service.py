@@ -956,16 +956,127 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
-    def concluir_doca(db: Session, recebimento_id: int, uas_rejeitadas: List[str] = [], itens_rejeitados: List[int] = []):
-        from app.models.recebimento import Recebimento, RecebimentoItem, RecebimentoLeitura
+    def concluir_doca(db: Session, recebimento_id: int, uas_rejeitadas: List[str] = [], itens_rejeitados: List[int] = [], resolucoes_sobra: dict = {}):
+        from app.models.recebimento import Recebimento, RecebimentoItem, RecebimentoLeitura, RecebimentoSessoes
         from app.models.ua import UA
         from app.models.historico_ua import HistoricoUA
+        from app.models.unidade_medida import UnidadeMedida
+        from app.models.unidade_produto import UnidadeProduto
 
         recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
 
-        # 1. Identifica todas as UAs a serem rejeitadas
+        # 1. Processa resoluções de sobra antes da conclusão física
+        for item_id_str, resolucao in resolucoes_sobra.items():
+            item_id = int(item_id_str)
+            item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+            if not item:
+                continue
+
+            # Só processa se houver sobra real (ignorando arredondamento)
+            if item.qtd_recebida <= item.qtd_nota + 0.0001:
+                continue
+
+            # Busca o fator da nota para conversão para base
+            fator_nota = 1.0
+            und_medida_nota = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first()
+            if und_medida_nota:
+                up_nota = db.query(UnidadeProduto).filter(
+                    UnidadeProduto.produto_id == item.sku,
+                    UnidadeProduto.unidade_medida_id == und_medida_nota.id
+                ).first()
+                if up_nota:
+                    fator_nota = up_nota.fator_conversao
+
+            # Excess em unidade base
+            excesso_base = (item.qtd_recebida - item.qtd_nota) * fator_nota
+
+            # Busca as UAs deste item na última sessão
+            sessao_ativa = db.query(RecebimentoSessoes).filter(
+                RecebimentoSessoes.recebimento_item_id == item.id
+            ).order_by(RecebimentoSessoes.numero_sessao.desc()).first()
+
+            if not sessao_ativa:
+                 continue
+
+            codigos_ua_item = db.query(RecebimentoLeitura.ua).filter(
+                RecebimentoLeitura.recebimento_item_id == item.id,
+                RecebimentoLeitura.sessao_id == sessao_ativa.id,
+                RecebimentoLeitura.ua != None
+            ).distinct().all()
+            ua_codes = [c[0] for c in codigos_ua_item]
+
+            # UAs físicas em ordem decrescente (processar as últimas criadas primeiro)
+            uas_fisicas_item = db.query(UA).filter(UA.ua.in_(ua_codes)).order_by(UA.id.desc()).all()
+
+            if resolucao == 'TRUNCAR':
+                for ua in uas_fisicas_item:
+                    if excesso_base <= 0:
+                        break
+                    
+                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
+                    reducao_base = min(ua_base_qty, excesso_base)
+                    
+                    nova_qtd_ua = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
+                    ua.quantidade = round(nova_qtd_ua, 4)
+                    excesso_base -= reducao_base
+                    
+                    if ua.quantidade <= 0:
+                        ua.status = "ESTORNADA"
+                        ua.quantidade = 0
+                    
+                    hist = HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="TRUNCAR_SOBRA",
+                        observacoes=f"Quantidade ajustada para bater com a nota fiscal. (Saldo sobra: {excesso_base/fator_nota:.2f} {item.und})",
+                        criado_por=recebimento.conferente or "Sistema"
+                    )
+                    db.add(hist)
+
+            elif resolucao == 'BLOQUEAR_EXCESSO':
+                for ua in uas_fisicas_item:
+                    if excesso_base <= 0:
+                        break
+                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
+                    ua.status = "Bloqueada"
+                    ua.observacoes = "Divergência de sobra: excedente à nota"
+                    excesso_base -= ua_base_qty
+                    
+                    db.add(HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="BLOQUEIO_SOBRA",
+                        observacoes="UA bloqueada por exceder a quantidade da nota fiscal.",
+                        criado_por=recebimento.conferente or "Sistema"
+                    ))
+
+            elif resolucao == 'BLOQUEAR_ITEM':
+                for ua in uas_fisicas_item:
+                    ua.status = "Bloqueada"
+                    ua.observacoes = "Divergência de sobra: item bloqueado integralmente"
+                    db.add(HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="BLOQUEIO_ITEM_SOBRA",
+                        observacoes="Item bloqueado integralmente devido à divergência de sobra na nota.",
+                        criado_por=recebimento.conferente or "Sistema"
+                    ))
+
+            elif resolucao == 'ESTORNAR_EXCESSO':
+                for ua in uas_fisicas_item:
+                    if excesso_base <= 0:
+                        break
+                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
+                    ua.status = "ESTORNADA"
+                    excesso_base -= ua_base_qty
+                    
+                    db.add(HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="ESTORNO_SOBRA",
+                        observacoes="UA estornada por ser excedente à nota fiscal.",
+                        criado_por=recebimento.conferente or "Sistema"
+                    ))
+
+        # 2. Identifica todas as UAs a serem rejeitadas (Divergência de Falta ou Avaria grave marcada no modal)
         rejeitadas_set = set(uas_rejeitadas)
         
         # Se algum item foi rejeitado inteiramente, adiciona as suas UAs à lista de rejeição
@@ -977,7 +1088,7 @@ class RecebimentoService:
                 if l.ua:
                     rejeitadas_set.add(l.ua)
 
-        # 2. Processa todas as UAs vinculadas a este romaneio
+        # 3. Processa todas as UAs vinculadas a este romaneio
         # Busca todas as leituras do romaneio para encontrar as UAs físicas correspondentes
         leituras_romaneio = db.query(RecebimentoLeitura).join(RecebimentoItem).filter(
             RecebimentoItem.recebimento_id == recebimento_id
@@ -999,17 +1110,18 @@ class RecebimentoService:
                     )
                     db.add(hist)
                 else:
-                    # UAs aceitas vão para o estoque aguardando armazenamento
-                    ua.status = "Aguardando Armazenamento"
+                    # UAs aceitas vão para o estoque aguardando armazenamento (se não foram bloqueadas acima)
+                    if ua.status not in ["ESTORNADA", "Bloqueada"]:
+                        ua.status = "Aguardando Armazenamento"
 
-        # 3. Força a sincronização com o banco antes de recalcular
+        # 4. Força a sincronização com o banco antes de recalcular
         db.flush()
 
-        # 4. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições
+        # 5. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições ou truncamentos
         for item in recebimento.itens:
             RecebimentoService._recalcular_qtd_item(db, item)
 
-        # 5. Finaliza o Romaneio via FSM
+        # 6. Finaliza o Romaneio via FSM
         fsm = RecebimentoFSM(recebimento)
         try:
             recebimento.concluir()
@@ -1020,6 +1132,7 @@ class RecebimentoService:
         db.commit()
         db.refresh(recebimento)
         return recebimento
+
 
     @staticmethod
     def finalizar_recebimento_fiscal(db: Session, recebimento_id: int):

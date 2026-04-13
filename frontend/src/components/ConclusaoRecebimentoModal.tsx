@@ -5,14 +5,15 @@ import type { Recebimento } from '../types/recebimento';
 interface ConclusaoRecebimentoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (rejeitados: { uas: string[], itens: number[] }) => void;
+  onConfirm: (rejeitados: { uas: string[], itens: number[] }, resolucoes_sobra: Record<number, string>) => void;
   recebimento: Recebimento | null;
   loading: boolean;
 }
 
+
 interface AnomaliaUA {
   ua: string;
-  tipo: string;
+  problemas: string[];
   quantidade: number;
 }
 
@@ -34,6 +35,8 @@ export function ConclusaoRecebimentoModal({
 }: ConclusaoRecebimentoModalProps) {
   const [qualidadeAprovados, setQualidadeAprovados] = useState<Record<string, boolean>>({});
   const [itensComExcecao, setItensComExcecao] = useState<ItemComExcecao[]>([]);
+  const [resolucoesSobra, setResolucoesSobra] = useState<Record<number, string>>({});
+
 
   useEffect(() => {
     if (isOpen && recebimento) {
@@ -70,12 +73,10 @@ export function ConclusaoRecebimentoModal({
             }
           }
 
-          const prob = probList.join(", ");
-
-          if (prob) {
+          if (probList.length > 0) {
             uasRuins.push({
               ua: l.ua,
-              tipo: prob,
+              problemas: probList,
               quantidade: l.qtd
             });
           }
@@ -96,6 +97,15 @@ export function ConclusaoRecebimentoModal({
 
       setItensComExcecao(listaExcecoes);
 
+      // Inicia resoluções padrão para sobras
+      const rSobra: Record<number, string> = {};
+      listaExcecoes.forEach(item => {
+        if (item.qtd_rec > item.qtd_nota) {
+          rSobra[item.item_id] = 'TRUNCAR'; // Padrão
+        }
+      });
+      setResolucoesSobra(rSobra);
+
       // Inicia todas as UAs ruins como aprovadas (checked)
       const qCheck: Record<string, boolean> = {};
       listaExcecoes.forEach(item => {
@@ -107,12 +117,25 @@ export function ConclusaoRecebimentoModal({
     }
   }, [isOpen, recebimento]);
 
+
   if (!recebimento) return null;
 
   const handleFinalizar = () => {
+    // Verifica se todos os itens com sobra têm uma resolução
+    const pendente = itensComExcecao.some(it => {
+      const qtdEfetiva = calcularQtdEfetiva(it);
+      return qtdEfetiva > it.qtd_nota && !resolucoesSobra[it.item_id];
+    });
+
+    if (pendente) {
+      alert("Por favor, selecione uma resolução para todos os itens com sobra.");
+      return;
+    }
+
     const uasRejeitadas = Object.keys(qualidadeAprovados).filter(ua => !qualidadeAprovados[ua]);
-    onConfirm({ uas: uasRejeitadas, itens: [] });
+    onConfirm({ uas: uasRejeitadas, itens: [] }, resolucoesSobra);
   };
+
 
   const calcularQtdEfetiva = (item: ItemComExcecao) => {
     const subtrair = item.unidades_com_problema
@@ -124,89 +147,98 @@ export function ConclusaoRecebimentoModal({
 
   return (
     <Modal isOpen={isOpen}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-white text-xl font-bold flex items-center italic">
-            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Gestão por Exceção
-          </h2>
-          <button onClick={onClose} className="text-blue-100 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      <div className="bg-wms-fundo rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-6">
-          <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-xl border border-blue-100">
-            Divergências detectadas na nota <b>{recebimento.nfe}</b>.
-            Revise as quantidades e condições físicas abaixo para autorizar o recebimento.
+          <div className="text-sm text-gray-400 italic">
+            Divergências detectadas. Revise antes de concluir.
           </div>
 
           <div className="space-y-4">
             {itensComExcecao.map(item => {
               const qtdEfetiva = calcularQtdEfetiva(item);
-              const diffFinal = qtdEfetiva - item.qtd_nota;
 
               return (
-                <div key={item.item_id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                  {/* Item Header */}
-                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{item.sku}</span>
-                        <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.descricao}</h4>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${diffFinal === 0 ? 'bg-green-100 text-green-700' : diffFinal > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
-                          {diffFinal === 0 ? 'Quantidade Ok' : diffFinal > 0 ? `Sobra (+${diffFinal.toFixed(2)})` : `Falta (${diffFinal.toFixed(2)})`}
-                        </span>
+                <div key={item.item_id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                  {/* Item Body */}
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-wms-sidebar">{item.sku}</span>
+                        <span className="text-gray-300">|</span>
+                        <h4 className="text-sm font-bold text-gray-800 truncate">{item.descricao}</h4>
                       </div>
                     </div>
-                    <div className="mt-2 text-sm">
-                      <span className="text-gray-500">Quantidade a receber: </span>
-                      <span className="text-blue-700 font-black text-lg">
-                        {qtdEfetiva.toFixed(2)}
-                      </span>
-                      <span className="text-gray-400 text-xs ml-2"> (Nota: {item.qtd_nota.toFixed(2)})</span>
+
+                    <div className="flex items-end justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-gray-500 uppercase">Qtd. Efetiva</span>
+                        <div className="flex items-baseline space-x-1">
+                          <span className="text-2xl font-black text-gray-900">{Math.round(qtdEfetiva)}</span>
+                          <span className="text-xs text-gray-400 font-medium tracking-tight">/ {Math.round(item.qtd_nota)}</span>
+                        </div>
+                      </div>
+
+                      {/* Resoluções de Sobra */}
+                      {qtdEfetiva > item.qtd_nota && (
+                        <div className="grid grid-cols-2 gap-1.5 bg-gray-50 p-1.5 rounded-lg border border-gray-200 w-64">
+                          {[
+                            { id: 'TRUNCAR', label: 'Aceitar Nota' },
+                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra' },
+                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item' },
+                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver' }
+                          ].map((opt) => (
+                            <button
+                              key={opt.id}
+                              onClick={() => setResolucoesSobra(prev => ({ ...prev, [item.item_id]: opt.id }))}
+                              className={`px-2 py-2 text-[9px] font-bold uppercase rounded-md transition-all text-center leading-tight ${
+                                resolucoesSobra[item.item_id] === opt.id
+                                  ? 'bg-wms-sidebar text-white shadow-sm'
+                                  : 'text-gray-500 hover:bg-white hover:text-gray-700'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Bad UAs List */}
                   {item.unidades_com_problema.length > 0 && (
-                    <div className="p-4 space-y-2">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Unidades com Problemas de Qualidade</p>
-                      {item.unidades_com_problema.map(ua => (
-                        <label
-                          key={ua.ua}
-                          className={`flex items-center p-3 rounded-xl border transition-all cursor-pointer ${qualidadeAprovados[ua.ua] ? 'border-gray-100 bg-white hover:bg-gray-50' : 'border-red-200 bg-red-50'}`}
-                        >
-                          <div className="flex items-center w-full" onClick={(e) => {
-                            e.preventDefault();
-                            setQualidadeAprovados(prev => ({ ...prev, [ua.ua]: !prev[ua.ua] }));
-                          }}>
+                    <div className="px-4 pb-4 pt-1 bg-amber-50/50 space-y-2 border-t border-gray-100">
+                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Unidades com Problemas</p>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {item.unidades_com_problema.map(ua => (
+                          <label
+                            key={ua.ua}
+                            className={`flex items-center px-3 py-2 rounded-lg border transition-all cursor-pointer ${qualidadeAprovados[ua.ua]
+                              ? 'border-gray-100 bg-white hover:bg-gray-50'
+                              : 'border-amber-200 bg-amber-50 shadow-sm'
+                              }`}
+                          >
                             <input
                               type="checkbox"
-                              className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 mr-3 border-gray-300"
+                              className="w-4 h-4 rounded text-wms-sidebar focus:ring-wms-sidebar mr-3 border-gray-300 transition-all cursor-pointer"
                               checked={qualidadeAprovados[ua.ua]}
-                              onChange={() => { }}
+                              onChange={() => setQualidadeAprovados(prev => ({ ...prev, [ua.ua]: !prev[ua.ua] }))}
                             />
-                            <div className="flex-1">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm font-bold text-gray-700">UA: {ua.ua}</span>
-                                <span className="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full uppercase">
-                                  {ua.tipo}
-                                </span>
+                            <div className="flex-1 flex justify-between items-center">
+                              <span className="text-sm font-bold text-gray-700">{ua.ua}</span>
+                              <div className="flex flex-col space-y-1 items-end">
+                                {ua.problemas.map((p, idx) => (
+                                  <span key={idx} className="text-[9px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded uppercase whitespace-nowrap">
+                                    {p}
+                                  </span>
+                                ))}
                               </div>
-                              <div className="text-xs text-gray-500 mt-0.5">Quantidade nesta unidade: {ua.quantidade}</div>
                             </div>
-                          </div>
-                        </label>
-                      ))}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -232,22 +264,22 @@ export function ConclusaoRecebimentoModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-6 py-2.5 rounded-xl text-gray-600 font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="px-6 py-2 rounded-lg text-gray-600 font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleFinalizar}
             disabled={loading}
-            className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center disabled:opacity-50"
+            className="px-8 py-2 rounded-lg bg-wms-sidebar text-white font-bold text-sm hover:opacity-90 shadow-md transition-all flex items-center disabled:opacity-50"
           >
-            {loading ? (
-              <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+            {loading && (
+              <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-            ) : null}
-            Finalizar Recebimento
+            )}
+            Concluir
           </button>
         </div>
       </div>

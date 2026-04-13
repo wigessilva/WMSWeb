@@ -363,11 +363,14 @@ export default function Recebimentos() {
     efetivarConclusao();
   }
 
-  const efetivarConclusao = async (rejeitados?: { uas: string[], itens: number[] }) => {
+  const efetivarConclusao = async (
+    rejeitados?: { uas: string[], itens: number[] }, 
+    resolucoes_sobra: Record<number, string> = {}
+  ) => {
     if (!recebimentoSelecionado) return;
     setCarregando(true);
     try {
-      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados);
+      const rec = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados, resolucoes_sobra);
       setRecebimentoSelecionado(rec);
       setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
       setModalConclusaoAberto(false);
@@ -378,6 +381,7 @@ export default function Recebimentos() {
       setCarregando(false);
     }
   }
+
 
   // Regras de Exibição dos Botões
   const temDireto = itemSelecionadoNaTabela ? unidadesInternas.some(u => u.sigla === itemSelecionadoNaTabela.und) : true;
@@ -1127,10 +1131,12 @@ export default function Recebimentos() {
       <ConclusaoRecebimentoModal 
         isOpen={modalConclusaoAberto}
         onClose={() => setModalConclusaoAberto(false)}
-        onConfirm={(rej) => efetivarConclusao(rej)}
+        onConfirm={(rej: { uas: string[], itens: number[] }, res: Record<number, string>) => efetivarConclusao(rej, res)}
+
         recebimento={recebimentoSelecionado}
         loading={carregando}
       />
+
     </div>
   )
 }

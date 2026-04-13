@@ -53,13 +53,19 @@ export const recebimentoService = {
     return response.data;
   },
 
-  concluirDoca: async (id: number, rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] }): Promise<Recebimento> => {
+  concluirDoca: async (
+    id: number, 
+    rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] },
+    resolucoes_sobra: Record<number, string> = {}
+  ): Promise<Recebimento> => {
     const response = await api.post(`/${id}/concluir-doca`, {
       uas_rejeitadas: rejeitados.uas,
-      itens_rejeitados: rejeitados.itens
+      itens_rejeitados: rejeitados.itens,
+      resolucoes_sobra
     });
     return response.data;
   },
+
 
   finalizar: async (id: number): Promise<Recebimento> => {
     const response = await api.post(`/${id}/finalizar`);
