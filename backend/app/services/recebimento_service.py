@@ -969,16 +969,61 @@ class RecebimentoService:
 
         novas_uas_geradas = []
 
+        # 1. Identifica todas as UAs a serem rejeitadas (Divergência de Falta ou Avaria grave marcada no modal)
+        rejeitadas_set = set(uas_rejeitadas)
+        
+        # Se algum item foi rejeitado inteiramente, adiciona as suas UAs à lista de rejeição
+        if itens_rejeitados:
+            leituras_itens_rejeitados = db.query(RecebimentoLeitura).filter(
+                RecebimentoLeitura.recebimento_item_id.in_(itens_rejeitados)
+            ).all()
+            for l in leituras_itens_rejeitados:
+                if l.ua:
+                    rejeitadas_set.add(l.ua)
 
-        # 1. Processa resoluções de sobra antes da conclusão física
+        # 2. Processa todas as UAs vinculadas a este romaneio para Estornar as rejeitadas
+        leituras_romaneio = db.query(RecebimentoLeitura).join(RecebimentoItem).filter(
+            RecebimentoItem.recebimento_id == recebimento_id
+        ).all()
+        
+        codigos_ua_romaneio = list(set([l.ua for l in leituras_romaneio if l.ua]))
+        
+        if codigos_ua_romaneio:
+            uas_fisicas = db.query(UA).filter(UA.ua.in_(codigos_ua_romaneio)).all()
+            
+            for ua in uas_fisicas:
+                if ua.ua in rejeitadas_set:
+                    ua.status = "ESTORNADA"
+                    hist = HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="REJEICAO_NA_CONCLUSAO",
+                        observacoes="Rejeitado pelo usuário durante a conclusão do recebimento (Gestão por Exceção).",
+                        criado_por=recebimento.conferente or "Sistema"
+                    )
+                    db.add(hist)
+                else:
+                    # UAs aceitas vão para o estoque aguardando armazenamento (se não foram bloqueadas acima)
+                    # Colocamos pendente de armazenamento, que pode ser sobrescrito se houver bloqueio/estorno de sobra
+                    if ua.status not in ["ESTORNADA", "Bloqueada"]:
+                        ua.status = "Aguardando Armazenamento"
+
+        # 3. Força a sincronização e RECALCULA antes da gestão de sobras, para abater as rejeições!
+        db.flush()
+
+        for item in recebimento.itens:
+            RecebimentoService._recalcular_qtd_item(db, item)
+
+        # As quantidades recebidas (item.qtd_recebida) agora refletem apenas o que não foi sumariamente rejeitado.
+
+        # 4. Processa resoluções de sobra nas UAs aceitas
         for item_id_str, resolucao in resolucoes_sobra.items():
             item_id = int(item_id_str)
-            item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+            item = next((i for i in recebimento.itens if i.id == item_id), None)
             if not item:
                 continue
 
-            # Só processa se houver sobra real (ignorando arredondamento)
-            if item.qtd_recebida <= item.qtd_nota + 0.0001:
+            # Só processa se houver sobra real ATUALIZADA (ignorando arredondamento)
+            if (item.qtd_recebida or 0) <= item.qtd_nota + 0.0001:
                 continue
 
             # Busca o fator da nota para conversão para base
@@ -1010,17 +1055,27 @@ class RecebimentoService:
             ).distinct().all()
             ua_codes = [c[0] for c in codigos_ua_item]
 
-            # UAs físicas em ordem decrescente (processar as últimas criadas primeiro)
-            uas_fisicas_item = db.query(UA).filter(UA.ua.in_(ua_codes)).order_by(UA.id.desc()).all()
+            # UAs físicas (apenas as que NÃO FORAM rejeitadas/estornadas no passo 2)
+            uas_fisicas_item = db.query(UA).filter(
+                UA.ua.in_(ua_codes),
+                UA.status != "ESTORNADA"
+            ).order_by(UA.id.desc()).all()
 
-            if resolucao == 'TRUNCAR':
-                for ua in uas_fisicas_item:
-                    if excesso_base <= 0:
-                        break
-                    
-                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
-                    reducao_base = min(ua_base_qty, excesso_base)
-                    
+            for ua in uas_fisicas_item:
+                if excesso_base <= 0:
+                    break
+                
+                ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
+                reducao_base = min(ua_base_qty, excesso_base)
+
+                ultima_leitura = db.query(RecebimentoLeitura).filter(
+                    RecebimentoLeitura.recebimento_item_id == item.id,
+                    RecebimentoLeitura.ua == ua.ua,
+                    RecebimentoLeitura.sessao_id == sessao_ativa.id,
+                    RecebimentoLeitura.qtd > 0
+                ).first()
+
+                if resolucao == 'TRUNCAR':
                     nova_qtd_ua = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
                     ua.quantidade = round(nova_qtd_ua, 4)
                     excesso_base -= reducao_base
@@ -1037,16 +1092,13 @@ class RecebimentoService:
                     )
                     db.add(hist)
 
-            elif resolucao == 'BLOQUEAR_EXCESSO':
-                for ua in uas_fisicas_item:
-                    if excesso_base <= 0:
-                        break
-                    
-                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
-                    reducao_base = min(ua_base_qty, excesso_base)
+                    # Inserir leitura compensatória para TRUNCAMENTO
+                    if ultima_leitura:
+                        qtd_estornar = reducao_base / (ultima_leitura.fator_conversao or 1.0)
+                        RecebimentoService._inserir_leitura_compensatoria(db, item, ua, sessao_ativa, ultima_leitura, qtd_estornar, recebimento.conferente)
 
+                elif resolucao == 'BLOQUEAR_EXCESSO':
                     if reducao_base >= ua_base_qty - 0.0001:
-                        # Bloqueia a UA inteira
                         ua.status = "Bloqueada"
                         ua.observacoes = "Divergência de sobra: excedente à nota"
                         excesso_base -= ua_base_qty
@@ -1067,7 +1119,7 @@ class RecebimentoService:
                             fator_conversao=ua.fator_conversao,
                             status="Bloqueada",
                             estado=ua.estado,
-                            observacoes="Divergência de sobra: excedente à nota (Split)",
+                            observacoes="Divergência de sobra: excedente à nota",
                             criado_por=recebimento.conferente or "Sistema"
                         )
                         db.add(nova_ua)
@@ -1081,8 +1133,7 @@ class RecebimentoService:
                         criado_por=recebimento.conferente or "Sistema"
                     ))
 
-            elif resolucao == 'BLOQUEAR_ITEM':
-                for ua in uas_fisicas_item:
+                elif resolucao == 'BLOQUEAR_ITEM':
                     ua.status = "Bloqueada"
                     ua.observacoes = "Divergência de sobra: item bloqueado integralmente"
                     db.add(HistoricoUA(
@@ -1092,14 +1143,7 @@ class RecebimentoService:
                         criado_por=recebimento.conferente or "Sistema"
                     ))
 
-            elif resolucao == 'ESTORNAR_EXCESSO':
-                for ua in uas_fisicas_item:
-                    if excesso_base <= 0:
-                        break
-                    
-                    ua_base_qty = ua.quantidade * (ua.fator_conversao or 1.0)
-                    reducao_base = min(ua_base_qty, excesso_base)
-
+                elif resolucao == 'ESTORNAR_EXCESSO':
                     if reducao_base >= ua_base_qty - 0.0001:
                         # Estorna a UA inteira
                         ua.status = "ESTORNADA"
@@ -1131,52 +1175,17 @@ class RecebimentoService:
                     db.add(HistoricoUA(
                         ua_id=ua.id,
                         tipo_acao="ESTORNO_SOBRA",
-                        observacoes="UA processada por ser excedente à nota fiscal (pode ter sofrido split).",
+                        observacoes="UA processada por ser excedente à nota fiscal.",
                         criado_por=recebimento.conferente or "Sistema"
                     ))
+                    
+                    # Inserir leitura compensatória para ESTORNO
+                    if ultima_leitura:
+                        qtd_estornar = reducao_base / (ultima_leitura.fator_conversao or 1.0)
+                        RecebimentoService._inserir_leitura_compensatoria(db, item, ua, sessao_ativa, ultima_leitura, qtd_estornar, recebimento.conferente)
 
-        # 2. Identifica todas as UAs a serem rejeitadas (Divergência de Falta ou Avaria grave marcada no modal)
-        rejeitadas_set = set(uas_rejeitadas)
-        
-        # Se algum item foi rejeitado inteiramente, adiciona as suas UAs à lista de rejeição
-        if itens_rejeitados:
-            leituras_itens_rejeitados = db.query(RecebimentoLeitura).filter(
-                RecebimentoLeitura.recebimento_item_id.in_(itens_rejeitados)
-            ).all()
-            for l in leituras_itens_rejeitados:
-                if l.ua:
-                    rejeitadas_set.add(l.ua)
-
-        # 3. Processa todas as UAs vinculadas a este romaneio
-        # Busca todas as leituras do romaneio para encontrar as UAs físicas correspondentes
-        leituras_romaneio = db.query(RecebimentoLeitura).join(RecebimentoItem).filter(
-            RecebimentoItem.recebimento_id == recebimento_id
-        ).all()
-        
-        codigos_ua_romaneio = list(set([l.ua for l in leituras_romaneio if l.ua]))
-        
-        if codigos_ua_romaneio:
-            uas_fisicas = db.query(UA).filter(UA.ua.in_(codigos_ua_romaneio)).all()
-            
-            for ua in uas_fisicas:
-                if ua.ua in rejeitadas_set:
-                    ua.status = "ESTORNADA"
-                    hist = HistoricoUA(
-                        ua_id=ua.id,
-                        tipo_acao="REJEICAO_NA_CONCLUSAO",
-                        observacoes="Rejeitado pelo usuário durante a conclusão do recebimento (Gestão por Exceção).",
-                        criado_por=recebimento.conferente or "Sistema"
-                    )
-                    db.add(hist)
-                else:
-                    # UAs aceitas vão para o estoque aguardando armazenamento (se não foram bloqueadas acima)
-                    if ua.status not in ["ESTORNADA", "Bloqueada"]:
-                        ua.status = "Aguardando Armazenamento"
-
-        # 4. Força a sincronização com o banco antes de recalcular
+        # 5. Após estornos/truncamentos de sobra, recalcula DINOVO as quantidades para refletir os ajustes físicos
         db.flush()
-
-        # 5. Recalcula as quantidades de todos os itens do romaneio para refletir possíveis rejeições ou truncamentos
         for item in recebimento.itens:
             RecebimentoService._recalcular_qtd_item(db, item)
 
@@ -1191,6 +1200,29 @@ class RecebimentoService:
         db.commit()
         db.refresh(recebimento)
         return {"recebimento": recebimento, "novas_uas": novas_uas_geradas}
+
+    @staticmethod
+    def _inserir_leitura_compensatoria(db, item, ua, sessao_ativa, ultima_leitura, qtd_estornar, conferente):
+        from app.models.recebimento import RecebimentoLeitura
+        estorno = RecebimentoLeitura(
+            recebimento_item_id=item.id,
+            qtd=-qtd_estornar,
+            und=ultima_leitura.und,
+            ean=ultima_leitura.ean,
+            lote=ultima_leitura.lote,
+            data_validade=ultima_leitura.data_validade,
+            fator_conversao=ultima_leitura.fator_conversao,
+            unidade_produto_id=ultima_leitura.unidade_produto_id,
+            descricao_visual=ultima_leitura.descricao_visual,
+            usuario=conferente or "Sistema",
+            ua=ua.ua,
+            sessao_id=sessao_ativa.id,
+            int_embalagem=ultima_leitura.int_embalagem,
+            int_material=ultima_leitura.int_material,
+            identificacao=ultima_leitura.identificacao,
+            cert_qual=ultima_leitura.cert_qual
+        )
+        db.add(estorno)
 
 
 
@@ -1528,4 +1560,4 @@ class RecebimentoService:
             return f"UA{proximo_num:07d}"
         except (ValueError, IndexError):
             # Fallback se o formato estiver estranho
-            return "UA0000001"
+            return "UA0000001"
