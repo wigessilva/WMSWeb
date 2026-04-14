@@ -28,6 +28,7 @@ class Produto(Base):
     bloquear_sem_validade = Column("BloquearSemValidade", Boolean, nullable=True)
     bloquear_sem_lote = Column("BloquearSemLote", Boolean, nullable=True)
     bloquear_reprovado = Column("BloquearReprovado", Boolean, nullable=True)
+    fracionavel_recebimento = Column("FracionavelRecebimento", Boolean, default=True, nullable=True)
 
     unidade_medida_id = Column("UnidadeMedidaId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
 

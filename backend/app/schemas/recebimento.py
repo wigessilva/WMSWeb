@@ -75,6 +75,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     bloquear_sem_lote: Optional[bool] = None
     bloquear_sem_validade: Optional[bool] = None
     vencimento_minimo: Optional[int] = None
+    fracionavel_recebimento: Optional[bool] = None
 
     @model_validator(mode='before')
     @classmethod
@@ -137,6 +138,10 @@ class RecebimentoItemSchema(RecebimentoItemBase):
                 ret['bloquear_sem_lote'] = get_param('bloquear_sem_lote')
                 ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
                 ret['vencimento_minimo'] = get_param('vencimento_minimo')
+                
+                # Usa default True se não estiver cadastrado em nenhum (fallback em tempo de conversão)
+                frac = get_param('fracionavel_recebimento')
+                ret['fracionavel_recebimento'] = frac if frac is not None else True
             
             return ret
         return data

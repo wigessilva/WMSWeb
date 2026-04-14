@@ -23,6 +23,7 @@ class Familia(Base):
     bloquear_sem_validade = Column("BloquearSemValidade", Boolean, nullable=True)
     bloquear_sem_lote = Column("BloquearSemLote", Boolean, nullable=True)
     bloquear_reprovado = Column("BloquearReprovado", Boolean, nullable=True)
+    fracionavel_recebimento = Column("FracionavelRecebimento", Boolean, default=True, nullable=True)
 
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
     atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)

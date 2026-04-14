@@ -69,6 +69,7 @@ export interface RecebimentoItem {
   bloquear_sem_lote?: boolean;
   bloquear_sem_validade?: boolean;
   vencimento_minimo?: number;
+  fracionavel_recebimento?: boolean;
   is_bonificacao?: boolean;
 }
 
