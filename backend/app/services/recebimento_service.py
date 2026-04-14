@@ -1075,73 +1075,14 @@ class RecebimentoService:
                     RecebimentoLeitura.qtd > 0
                 ).first()
 
-                if resolucao == 'TRUNCAR':
-                    nova_qtd_ua = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
-                    ua.quantidade = round(nova_qtd_ua, 4)
+                if resolucao == 'ACEITAR_EXCESSO':
+                    db.add(HistoricoUA(
+                        ua_id=ua.id,
+                        tipo_acao="ACEITACAO_SOBRA",
+                        observacoes=f"Excedente à nota fiscal aceito pelo conferente e liberado para uso. (Saldo sobra: {excesso_base/fator_nota:.2f} {item.und})",
+                        criado_por=recebimento.conferente or "Sistema"
+                    ))
                     excesso_base -= reducao_base
-                    
-                    if ua.quantidade <= 0:
-                        ua.status = "ESTORNADA"
-                        ua.quantidade = 0
-                    
-                    hist = HistoricoUA(
-                        ua_id=ua.id,
-                        tipo_acao="TRUNCAR_SOBRA",
-                        observacoes=f"Quantidade ajustada para bater com a nota fiscal. (Saldo sobra: {excesso_base/fator_nota:.2f} {item.und})",
-                        criado_por=recebimento.conferente or "Sistema"
-                    )
-                    db.add(hist)
-
-                    # Inserir leitura compensatória para TRUNCAMENTO
-                    if ultima_leitura:
-                        qtd_estornar = reducao_base / (ultima_leitura.fator_conversao or 1.0)
-                        RecebimentoService._inserir_leitura_compensatoria(db, item, ua, sessao_ativa, ultima_leitura, qtd_estornar, recebimento.conferente)
-
-                elif resolucao == 'BLOQUEAR_EXCESSO':
-                    if reducao_base >= ua_base_qty - 0.0001:
-                        ua.status = "Bloqueada"
-                        ua.observacoes = "Divergência de sobra: excedente à nota"
-                        excesso_base -= ua_base_qty
-                    else:
-                        # Split: reduz a original e cria uma nova bloqueada
-                        nova_qtd_orig = (ua_base_qty - reducao_base) / (ua.fator_conversao or 1.0)
-                        ua.quantidade = round(nova_qtd_orig, 4)
-                        
-                        nova_ua_code = RecebimentoService._gerar_proxima_ua(db)
-                        nova_ua = UA(
-                            ua=nova_ua_code,
-                            filial_id=ua.filial_id,
-                            produto_id=ua.produto_id,
-                            lote=ua.lote,
-                            data_validade=ua.data_validade,
-                            quantidade=round(reducao_base / (ua.fator_conversao or 1.0), 4),
-                            unidade_produto_id=ua.unidade_produto_id,
-                            fator_conversao=ua.fator_conversao,
-                            status="Bloqueada",
-                            estado=ua.estado,
-                            observacoes="Divergência de sobra: excedente à nota",
-                            criado_por=recebimento.conferente or "Sistema"
-                        )
-                        db.add(nova_ua)
-                        novas_uas_geradas.append(nova_ua_code)
-                        excesso_base -= reducao_base
-                    
-                    db.add(HistoricoUA(
-                        ua_id=ua.id,
-                        tipo_acao="BLOQUEIO_SOBRA",
-                        observacoes="UA processada por exceder a quantidade da nota fiscal (pode ter sofrido split).",
-                        criado_por=recebimento.conferente or "Sistema"
-                    ))
-
-                elif resolucao == 'BLOQUEAR_ITEM':
-                    ua.status = "Bloqueada"
-                    ua.observacoes = "Divergência de sobra: item bloqueado integralmente"
-                    db.add(HistoricoUA(
-                        ua_id=ua.id,
-                        tipo_acao="BLOQUEIO_ITEM_SOBRA",
-                        observacoes="Item bloqueado integralmente devido à divergência de sobra na nota.",
-                        criado_por=recebimento.conferente or "Sistema"
-                    ))
 
                 elif resolucao == 'ESTORNAR_EXCESSO':
                     if reducao_base >= ua_base_qty - 0.0001:

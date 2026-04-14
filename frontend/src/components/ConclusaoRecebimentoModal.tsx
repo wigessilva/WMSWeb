@@ -102,7 +102,7 @@ export function ConclusaoRecebimentoModal({
       const rSobra: Record<number, string> = {};
       listaExcecoes.forEach(item => {
         if (item.qtd_rec > item.qtd_nota) {
-          rSobra[item.item_id] = 'TRUNCAR'; // Padrão
+          rSobra[item.item_id] = 'ACEITAR_EXCESSO'; // Padrão
         }
       });
       setResolucoesSobra(rSobra);
@@ -173,9 +173,9 @@ export function ConclusaoRecebimentoModal({
                       </div>
                     </div>
 
-                    <div className="flex items-end justify-between">
+                    <div className="flex items-end justify-start space-x-12">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Qtd. Efetiva</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase">Qtd. a Receber</span>
                         <div className="flex items-baseline space-x-1">
                           <span className="text-2xl font-black text-gray-900">{Math.round(qtdEfetiva)}</span>
                           <span className="text-xs text-gray-400 font-medium tracking-tight">/ {Math.round(item.qtd_nota)}</span>
@@ -184,25 +184,26 @@ export function ConclusaoRecebimentoModal({
 
                       {/* Resoluções de Sobra */}
                       {qtdEfetiva > item.qtd_nota && (
-                        <div className="flex items-center space-x-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                          {[
-                            { id: 'TRUNCAR', label: 'Ajustar à Nota', desc: 'Ajusta o recebimento para bater exatamente com a nota, ignorando a sobra física.' },
-                            { id: 'BLOQUEAR_EXCESSO', label: 'Bloquear Sobra', desc: 'Libera a quantidade da nota e deixa o excedente bloqueado.' },
-                            { id: 'BLOQUEAR_ITEM', label: 'Bloquear Item', desc: 'Bloqueia todo o saldo recebido do item.' },
-                            { id: 'ESTORNAR_EXCESSO', label: 'Devolver', desc: 'Estorna as unidades excedentes' }
-                          ].map((opt) => (
-                            <button
-                              key={opt.id}
-                              onClick={() => setResolucoesSobra(prev => ({ ...prev, [item.item_id]: opt.id }))}
-                              className={`px-3 py-1.5 text-[8.5px] font-bold uppercase rounded-md transition-all whitespace-nowrap flex items-center space-x-1.5 group/btn ${resolucoesSobra[item.item_id] === opt.id
+                        <div className="flex flex-col items-start space-y-1">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Gestão de Sobras</span>
+                          <div className="flex items-center space-x-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
+                            {[
+                              { id: 'ACEITAR_EXCESSO', label: 'Aceitar', desc: 'Valida os volumes excedidos e os libera para uso.' },
+                              { id: 'ESTORNAR_EXCESSO', label: 'Recusar', desc: 'Estorna os volumes excedidos.' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => setResolucoesSobra(prev => ({ ...prev, [item.item_id]: opt.id }))}
+                                className={`px-3 py-1.5 text-[8.5px] font-bold uppercase rounded-md transition-all whitespace-nowrap flex items-center space-x-1.5 group/btn ${resolucoesSobra[item.item_id] === opt.id
                                   ? 'bg-[#1a63b6] text-white shadow-sm'
                                   : 'text-gray-500 hover:bg-white hover:text-gray-700'
-                                }`}
-                            >
-                              <span>{opt.label}</span>
-                              <Tooltip text={opt.desc} />
-                            </button>
-                          ))}
+                                  }`}
+                              >
+                                <span>{opt.label}</span>
+                                <Tooltip text={opt.desc} />
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
