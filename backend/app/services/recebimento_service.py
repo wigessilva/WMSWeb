@@ -447,7 +447,12 @@ class RecebimentoService:
 
     @staticmethod
     def iniciar_conferencia(db: Session, recebimento_id: int, conferente_id: str):
-        recebimento = db.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
+        # Lock pessimista (UPDLOCK no SQL Server) para evitar race condition
+        # Se dois usuários biparem ao mesmo tempo, o segundo ficará bloqueado
+        # até o primeiro fazer commit, e então verá o status atualizado.
+        recebimento = db.query(Recebimento).filter(
+            Recebimento.id == recebimento_id
+        ).with_for_update().first()
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
 
@@ -479,6 +484,7 @@ class RecebimentoService:
         db.commit()
         db.refresh(recebimento)
         return recebimento
+
 
 
     @staticmethod
