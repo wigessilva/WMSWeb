@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { Tooltip } from '../components/Tooltip'
 import { ActionToolbar } from '../components/ActionToolbar'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
@@ -33,6 +34,7 @@ export default function Familias() {
   const [bloquearSemValidade, setBloquearSemValidade] = useState(false)
   const [bloquearSemLote, setBloquearSemLote] = useState(false)
   const [bloquearReprovado, setBloquearReprovado] = useState(false)
+  const [fracionavelRecebimento, setFracionavelRecebimento] = useState(true)
   const [lockValidade, setLockValidade] = useState(true)
   const [lockLote, setLockLote] = useState(true)
   const [lockGiro, setLockGiro] = useState(true)
@@ -88,6 +90,7 @@ export default function Familias() {
       setBloquearSemValidade(false);
       setBloquearSemLote(false);
       setBloquearReprovado(false);
+      setFracionavelRecebimento(true);
     }
   }
 
@@ -137,6 +140,7 @@ export default function Familias() {
     setNovaDescricao(familiaSelecionada.descricao || "");
     setVariavelConsumo(familiaSelecionada.variavel_consumo);
     setAreaArmazenagem(familiaSelecionada.area_armazenagem_preferencial || "");
+    setFracionavelRecebimento(familiaSelecionada.fracionavel_recebimento ?? true);
 
     const herdaValidade = familiaSelecionada.tipo_validade === null;
     setLockValidade(herdaValidade);
@@ -146,9 +150,9 @@ export default function Familias() {
     setVencimentoMinimo(familiaSelecionada.vencimento_minimo?.toString() || "");
 
     if (!herdaValidade) {
-        setTipoValidade(familiaSelecionada.tipo_validade || "sem_validade");
+      setTipoValidade(familiaSelecionada.tipo_validade || "sem_validade");
     } else {
-        setTipoValidade(parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional");
+      setTipoValidade(parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional");
     }
 
     const herdaLote = familiaSelecionada.lote_obrigatorio === null;
@@ -162,15 +166,15 @@ export default function Familias() {
     const herdaBloqueios = familiaSelecionada.bloquear_vencido === null;
     setLockBloqueios(herdaBloqueios);
     if (!herdaBloqueios) {
-        setBloquearVencido(familiaSelecionada.bloquear_vencido ?? false);
-        setBloquearSemValidade(familiaSelecionada.bloquear_sem_validade ?? false);
-        setBloquearSemLote(familiaSelecionada.bloquear_sem_lote ?? false);
-        setBloquearReprovado(familiaSelecionada.bloquear_reprovado ?? false);
+      setBloquearVencido(familiaSelecionada.bloquear_vencido ?? false);
+      setBloquearSemValidade(familiaSelecionada.bloquear_sem_validade ?? false);
+      setBloquearSemLote(familiaSelecionada.bloquear_sem_lote ?? false);
+      setBloquearReprovado(familiaSelecionada.bloquear_reprovado ?? false);
     } else {
-        setBloquearVencido(parametrosGlobais?.bloquear_vencido ?? false);
-        setBloquearSemValidade(parametrosGlobais?.bloquear_sem_validade ?? false);
-        setBloquearSemLote(parametrosGlobais?.bloquear_sem_lote ?? false);
-        setBloquearReprovado(parametrosGlobais?.bloquear_reprovado ?? false);
+      setBloquearVencido(parametrosGlobais?.bloquear_vencido ?? false);
+      setBloquearSemValidade(parametrosGlobais?.bloquear_sem_validade ?? false);
+      setBloquearSemLote(parametrosGlobais?.bloquear_sem_lote ?? false);
+      setBloquearReprovado(parametrosGlobais?.bloquear_reprovado ?? false);
     }
 
     setModalCriarAberto(true);
@@ -227,9 +231,9 @@ export default function Familias() {
         lote_obrigatorio: lockLote ? undefined : (controleLote === "obrigatorio"),
         modelo_giro: lockGiro ? undefined : giroEstoque,
         bloquear_vencido: lockBloqueios ? undefined : bloquearVencido,
-        bloquear_sem_validade: lockBloqueios ? undefined : bloquearSemValidade,
         bloquear_sem_lote: lockBloqueios ? undefined : bloquearSemLote,
-        bloquear_reprovado: lockBloqueios ? undefined : bloquearReprovado
+        bloquear_reprovado: lockBloqueios ? undefined : bloquearReprovado,
+        fracionavel_recebimento: fracionavelRecebimento
       };
 
       if (modoEdicao && familiaSelecionada) {
@@ -303,9 +307,8 @@ export default function Familias() {
                   <tr
                     key={fam.id}
                     onClick={() => setFamiliaSelecionada(fam)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      familiaSelecionada?.id === fam.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${familiaSelecionada?.id === fam.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-3 py-1.5 font-bold text-blue-900">{fam.nome}</td>
                     <td className="px-3 py-1.5">{fam.descricao || "-"}</td>
@@ -318,183 +321,204 @@ export default function Familias() {
       </div>
 
       <Modal isOpen={modalCriarAberto}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">{modoEdicao ? 'Editar Família' : 'Criar Família'}</h2>
-            <form onSubmit={handleSalvar} className="space-y-6">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[95vh] overflow-y-auto">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">{modoEdicao ? 'Editar Família' : 'Criar Família'}</h2>
+          <form onSubmit={handleSalvar} className="space-y-6">
 
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Nome"
-                  value={novoNome}
-                  onChange={(e) => setNovoNome(e.target.value)}
-                  autoFocus
-                />
-                <Input
-                  label="Descrição"
-                  value={novaDescricao}
-                  onChange={(e) => setNovaDescricao(e.target.value)}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Nome"
+                value={novoNome}
+                onChange={(e) => setNovoNome(e.target.value)}
+                autoFocus
+              />
+              <Input
+                label="Descrição"
+                value={novaDescricao}
+                onChange={(e) => setNovaDescricao(e.target.value)}
+              />
+            </div>
 
-              <div className="border border-gray-200 rounded-md bg-gray-50 p-4 space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">Parâmetros</h3>
+            <div className="border border-gray-200 rounded-md bg-gray-50 p-4 space-y-4">
+              <h3 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">Parâmetros</h3>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-sm font-medium text-gray-700">Validade</label>
-                      <button type="button" onClick={toggleLockValidade} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
-                        {lockValidade ? "🔒 Herdar" : "🔓 Exceção"}
-                      </button>
-                    </div>
-                    <select
-                      value={tipoValidade}
-                      onChange={(e) => setTipoValidade(e.target.value)}
-                      disabled={lockValidade}
-                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockValidade ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
-                    >
-                      <option value="sem_validade">Sem Validade</option>
-                      <option value="opcional">Opcional</option>
-                      <option value="obrigatoria">Obrigatória</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prazo de validade (dias)</label>
-                    <input
-                      type="number"
-                      value={prazoValidade}
-                      onChange={(e) => setPrazoValidade(e.target.value)}
-                      min="0"
-                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
-                      disabled={tipoValidade === "sem_validade"}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Vencimento mínimo (dias)</label>
-                    <input
-                      type="number"
-                      value={vencimentoMinimo}
-                      onChange={(e) => setVencimentoMinimo(e.target.value)}
-                      min="0"
-                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
-                      disabled={tipoValidade === "sem_validade"}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Variável de Consumo</label>
-                    <select
-                      value={variavelConsumo}
-                      onChange={(e) => setVariavelConsumo(e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                    >
-                      <option value="unidade">Unidade</option>
-                      <option value="largura">Largura</option>
-                      <option value="comprimento">Comprimento</option>
-                      <option value="peso">Peso</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Área de Armazenagem Preferencial</label>
-                    <select
-                      value={areaArmazenagem}
-                      onChange={(e) => setAreaArmazenagem(e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
-                    >
-                      <option value="">Selecione a área...</option>
-                      <option value="1">Área 1 (Exemplo)</option>
-                      <option value="2">Área 2 (Exemplo)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-sm font-medium text-gray-700">Controle de Lote</label>
-                      <button type="button" onClick={toggleLockLote} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
-                        {lockLote ? "🔒 Herdar" : "🔓 Exceção"}
-                      </button>
-                    </div>
-                    <select
-                      value={controleLote}
-                      onChange={(e) => setControleLote(e.target.value)}
-                      disabled={lockLote}
-                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockLote ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
-                    >
-                      <option value="opcional">Opcional</option>
-                      <option value="obrigatorio">Obrigatório</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-sm font-medium text-gray-700">Giro de Estoque</label>
-                      <button type="button" onClick={toggleLockGiro} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
-                        {lockGiro ? "🔒 Herdar" : "🔓 Exceção"}
-                      </button>
-                    </div>
-                    <select
-                      value={giroEstoque}
-                      onChange={(e) => setGiroEstoque(e.target.value)}
-                      disabled={lockGiro}
-                      className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockGiro ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
-                    >
-                      <option value="FEFO">FEFO</option>
-                      <option value="FIFO">FIFO</option>
-                      <option value="LIFO">LIFO</option>
-                    </select>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Bloqueios Automáticos</label>
-                    <button type="button" onClick={toggleLockBloqueios} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
-                      {lockBloqueios ? "🔒 Herdar" : "🔓 Exceção"}
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Validade</label>
+                    <button type="button" onClick={toggleLockValidade} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                      {lockValidade ? "🔒 Herdar" : "🔓 Exceção"}
                     </button>
                   </div>
-                  <div className={`grid grid-cols-2 gap-2 p-2 rounded ${lockBloqueios ? 'opacity-60 pointer-events-none bg-gray-100 border border-gray-200' : 'border border-blue-300 bg-white'}`}>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={bloquearVencido} onChange={(e) => setBloquearVencido(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
-                      <span className="text-sm text-gray-700">Produto vencido</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={bloquearSemValidade} onChange={(e) => setBloquearSemValidade(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
-                      <span className="text-sm text-gray-700">Sem validade</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={bloquearSemLote} onChange={(e) => setBloquearSemLote(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
-                      <span className="text-sm text-gray-700">Sem lote</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={bloquearReprovado} onChange={(e) => setBloquearReprovado(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
-                      <span className="text-sm text-gray-700">Reprovado qualidade</span>
-                    </label>
-                  </div>
+                  <select
+                    value={tipoValidade}
+                    onChange={(e) => setTipoValidade(e.target.value)}
+                    disabled={lockValidade}
+                    className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockValidade ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
+                  >
+                    <option value="sem_validade">Sem Validade</option>
+                    <option value="opcional">Opcional</option>
+                    <option value="obrigatoria">Obrigatória</option>
+                  </select>
                 </div>
-
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prazo de validade (dias)</label>
+                  <input
+                    type="number"
+                    value={prazoValidade}
+                    onChange={(e) => setPrazoValidade(e.target.value)}
+                    min="0"
+                    className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
+                    disabled={tipoValidade === "sem_validade"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vencimento mínimo (dias)</label>
+                  <input
+                    type="number"
+                    value={vencimentoMinimo}
+                    onChange={(e) => setVencimentoMinimo(e.target.value)}
+                    min="0"
+                    className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${tipoValidade === "sem_validade" ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
+                    disabled={tipoValidade === "sem_validade"}
+                  />
+                </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={salvando}
-                  onClick={() => {
-                    setModalCriarAberto(false);
-                    resetarFormulario();
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" variant="primary" loading={salvando}>
-                  Salvar
-                </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Variável de Consumo</label>
+                  <select
+                    value={variavelConsumo}
+                    onChange={(e) => setVariavelConsumo(e.target.value)}
+                    className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  >
+                    <option value="unidade">Unidade</option>
+                    <option value="largura">Largura</option>
+                    <option value="comprimento">Comprimento</option>
+                    <option value="peso">Peso</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Área de Armazenagem Preferencial</label>
+                  <select
+                    value={areaArmazenagem}
+                    onChange={(e) => setAreaArmazenagem(e.target.value)}
+                    className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]"
+                  >
+                    <option value="">Selecione a área...</option>
+                    <option value="1">Área 1 (Exemplo)</option>
+                    <option value="2">Área 2 (Exemplo)</option>
+                  </select>
+                </div>
               </div>
-            </form>
-          </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Controle de Lote</label>
+                    <button type="button" onClick={toggleLockLote} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                      {lockLote ? "🔒 Herdar" : "🔓 Exceção"}
+                    </button>
+                  </div>
+                  <select
+                    value={controleLote}
+                    onChange={(e) => setControleLote(e.target.value)}
+                    disabled={lockLote}
+                    className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockLote ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
+                  >
+                    <option value="opcional">Opcional</option>
+                    <option value="obrigatorio">Obrigatório</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Giro de Estoque</label>
+                    <button type="button" onClick={toggleLockGiro} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                      {lockGiro ? "🔒 Herdar" : "🔓 Exceção"}
+                    </button>
+                  </div>
+                  <select
+                    value={giroEstoque}
+                    onChange={(e) => setGiroEstoque(e.target.value)}
+                    disabled={lockGiro}
+                    className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${lockGiro ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-300'}`}
+                  >
+                    <option value="FEFO">FEFO</option>
+                    <option value="FIFO">FIFO</option>
+                    <option value="LIFO">LIFO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Bloqueios Automáticos</label>
+                  <button type="button" onClick={toggleLockBloqueios} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                    {lockBloqueios ? "🔒 Herdar" : "🔓 Exceção"}
+                  </button>
+                </div>
+                <div className={`grid grid-cols-2 gap-2 p-2 rounded ${lockBloqueios ? 'opacity-60 pointer-events-none bg-gray-100 border border-gray-200' : 'border border-blue-300 bg-white'}`}>
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" checked={bloquearVencido} onChange={(e) => setBloquearVencido(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
+                    <span className="text-sm text-gray-700">Produto vencido</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" checked={bloquearSemValidade} onChange={(e) => setBloquearSemValidade(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
+                    <span className="text-sm text-gray-700">Sem validade</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" checked={bloquearSemLote} onChange={(e) => setBloquearSemLote(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
+                    <span className="text-sm text-gray-700">Sem lote</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" checked={bloquearReprovado} onChange={(e) => setBloquearReprovado(e.target.checked)} className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]" />
+                    <span className="text-sm text-gray-700">Reprovado qualidade</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 border-t border-gray-200 mt-4 pt-4">
+                <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-[#1a63b6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Recebimento
+                </h3>
+                <div className="p-2 border border-blue-200 bg-blue-50/30 rounded-lg">
+                  <label className="flex items-center space-x-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={fracionavelRecebimento}
+                      onChange={(e) => setFracionavelRecebimento(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]"
+                    />
+                    <span className="text-sm text-gray-800 font-bold">Divisível</span>
+                    <Tooltip text="Se ativado, permite gerar UAs menores a partir de sobras." />
+                  </label>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={salvando}
+                onClick={() => {
+                  setModalCriarAberto(false);
+                  resetarFormulario();
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary" loading={salvando}>
+                Salvar
+              </Button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
     </div>

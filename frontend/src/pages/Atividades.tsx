@@ -37,21 +37,16 @@ export default function Atividades() {
   }, []);
 
   const handleConferir = async (atividade: Recebimento) => {
-    try {
-      // Se já estiver em conferência pela mesma pessoa, apenas redireciona
-      if (atividade.status === 'EM_CONFERENCIA' && atividade.conferente === nomeUsuario) {
-        navigate(`/conferencia/${atividade.id}`);
-        return;
-      }
-      
-      // Se não, inicia a conferência na API (assumindo a tarefa)
-      await recebimentoService.iniciarConferencia(atividade.id, nomeUsuario);
-      toast.success("Atividade Assumida!");
-      navigate(`/conferencia/${atividade.id}`);
-    } catch (e: any) {
-      toast.error(e.response?.data?.detail || "Não foi possível iniciar esta conferência.");
-      carregarAtividades(); // Atualiza a lista caso alguém tenha pego primeiro
+    // Se já estiver em conferência por outra pessoa, bloqueia no frontend
+    if (atividade.status === 'EM_CONFERENCIA' && atividade.conferente && atividade.conferente !== nomeUsuario) {
+      toast.error(`Esta atividade já está sendo conferida por ${atividade.conferente}.`);
+      carregarAtividades();
+      return;
     }
+    
+    // Apenas navega para a tela de conferência.
+    // O conferente e o status serão gravados quando o usuário bipar a primeira UA.
+    navigate(`/conferencia/${atividade.id}`);
   };
 
   const atividadesFiltradas = atividades.filter(() => {

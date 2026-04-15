@@ -180,6 +180,24 @@ export default function Conferencia() {
         [itemAtual.id]: novasUasDoItem
       }));
 
+      // No primeiro bip, oficializa a conferência (grava conferente + muda status)
+      if (recebimento?.status === 'AGUARDANDO_CONFERENCIA') {
+        try {
+          const userJson = sessionStorage.getItem('wms_sessao_usuario');
+          const nomeUsuario = userJson ? JSON.parse(userJson).nome : 'Coletor';
+          await recebimentoService.iniciarConferencia(Number(id), nomeUsuario);
+        } catch (err: any) {
+          toast.error(err.response?.data?.detail || "Erro ao iniciar conferência.");
+          // Remove a UA que acabou de adicionar
+          setUasPorItem(prev => ({
+            ...prev,
+            [itemAtual.id]: (prev[itemAtual.id] || []).filter((_, i) => i !== novasUasDoItem.length - 1)
+          }));
+          setCodigoUA('');
+          return;
+        }
+      }
+
       // Muda para a tela de conferência focada nesta UA
       setUaAtualIndex(novasUasDoItem.length - 1);
       setStep('CONFERENCIA');

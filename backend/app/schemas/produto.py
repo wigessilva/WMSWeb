@@ -19,6 +19,7 @@ class ProdutoBase(BaseModel):
     bloquear_sem_validade: Optional[bool] = None
     bloquear_sem_lote: Optional[bool] = None
     bloquear_reprovado: Optional[bool] = None
+    fracionavel_recebimento: Optional[bool] = None
     unidade_medida_id: Optional[int] = None
     status: str = "pendente"
 
@@ -50,6 +51,7 @@ class ProdutoEditar(BaseModel):
     bloquear_sem_validade: Optional[bool] = None
     bloquear_sem_lote: Optional[bool] = None
     bloquear_reprovado: Optional[bool] = None
+    fracionavel_recebimento: Optional[bool] = None
     unidade_medida_id: Optional[int] = None
     status: Optional[str] = None
 

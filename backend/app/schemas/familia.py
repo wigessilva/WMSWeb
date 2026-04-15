@@ -24,6 +24,7 @@ class FamiliaBase(BaseModel):
     bloquear_sem_validade: Optional[bool] = None
     bloquear_sem_lote: Optional[bool] = None
     bloquear_reprovado: Optional[bool] = None
+    fracionavel_recebimento: Optional[bool] = True
 
 class FamiliaCriar(FamiliaBase):
     pass
@@ -49,6 +50,7 @@ class FamiliaEditar(BaseModel):
     bloquear_sem_validade: Optional[bool] = None
     bloquear_sem_lote: Optional[bool] = None
     bloquear_reprovado: Optional[bool] = None
+    fracionavel_recebimento: Optional[bool] = None
 
 class FamiliaSchema(FamiliaBase):
     id: int

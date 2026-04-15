@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe versao="4.00" Id="NFe35260400000000000000550010000080001000080000">
+            <ide>
+                <nNF>8000</nNF>
+            </ide>
+            <emit>
+                <CNPJ>12345678000199</CNPJ>
+                <xNome>FORNECEDOR CV</xNome>
+            </emit>
+            <dest>
+                <CNPJ>98765432000100</CNPJ>
+                <xNome>WMS CLIENTE</xNome>
+            </dest>
+            <det nItem="1">
+                <prod>
+                    <cProd>CV408</cProd>
+                    <xProd>Fita Dupla Face CV-408 1100mmx300m</xProd>
+                    <uCom>M2</uCom>
+                    <qCom>330.0000</qCom>
+                    <vUnCom>10.0000000000</vUnCom>
+                    <vProd>3300.00</vProd>
+                    <xPed>8000</xPed>
+                </prod>
+            </det>
+            <total>
+                <ICMSTot>
+                    <vNF>3300.00</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

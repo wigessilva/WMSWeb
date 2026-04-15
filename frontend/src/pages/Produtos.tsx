@@ -6,6 +6,7 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
 import { ToggleSwitch } from '../components/ToggleSwitch'
+import { Tooltip } from '../components/Tooltip'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
 import { parametrosMestresService } from '../services/parametrosMestresService'
@@ -55,6 +56,7 @@ export default function Produtos() {
   const [lockLote, setLockLote] = useState(true)
   const [lockGiro, setLockGiro] = useState(true)
   const [lockBloqueios, setLockBloqueios] = useState(true)
+  const [lockFracionavel, setLockFracionavel] = useState(true)
 
   // Estados do Cadastro
   const [familiaId, setFamiliaId] = useState<number | "">("")
@@ -184,6 +186,7 @@ export default function Produtos() {
   const [bloquearSemValidade, setBloquearSemValidade] = useState(false)
   const [bloquearSemLote, setBloquearSemLote] = useState(false)
   const [bloquearReprovado, setBloquearReprovado] = useState(false)
+  const [fracionavelRecebimento, setFracionavelRecebimento] = useState(true)
 
   const carregarProdutos = async (termo?: string) => {
     try {
@@ -299,6 +302,12 @@ export default function Produtos() {
     }
   };
 
+  const toggleLockFracionavel = () => {
+    const novo = !lockFracionavel;
+    setLockFracionavel(novo);
+    if (novo) setFracionavelRecebimento(resolverRegra('fracionavel_recebimento', true));
+  };
+
   const abrirModalEditar = (prod: Produto) => {
     setProdutoSelecionado(prod);
     setAbaAtiva('cadastro');
@@ -325,14 +334,14 @@ export default function Produtos() {
     setLockValidade(herdaValidade);
 
     if (!herdaValidade) {
-        setTipoValidade(prod.tipo_validade || "sem_validade");
-        setPrazoValidade(prod.prazo_validade?.toString() || "");
-        setVencimentoMinimo(prod.vencimento_minimo?.toString() || "");
+      setTipoValidade(prod.tipo_validade || "sem_validade");
+      setPrazoValidade(prod.prazo_validade?.toString() || "");
+      setVencimentoMinimo(prod.vencimento_minimo?.toString() || "");
     } else {
-        const globalVal = parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional";
-        setTipoValidade(resolverRegra('tipo_validade', globalVal, prod) || "sem_validade");
-        setPrazoValidade(resolverRegra('prazo_validade', "", prod)?.toString() || "");
-        setVencimentoMinimo(resolverRegra('vencimento_minimo', "", prod)?.toString() || "");
+      const globalVal = parametrosGlobais?.validade_obrigatoria ? "obrigatoria" : "opcional";
+      setTipoValidade(resolverRegra('tipo_validade', globalVal, prod) || "sem_validade");
+      setPrazoValidade(resolverRegra('prazo_validade', "", prod)?.toString() || "");
+      setVencimentoMinimo(resolverRegra('vencimento_minimo', "", prod)?.toString() || "");
     }
 
     // Lote
@@ -345,20 +354,25 @@ export default function Produtos() {
     setLockGiro(herdaGiro);
     setGiroEstoque(herdaGiro ? resolverRegra('modelo_giro', parametrosGlobais?.modelo_giro || "FEFO", prod) : (prod.modelo_giro || "FEFO"));
 
-    // Bloqueios
+    // Bloqueios Automáticos
     const herdaBloqueios = prod.bloquear_vencido === null || prod.bloquear_vencido === undefined;
     setLockBloqueios(herdaBloqueios);
     if (!herdaBloqueios) {
-        setBloquearVencido(prod.bloquear_vencido ?? false);
-        setBloquearSemValidade(prod.bloquear_sem_validade ?? false);
-        setBloquearSemLote(prod.bloquear_sem_lote ?? false);
-        setBloquearReprovado(prod.bloquear_reprovado ?? false);
+      setBloquearVencido(prod.bloquear_vencido ?? false);
+      setBloquearSemValidade(prod.bloquear_sem_validade ?? false);
+      setBloquearSemLote(prod.bloquear_sem_lote ?? false);
+      setBloquearReprovado(prod.bloquear_reprovado ?? false);
     } else {
-        setBloquearVencido(resolverRegra('bloquear_vencido', parametrosGlobais?.bloquear_vencido ?? false, prod));
-        setBloquearSemValidade(resolverRegra('bloquear_sem_validade', parametrosGlobais?.bloquear_sem_validade ?? false, prod));
-        setBloquearSemLote(resolverRegra('bloquear_sem_lote', parametrosGlobais?.bloquear_sem_lote ?? false, prod));
-        setBloquearReprovado(resolverRegra('bloquear_reprovado', parametrosGlobais?.bloquear_reprovado ?? false, prod));
+      setBloquearVencido(resolverRegra('bloquear_vencido', parametrosGlobais?.bloquear_vencido ?? false, prod));
+      setBloquearSemValidade(resolverRegra('bloquear_sem_validade', parametrosGlobais?.bloquear_sem_validade ?? false, prod));
+      setBloquearSemLote(resolverRegra('bloquear_sem_lote', parametrosGlobais?.bloquear_sem_lote ?? false, prod));
+      setBloquearReprovado(resolverRegra('bloquear_reprovado', parametrosGlobais?.bloquear_reprovado ?? false, prod));
     }
+
+    // Fracionamento
+    const herdaFracionavel = prod.fracionavel_recebimento === null || prod.fracionavel_recebimento === undefined;
+    setLockFracionavel(herdaFracionavel);
+    setFracionavelRecebimento(herdaFracionavel ? resolverRegra('fracionavel_recebimento', true, prod) : (prod.fracionavel_recebimento ?? true));
 
     setModalEditarAberto(true);
   };
@@ -386,7 +400,8 @@ export default function Produtos() {
         bloquear_vencido: lockBloqueios ? null : bloquearVencido,
         bloquear_sem_validade: lockBloqueios ? null : bloquearSemValidade,
         bloquear_sem_lote: lockBloqueios ? null : bloquearSemLote,
-        bloquear_reprovado: lockBloqueios ? null : bloquearReprovado
+        bloquear_reprovado: lockBloqueios ? null : bloquearReprovado,
+        fracionavel_recebimento: lockFracionavel ? null : fracionavelRecebimento
       };
 
       await produtoService.editar(produtoSelecionado.id, payload);
@@ -470,17 +485,15 @@ export default function Produtos() {
                   <tr
                     key={prod.id}
                     onClick={() => setProdutoSelecionado(prod)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      produtoSelecionado?.id === prod.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${produtoSelecionado?.id === prod.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-3 py-1.5 font-bold text-blue-900">{prod.sku}</td>
                     <td className="px-3 py-1.5">{prod.descricao}</td>
                     <td className="px-3 py-1.5">{prod.referencia || "-"}</td>
                     <td className="px-3 py-1.5 flex items-center space-x-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        prod.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${prod.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {prod.status.toUpperCase()}
                       </span>
                       {prod.bloqueado && (
@@ -648,9 +661,8 @@ export default function Produtos() {
                               <tr
                                 key={und.id}
                                 onClick={() => setUnidadeSelecionada(und)}
-                                className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                                  unidadeSelecionada?.id === und.id ? "bg-blue-100" : ""
-                                }`}
+                                className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${unidadeSelecionada?.id === und.id ? "bg-blue-100" : ""
+                                  }`}
                               >
                                 <td className="px-3 py-2 text-gray-500 font-medium">{index + 1}</td>
                                 <td className="px-3 py-2 font-bold text-blue-800">
@@ -831,6 +843,28 @@ export default function Produtos() {
                       </label>
                     </div>
                   </div>
+
+                  {/* Bloco Recebimento */}
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Recebimento</label>
+                      <button type="button" onClick={toggleLockFracionavel} className="text-xs font-semibold text-gray-500 hover:text-blue-600 focus:outline-none">
+                        {lockFracionavel ? "🔒 Herdar" : "🔓 Exceção"}
+                      </button>
+                    </div>
+                    <div className={`p-2 rounded ${lockFracionavel ? 'opacity-60 pointer-events-none bg-gray-100 border border-gray-200' : 'border border-blue-300 bg-white'}`}>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={fracionavelRecebimento}
+                          onChange={(e) => setFracionavelRecebimento(e.target.checked)}
+                          className="rounded border-gray-300 text-[#1a63b6] focus:ring-[#1a63b6]"
+                        />
+                        <span className="text-sm text-gray-800 font-bold">Divisível</span>
+                        <Tooltip text="Se ativado, permite gerar UAs menores a partir de sobras." />
+                      </label>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -846,22 +880,22 @@ export default function Produtos() {
 
       {/* Modal de Motivo de Bloqueio */}
       <Modal isOpen={modalMotivoAberto} zIndexClass="z-[1010]">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Motivo do Bloqueio</h3>
-            <textarea
-              value={motivoBloqueio}
-              onChange={(e) => setMotivoBloqueio(e.target.value)}
-              className="w-full border border-gray-300 p-3 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px] mb-4"
-              autoFocus
-            />
-            <div className="flex justify-end space-x-3">
-              <Button type="button" variant="secondary" onClick={() => { setProdutoBloqueado(false); setModalMotivoAberto(false); setMotivoBloqueio(""); }}>Cancelar</Button>
-              <Button type="button" variant="danger" disabled={!motivoBloqueio.trim()} onClick={() => {
-                  setProdutoBloqueado(true);
-                  setModalMotivoAberto(false);
-              }}>Confirmar Bloqueio</Button>
-            </div>
+        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Motivo do Bloqueio</h3>
+          <textarea
+            value={motivoBloqueio}
+            onChange={(e) => setMotivoBloqueio(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px] mb-4"
+            autoFocus
+          />
+          <div className="flex justify-end space-x-3">
+            <Button type="button" variant="secondary" onClick={() => { setProdutoBloqueado(false); setModalMotivoAberto(false); setMotivoBloqueio(""); }}>Cancelar</Button>
+            <Button type="button" variant="danger" disabled={!motivoBloqueio.trim()} onClick={() => {
+              setProdutoBloqueado(true);
+              setModalMotivoAberto(false);
+            }}>Confirmar Bloqueio</Button>
           </div>
+        </div>
       </Modal>
 
       {/* Modal de Edição de Unidade */}
@@ -870,98 +904,97 @@ export default function Produtos() {
         zIndexClass="z-[1010]"
         fundoTransparente={modalConfirmarPesoAberto}
       >
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Editar Unidade</h3>
+        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Editar Unidade</h3>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Unidade</label>
-                <select
-                  value={tipoUnidade}
-                  onChange={(e) => setTipoUnidade(e.target.value)}
-                  disabled={unidadeEditando?.tipo === 'base'}
-                  className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${
-                    unidadeEditando?.tipo === 'base' ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : 'border-gray-300 bg-white'
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Unidade</label>
+              <select
+                value={tipoUnidade}
+                onChange={(e) => setTipoUnidade(e.target.value)}
+                disabled={unidadeEditando?.tipo === 'base'}
+                className={`w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6] ${unidadeEditando?.tipo === 'base' ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : 'border-gray-300 bg-white'
                   }`}
-                >
-                  <option value="base">Base</option>
-                  <option value="produto">Produto</option>
-                  <option value="recipiente">Recipiente</option>
-                </select>
-                {unidadeEditando?.tipo === 'base' && (
-                  <p className="text-xs text-gray-500 mt-1">
-                  </p>
-                )}
-              </div>
+              >
+                <option value="base">Base</option>
+                <option value="produto">Produto</option>
+                <option value="recipiente">Recipiente</option>
+              </select>
+              {unidadeEditando?.tipo === 'base' && (
+                <p className="text-xs text-gray-500 mt-1">
+                </p>
+              )}
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Largura</label>
-                  <div className="flex">
-                    <input type="number" value={largura} onChange={(e) => setLargura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                    <select value={unidadeLargura} onChange={(e) => setUnidadeLargura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                      <option value="mm">mm</option>
-                      <option value="cm">cm</option>
-                      <option value="m">m</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento</label>
-                  <div className="flex">
-                    <input type="number" value={comprimento} onChange={(e) => setComprimento(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                    <select value={unidadeComprimento} onChange={(e) => setUnidadeComprimento(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                      <option value="mm">mm</option>
-                      <option value="cm">cm</option>
-                      <option value="m">m</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Altura</label>
-                  <div className="flex">
-                    <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                    <select value={unidadeAltura} onChange={(e) => setUnidadeAltura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                      <option value="mm">mm</option>
-                      <option value="cm">cm</option>
-                      <option value="m">m</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Peso Bruto</label>
-                  <input type="number" value={pesoBruto} onChange={(e) => setPesoBruto(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Largura</label>
+                <div className="flex">
+                  <input type="number" value={largura} onChange={(e) => setLargura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                  <select value={unidadeLargura} onChange={(e) => setUnidadeLargura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="mm">mm</option>
+                    <option value="cm">cm</option>
+                    <option value="m">m</option>
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">EAN/GTIN</label>
-                <input type="text" value={eanGtin} onChange={(e) => setEanGtin(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento</label>
+                <div className="flex">
+                  <input type="number" value={comprimento} onChange={(e) => setComprimento(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                  <select value={unidadeComprimento} onChange={(e) => setUnidadeComprimento(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="mm">mm</option>
+                    <option value="cm">cm</option>
+                    <option value="m">m</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Altura</label>
+                <div className="flex">
+                  <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
+                  <select value={unidadeAltura} onChange={(e) => setUnidadeAltura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="mm">mm</option>
+                    <option value="cm">cm</option>
+                    <option value="m">m</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Peso Bruto</label>
+                <input type="number" value={pesoBruto} onChange={(e) => setPesoBruto(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button type="button" variant="secondary" onClick={() => setModalEditarUnidadeAberto(false)}>Cancelar</Button>
-              <Button type="button" variant="primary" onClick={handleAplicarUnidade}>Aplicar</Button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">EAN/GTIN</label>
+              <input type="text" value={eanGtin} onChange={(e) => setEanGtin(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
             </div>
           </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button type="button" variant="secondary" onClick={() => setModalEditarUnidadeAberto(false)}>Cancelar</Button>
+            <Button type="button" variant="primary" onClick={handleAplicarUnidade}>Aplicar</Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Modal de Confirmação de Cálculo de Peso */}
       <Modal isOpen={modalConfirmarPesoAberto} zIndexClass="z-[1020]">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">Atualizar pesos?</h3>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Deseja que o sistema calcule <strong>automaticamente</strong> o peso das outras embalagens?
-            </p>
-            <div className="flex justify-end space-x-3 mt-4">
-              <Button type="button" variant="secondary" onClick={() => confirmarCalculoPeso(false)}>Não</Button>
-              <Button type="button" variant="primary" onClick={() => confirmarCalculoPeso(true)}>Sim</Button>
-            </div>
+        <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+          <h3 className="text-lg font-bold text-gray-800 mb-3">Atualizar pesos?</h3>
+          <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+            Deseja que o sistema calcule <strong>automaticamente</strong> o peso das outras embalagens?
+          </p>
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button type="button" variant="secondary" onClick={() => confirmarCalculoPeso(false)}>Não</Button>
+            <Button type="button" variant="primary" onClick={() => confirmarCalculoPeso(true)}>Sim</Button>
           </div>
+        </div>
       </Modal>
     </div>
   )

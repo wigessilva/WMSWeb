@@ -452,11 +452,10 @@ class RecebimentoService:
             raise ValueError("Romaneio não encontrado.")
 
         # Se já estiver em conferência e for outra pessoa
-        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente and recebimento.conferente != conferente_id:
-            raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente}.")
-
-        # Se já é a própria pessoa voltando para a conferência
-        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value and recebimento.conferente == conferente_id:
+        if recebimento.status == StatusRecebimento.EM_CONFERENCIA.value:
+            if recebimento.conferente and recebimento.conferente != conferente_id:
+                raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente}.")
+            # Se for a mesma pessoa voltando, apenas retorna
             return recebimento
 
         fsm = RecebimentoFSM(recebimento)
@@ -464,6 +463,8 @@ class RecebimentoService:
             recebimento.iniciar_conferencia()
             if not recebimento.inicio:
                 recebimento.inicio = datetime.now()
+            if not recebimento.inicio_conferencia:
+                recebimento.inicio_conferencia = datetime.now()
             
             recebimento.conferente = conferente_id
             
@@ -473,11 +474,12 @@ class RecebimentoService:
                     item.status = StatusRecebimentoItem.EM_CONFERENCIA.value
             event_bus.publish('RECEBIMENTO_EM_CONFERENCIA', {'id': recebimento_id, 'conferente': conferente_id})
         except Exception as e:
-            raise ValueError(f"Não é possível iniciar a conferência: Status atual '{recebimento.status}' não permite transição para Conferência. (Erro: {str(e)})")
+            raise ValueError(f"Não é possível iniciar a conferência: {str(e)}")
 
         db.commit()
         db.refresh(recebimento)
         return recebimento
+
 
     @staticmethod
     def cancelar_liberacao_romaneio(db: Session, recebimento_id: int):
@@ -655,9 +657,11 @@ class RecebimentoService:
         if not item:
             raise ValueError("Item não encontrado.")
 
-        # Marca o início real da conferência (no Romaneio) apenas no primeiro bibe
-        if item.recebimento and not item.recebimento.inicio_conferencia:
-            item.recebimento.inicio_conferencia = datetime.now()
+        # Validação de segurança: se já houver um conferente atribuído, apenas ele pode bipar
+        if item.recebimento and item.recebimento.status == StatusRecebimento.EM_CONFERENCIA.value:
+            if item.recebimento.conferente and item.recebimento.conferente != usuario:
+                raise ValueError(f"Este romaneio está sendo conferido por {item.recebimento.conferente}. Você não pode registrar leituras nele.")
+
 
         # Validação de Lote e Validade conforme regras do produto/família
         produto = item.produto

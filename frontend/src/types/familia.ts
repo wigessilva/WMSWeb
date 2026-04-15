@@ -13,6 +13,7 @@ export interface Familia {
   bloquear_sem_validade: boolean | null;
   bloquear_sem_lote: boolean | null;
   bloquear_reprovado: boolean | null;
+  fracionavel_recebimento: boolean | null;
   criado_em: string;
   atualizado_em: string;
 }
@@ -31,4 +32,5 @@ export interface FamiliaCriar {
   bloquear_sem_validade?: boolean;
   bloquear_sem_lote?: boolean;
   bloquear_reprovado?: boolean;
+  fracionavel_recebimento?: boolean;
 }

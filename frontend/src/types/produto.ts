@@ -37,6 +37,7 @@ export interface Produto {
   bloquear_sem_validade?: boolean | null;
   bloquear_sem_lote?: boolean | null;
   bloquear_reprovado?: boolean | null;
+  fracionavel_recebimento?: boolean | null;
   unidade_medida_id: number | null;
   status: string;
   largura_mm: number | null;
