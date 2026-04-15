@@ -123,25 +123,62 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             ret['descricoes_visuais'] = desc_visuais
             ret['leituras'] = leituras_filtradas # Sobrescreve com a lista filtrada
 
-            # Adiciona os parâmetros do produto para validação no frontend (com herança da família)
+            # Adiciona os parâmetros do produto para validação no frontend
+            # Cadeia de herança: Produto → Família → Parâmetros Globais
             if produto:
                 fam = produto.familia_relacao
                 
-                def get_param(name):
-                    # Tenta no produto, se for None, tenta na família
+                # Importa e carrega os parâmetros globais para fallback
+                from app.models.parametros_mestres import ParametrosMestres
+                from app.db.database import SessionLocal
+                _db = SessionLocal()
+                try:
+                    params_globais = _db.query(ParametrosMestres).first()
+                finally:
+                    _db.close()
+
+                def get_param(name, global_name=None):
+                    # 1. Exceção no produto
                     val = getattr(produto, name, None)
-                    if val is None and fam:
+                    if val is not None:
+                        return val
+                    # 2. Regra na família
+                    if fam:
                         val = getattr(fam, name, None)
-                    return val
+                        if val is not None:
+                            return val
+                    # 3. Parâmetro global
+                    g_name = global_name or name
+                    if params_globais:
+                        val = getattr(params_globais, g_name, None)
+                        if val is not None:
+                            return val
+                    return None
 
                 ret['lote_obrigatorio'] = get_param('lote_obrigatorio')
                 ret['bloquear_sem_lote'] = get_param('bloquear_sem_lote')
-                ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
                 ret['vencimento_minimo'] = get_param('vencimento_minimo')
+                
+                # Resolve validade: tipo_validade pode ser "sem_validade", "opcional" ou "obrigatoria"
+                tipo_val = get_param('tipo_validade')
+                if tipo_val is None:
+                    # Nenhum nível definiu tipo_validade, usa o global booleano
+                    global_obrigatoria = getattr(params_globais, 'validade_obrigatoria', False) if params_globais else False
+                    ret['bloquear_sem_validade'] = global_obrigatoria or get_param('bloquear_sem_validade')
+                elif tipo_val == 'obrigatoria':
+                    ret['bloquear_sem_validade'] = True
+                elif tipo_val == 'sem_validade':
+                    # Produto/Família explicitamente declara que não tem validade
+                    # Parâmetro global NÃO pode sobrescrever isso
+                    ret['bloquear_sem_validade'] = False
+                else:
+                    # "opcional" — não obriga, mas respeita bloqueio se configurado
+                    ret['bloquear_sem_validade'] = get_param('bloquear_sem_validade') or False
                 
                 # Usa default True se não estiver cadastrado em nenhum (fallback em tempo de conversão)
                 frac = get_param('fracionavel_recebimento')
                 ret['fracionavel_recebimento'] = frac if frac is not None else True
+
             
             return ret
         return data

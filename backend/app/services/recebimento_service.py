@@ -669,24 +669,64 @@ class RecebimentoService:
                 raise ValueError(f"Este romaneio está sendo conferido por {item.recebimento.conferente}. Você não pode registrar leituras nele.")
 
 
-        # Validação de Lote e Validade conforme regras do produto/família
+        # Validação de Lote e Validade respeitando a cadeia de herança:
+        # Produto (exceção) → Família → Parâmetros Globais
         produto = item.produto
         familia = produto.familia_relacao if produto else None
         
-        def get_param(name):
-            val = getattr(produto, name, None) if produto else None
-            if val is None and familia:
-                val = getattr(familia, name, None)
-            return val
+        # Carrega parâmetros globais como fallback final
+        from app.models.parametros_mestres import ParametrosMestres
+        params_globais = db.query(ParametrosMestres).first()
 
-        lote_obrigatorio = get_param('lote_obrigatorio') or get_param('bloquear_sem_lote')
-        validade_obrigatoria = get_param('bloquear_sem_validade') or bool(get_param('tipo_validade'))
+        def resolve_param(attr_produto, attr_familia, attr_global, default=None):
+            """Resolve um parâmetro pela cadeia Produto → Família → Global."""
+            # 1. Exceção no produto (se não for None, o produto sobrescreveu)
+            val = getattr(produto, attr_produto, None) if produto else None
+            if val is not None:
+                return val
+            # 2. Regra na família
+            val = getattr(familia, attr_familia, None) if familia else None
+            if val is not None:
+                return val
+            # 3. Parâmetro global
+            val = getattr(params_globais, attr_global, None) if params_globais else None
+            if val is not None:
+                return val
+            return default
 
-        if lote_obrigatorio and (not leit.lote or not leit.lote.strip()):
+        # tipo_validade: "sem_validade", "opcional" ou "obrigatoria"
+        # Resolve apenas na cadeia Produto → Família (sem global, pois global usa campo booleano)
+        tipo_validade_produto = getattr(produto, 'tipo_validade', None) if produto else None
+        tipo_validade_familia = getattr(familia, 'tipo_validade', None) if familia else None
+        tipo_validade = tipo_validade_produto or tipo_validade_familia  # Primeiro não-None
+
+        if tipo_validade == 'sem_validade':
+            # Produto/Família explicitamente declaram que não tem validade
+            # Global NÃO pode sobrescrever isso
+            validade_obrigatoria = False
+            bloquear_sem_validade = False
+        elif tipo_validade == 'obrigatoria':
+            validade_obrigatoria = True
+            bloquear_sem_validade = True
+        elif tipo_validade == 'opcional':
+            validade_obrigatoria = False
+            bloquear_sem_validade = resolve_param('bloquear_sem_validade', 'bloquear_sem_validade', 'bloquear_sem_validade', False)
+        else:
+            # Nenhum nível definiu tipo_validade, usa parâmetros globais
+            global_obrigatoria = getattr(params_globais, 'validade_obrigatoria', False) if params_globais else False
+            validade_obrigatoria = global_obrigatoria
+            bloquear_sem_validade = resolve_param('bloquear_sem_validade', 'bloquear_sem_validade', 'bloquear_sem_validade', False)
+
+        lote_obrigatorio = resolve_param('lote_obrigatorio', 'lote_obrigatorio', 'lote_obrigatorio', False)
+        bloquear_sem_lote = resolve_param('bloquear_sem_lote', 'bloquear_sem_lote', 'bloquear_sem_lote', False)
+
+        if (lote_obrigatorio or bloquear_sem_lote) and (not leit.lote or not leit.lote.strip()):
             raise ValueError(f"Lote é obrigatório.")
         
-        if validade_obrigatoria and (not leit.data_validade or not leit.data_validade.strip()):
+        if (validade_obrigatoria or bloquear_sem_validade) and (not leit.data_validade or not leit.data_validade.strip()):
             raise ValueError(f"Data de validade é obrigatória.")
+
+
 
         if leit.ean:
             unidade_ean = db.query(UnidadeProduto).filter(
