@@ -27,6 +27,7 @@ from ..models.endereco import Endereco
 from ..models.ua import UA
 from ..models.historico_ua import HistoricoUA
 from ..models.configuracao_integracao import ConfiguracaoIntegracao
+from ..core.erp_schema import ERPSchema
 
 
 class RecebimentoService:
@@ -41,7 +42,7 @@ class RecebimentoService:
         oc_verificada = None
         if dados.oc:
             # Procura no ERP pela coluna correta (NumeroOC)
-            query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
+            query_erp = text(f"SELECT 1 FROM {ERPSchema.TABELA_PEDIDOS_COMPRA} WITH (NOLOCK) WHERE {ERPSchema.COL_OC_NUMERO} = :oc")
             resultado_erp = db_erp.execute(query_erp, {"oc": dados.oc}).first()
             if resultado_erp:
                 oc_verificada = dados.oc
@@ -196,7 +197,16 @@ class RecebimentoService:
             return None
 
         # Busca itens da OC no ERP
-        query_itens_erp = text("SELECT * FROM PedidosCompraItens WITH (NOLOCK) WHERE NumeroOC = :oc")
+        query_itens_erp = text(f"""
+            SELECT 
+                {ERPSchema.COL_IT_SKU} as Sku, 
+                {ERPSchema.COL_IT_PRECO} as PrecoUnitario, 
+                {ERPSchema.COL_IT_UND} as Und, 
+                {ERPSchema.COL_IT_QTD} as Qtd, 
+                {ERPSchema.COL_IT_QTD_RECEBIDA} as QtdRecebida 
+            FROM {ERPSchema.TABELA_PEDIDOS_COMPRA_ITENS} WITH (NOLOCK) 
+            WHERE {ERPSchema.COL_IT_OC_NUMERO} = :oc
+        """)
         itens_oc = db_erp.execute(query_itens_erp, {"oc": recebimento.oc}).mappings().all()
         if not itens_oc:
             return None
@@ -1326,7 +1336,7 @@ class RecebimentoService:
             raise ValueError(f"Não é possível editar a OC. A conferência já foi iniciada ou está na fila. Cancele a liberação antes.")
 
         # Vai na tabela do ERP verificar se a OC existe
-        query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
+        query_erp = text(f"SELECT 1 FROM {ERPSchema.TABELA_PEDIDOS_COMPRA} WITH (NOLOCK) WHERE {ERPSchema.COL_OC_NUMERO} = :oc")
         resultado_erp = db_erp.execute(query_erp, {"oc": oc}).first()
 
         if not resultado_erp:
@@ -1360,7 +1370,7 @@ class RecebimentoService:
 
             if historico and historico.xped_original:
                 # Vai no ERP procurar a OC original usando a tabela de PedidosCompra
-                query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")
+                query_erp = text(f"SELECT 1 FROM {ERPSchema.TABELA_PEDIDOS_COMPRA} WITH (NOLOCK) WHERE {ERPSchema.COL_OC_NUMERO} = :oc")
                 resultado_erp = db_erp.execute(query_erp, {"oc": historico.xped_original}).first()
 
                 if resultado_erp:
@@ -1535,7 +1545,17 @@ class RecebimentoService:
             return {"sugestao": None, "mensagem": "Sem OC vinculada."}
 
         # 3. Buscar OC no ERP
-        query_erp = text("SELECT * FROM PedidosCompraItens WITH (NOLOCK) WHERE NumeroOC = :oc")
+        query_erp = text(f"""
+            SELECT 
+                {ERPSchema.COL_IT_SKU} as Sku, 
+                {ERPSchema.COL_IT_UND} as Und, 
+                {ERPSchema.COL_IT_QTD} as Qtd, 
+                {ERPSchema.COL_IT_QTD_RECEBIDA} as QtdRecebida, 
+                {ERPSchema.COL_IT_PRECO} as PrecoUnitario, 
+                {ERPSchema.COL_IT_DESCRICAO} as Descricao
+            FROM {ERPSchema.TABELA_PEDIDOS_COMPRA_ITENS} WITH (NOLOCK) 
+            WHERE {ERPSchema.COL_IT_OC_NUMERO} = :oc
+        """)
         itens_oc = db_erp.execute(query_erp, {"oc": rec.oc}).mappings().all()
 
         if not itens_oc:

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from ..core.erp_schema import ERPSchema
 from app.models.produto import Produto
 from app.models.unidade_medida import UnidadeMedida
 from app.models.unidade_produto import UnidadeProduto
@@ -9,7 +10,7 @@ class ServicoSincronizacaoERP:
     @staticmethod
     def sincronizar_produtos(db_wms: Session, db_erp: Session):
         # Substitua 'NOME_DA_TABELA_NO_ERP' pelo nome real da tabela de produtos no seu ERP
-        query_erp = text("SELECT Cod, Descricao, Ref FROM Produtos WITH (NOLOCK)")
+        query_erp = text(f"SELECT {ERPSchema.COL_PROD_SKU}, {ERPSchema.COL_PROD_DESCRICAO}, {ERPSchema.COL_PROD_REF} FROM {ERPSchema.TABELA_PRODUTOS} WITH (NOLOCK)")
 
         # Lendo os dados do ERP
         resultados_erp = db_erp.execute(query_erp).fetchall()
@@ -18,9 +19,9 @@ class ServicoSincronizacaoERP:
         produtos_atualizados = 0
 
         for linha in resultados_erp:
-            sku_erp = str(linha.Cod)
-            descricao_erp = str(linha.Descricao)
-            referencia_erp = str(linha.Ref) if linha.Ref else None
+            sku_erp = str(getattr(linha, ERPSchema.COL_PROD_SKU))
+            descricao_erp = str(getattr(linha, ERPSchema.COL_PROD_DESCRICAO))
+            referencia_erp = str(getattr(linha, ERPSchema.COL_PROD_REF)) if getattr(linha, ERPSchema.COL_PROD_REF) else None
 
             # Verifica se o produto já existe no WMS
             produto_existente = db_wms.query(Produto).filter(Produto.sku == sku_erp).first()
@@ -54,7 +55,7 @@ class ServicoSincronizacaoERP:
     @staticmethod
     def sincronizar_produtos_unidades(db_wms: Session, db_erp: Session):
         # Ordenamos por Codigo e Fator ASC para garantir que a unidade base (fator 1.0) seja lida primeiro
-        query_erp = text("SELECT Id, Codigo, Sigla, Fator FROM ProdutosUnidades WITH (NOLOCK) ORDER BY Codigo, Fator ASC")
+        query_erp = text(f"SELECT {ERPSchema.COL_PU_ID}, {ERPSchema.COL_PU_SKU}, {ERPSchema.COL_PU_SIGLA}, {ERPSchema.COL_PU_FATOR} FROM {ERPSchema.TABELA_PRODUTOS_UNIDADES} WITH (NOLOCK) ORDER BY {ERPSchema.COL_PU_SKU}, {ERPSchema.COL_PU_FATOR} ASC")
         resultados_erp = db_erp.execute(query_erp).fetchall()
 
         unidades_adicionadas = 0
@@ -66,10 +67,10 @@ class ServicoSincronizacaoERP:
         ids_erp_validos = set()
 
         for linha in resultados_erp:
-            linha_id = int(linha.Id)
-            codigo_erp = str(linha.Codigo)
-            sigla_erp = str(linha.Sigla).upper()
-            fator_erp = float(linha.Fator)
+            linha_id = int(getattr(linha, ERPSchema.COL_PU_ID))
+            codigo_erp = str(getattr(linha, ERPSchema.COL_PU_SKU))
+            sigla_erp = str(getattr(linha, ERPSchema.COL_PU_SIGLA)).upper()
+            fator_erp = float(getattr(linha, ERPSchema.COL_PU_FATOR))
             
             ids_erp_validos.add(linha_id)
 
@@ -149,7 +150,7 @@ class ServicoSincronizacaoERP:
 
     @staticmethod
     def sincronizar_unidades_medida(db_wms: Session, db_erp: Session):
-        query_erp = text("SELECT Sigla, Descricao FROM UnidadesMedida WITH (NOLOCK)")
+        query_erp = text(f"SELECT {ERPSchema.COL_UM_SIGLA}, {ERPSchema.COL_UM_DESCRICAO} FROM {ERPSchema.TABELA_UNIDADES_MEDIDA} WITH (NOLOCK)")
 
         # Lendo os dados do ERP
         resultados_erp = db_erp.execute(query_erp).fetchall()
@@ -158,8 +159,8 @@ class ServicoSincronizacaoERP:
         unidades_atualizadas = 0
 
         for linha in resultados_erp:
-            sigla_erp = str(linha.Sigla).upper()
-            desc_erp = str(linha.Descricao)
+            sigla_erp = str(getattr(linha, ERPSchema.COL_UM_SIGLA)).upper()
+            desc_erp = str(getattr(linha, ERPSchema.COL_UM_DESCRICAO))
 
             # Verifica se a unidade já existe no WMS
             unidade_existente = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == sigla_erp).first()
