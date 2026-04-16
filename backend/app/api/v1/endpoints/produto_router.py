@@ -7,7 +7,9 @@ from fastapi import Query
 from app.services.produto_service import ProdutoService
 from app.services.erp_sync_service import ServicoSincronizacaoERP
 
-router = APIRouter()
+from app.core.auth_dep import get_current_user_active
+
+router = APIRouter(dependencies=[Depends(get_current_user_active)])
 
 
 @router.post("/sincronizar-erp")

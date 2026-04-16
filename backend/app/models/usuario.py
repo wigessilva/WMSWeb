@@ -18,6 +18,7 @@ class Usuario(Base):
 
     ultimo_login = Column("UltimoLogin", DateTime, nullable=True)
     ativo = Column("Ativo", Boolean, default=True, nullable=False)
+    token_sessao = Column("TokenSessao", String(255), nullable=True)
 
     # Auditoria padrao
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)

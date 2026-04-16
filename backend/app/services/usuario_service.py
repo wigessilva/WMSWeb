@@ -87,8 +87,11 @@ def autenticar_usuario(db: Session, credenciais: UsuarioLogin):
     if not usuario.ativo:
         raise HTTPException(status_code=403, detail="Usuário inativo. Procure o Administrador.")
 
-    # Atualiza o carimbo de último acesso (Regra que você solicitou)
+    # Atualiza o carimbo de último acesso e gera novo token de sessão
+    import uuid
     usuario.ultimo_login = datetime.now()
+    usuario.token_sessao = str(uuid.uuid4())
+    
     db.commit()
     db.refresh(usuario)
 

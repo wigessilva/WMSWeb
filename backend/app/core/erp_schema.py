@@ -1,7 +1,6 @@
 class ERPSchema:
     """
     Centraliza o mapeamento de tabelas e colunas do Banco de Dados do ERP.
-    Edite este arquivo para adequar o sistema a diferentes nomes e estruturas de ERP.
     """
     
     # --- TABELAS ---

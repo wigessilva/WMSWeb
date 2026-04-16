@@ -8,7 +8,9 @@ from app.schemas.recebimento import RecebimentoCriar, RecebimentoSchema, Autoriz
 from app.services.recebimento_service import RecebimentoService
 from app.models.recebimento import Recebimento, RecebimentoItem
 
-router = APIRouter()
+from app.core.auth_dep import get_current_user_active
+
+router = APIRouter(dependencies=[Depends(get_current_user_active)])
 
 # --- ROTAS DE ATIVIDADES OPERACIONAIS ---
 @router.get("/atividades", response_model=List[RecebimentoSchema])

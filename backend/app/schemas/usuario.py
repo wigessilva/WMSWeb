@@ -37,6 +37,7 @@ class UsuarioSchema(UsuarioBase):
     rowversion: int
     filiais: List[FilialResumo] = []
     permissoes: List[str] = []  # Chaves das permissões do perfil do usuário
+    token_sessao: Optional[str] = None
     # Nota: A senha_hash nunca deve vir para o Frontend, por isso não a colocamos aqui!
 
     class Config:

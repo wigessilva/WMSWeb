@@ -1,14 +1,11 @@
-import axios from 'axios';
+import apiClient from './api';
 import type { Recebimento } from '../types/recebimento';
 
-const api = axios.create();
-
-// Redireciona a requisição inteira para o IP do servidor da filial selecionada
-api.interceptors.request.use((config) => {
-  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
-  config.baseURL = `${urlServidorFilial}/recebimentos`;
-  return config;
-});
+const api = {
+    get: (url: string, config?: any) => apiClient.get(`/recebimentos${url}`, config),
+    post: (url: string, data?: any, config?: any) => apiClient.post(`/recebimentos${url}`, data, config),
+    put: (url: string, data?: any, config?: any) => apiClient.put(`/recebimentos${url}`, data, config),
+};
 
 export const recebimentoService = {
   // Busca todos os recebimentos com os seus itens na base de dados (com busca opcional)
