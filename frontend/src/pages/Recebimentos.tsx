@@ -365,12 +365,13 @@ export default function Recebimentos() {
 
   const efetivarConclusao = async (
     rejeitados?: { uas: string[], itens: number[] }, 
-    resolucoes_sobra: Record<number, string> = {}
+    resolucoes_sobra: Record<number, string> = {},
+    is_parcial: boolean = false
   ) => {
     if (!recebimentoSelecionado) return;
     setCarregando(true);
     try {
-      const data = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados, resolucoes_sobra);
+      const data = await recebimentoService.concluirDoca(recebimentoSelecionado.id, rejeitados, resolucoes_sobra, is_parcial);
       const rec = data.recebimento;
       const novasUas = data.novas_uas;
 
@@ -477,7 +478,7 @@ export default function Recebimentos() {
               { label: "Alterar Destino", onClick: () => { } }
             ] : []),
             // Ações do Recebimento (FSM)
-            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' || recebimentoSelecionado.status === 'DIVERGENTE') && temPermissao('RECEBIMENTO.LIBERAR') ? [
+            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' || recebimentoSelecionado.status === 'DIVERGENTE' || recebimentoSelecionado.status === 'PARCIAL') && temPermissao('RECEBIMENTO.LIBERAR') ? [
               { label: "Liberar Conferência", onClick: handleLiberar, className: "text-green-600 font-bold" }
             ] : []),
             ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') && temPermissao('RECEBIMENTO.CONFERIR') ? [
@@ -1146,7 +1147,7 @@ export default function Recebimentos() {
       <ConclusaoRecebimentoModal 
         isOpen={modalConclusaoAberto}
         onClose={() => setModalConclusaoAberto(false)}
-        onConfirm={(rej: { uas: string[], itens: number[] }, res: Record<number, string>) => efetivarConclusao(rej, res)}
+        onConfirm={(rej: { uas: string[], itens: number[] }, res: Record<number, string>, partial: boolean) => efetivarConclusao(rej, res, partial)}
 
         recebimento={recebimentoSelecionado}
         loading={carregando}

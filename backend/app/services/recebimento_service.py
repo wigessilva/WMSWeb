@@ -449,6 +449,12 @@ class RecebimentoService:
             for item in recebimento.itens:
                 if item.status == StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value:
                     item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+                elif estado_anterior == StatusRecebimento.PARCIAL.value:
+                    # Se estava PARCIAL e estamos liberando, os itens com falta devem ser reconferidos!
+                    # Os que já bateram a quantidade ficam onde estão (CONFERIDO).
+                    if (item.qtd_recebida or 0) < item.qtd_nota:
+                        item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
+                        item.tentativas = (item.tentativas or 1) + 1
             
             RecebimentoService._registrar_log(
                 db, tabela="Recebimentos", registro_id=recebimento.id, 
@@ -563,9 +569,10 @@ class RecebimentoService:
         # Precisamos considerar o histórico para evitar erros de integridade
         from app.models.historico_ua import HistoricoUA
         
-        # Busca os IDs das UAs que serão removidas
+        # Busca os IDs das UAs que serão removidas (apenas as inconclusas da sessão atual)
         uas_para_remover = db.query(UA.id).filter(
             UA.produto_id == item.sku, 
+            UA.status.in_(["Em Conferência", "Em Análise"]),
             UA.ua.in_(
                 db.query(RecebimentoLeitura.ua).filter(RecebimentoLeitura.recebimento_item_id == item_id)
             )
@@ -586,8 +593,8 @@ class RecebimentoService:
                 )
                 db.add(hist)
 
-        # 4. Reseta as quantidades do item para a nova sessão
-        item.qtd_recebida = 0.0
+        # 4. Reseta as quantidades do item para a nova sessão (mas preserva histórico aprovado)
+        RecebimentoService._recalcular_qtd_item(db, item)
         item.status = "AGUARDANDO_CONFERENCIA"
         
         # 5. Se o romaneio estiver em análise, divergente ou finalizado, volta para aguardando conferência
@@ -989,15 +996,14 @@ class RecebimentoService:
                 db.add(item)
             return
 
-        # Apenas somar as leituras da sessão corrente (tentativa atual do item)
-        # filtrando UAs que foram estornadas (rejeitadas na conclusão ou canceladas)
+        # Somar as leituras de todas as sessões do item
+        # filtrando UAs que foram estornadas (rejeitadas na conclusão ou canceladas no passado)
         from app.models.ua import UA
         
         leituras = db.query(RecebimentoLeitura).select_from(RecebimentoLeitura).outerjoin(
             UA, RecebimentoLeitura.ua == UA.ua
         ).filter(
             RecebimentoLeitura.recebimento_item_id == item.id,
-            RecebimentoLeitura.sessao_id == sessao_ativa.id,
             (UA.status != "ESTORNADA") | (UA.ua == None)
         ).all()
         total_base = sum(l.qtd * (l.fator_conversao or 1.0) for l in leituras)
@@ -1048,7 +1054,7 @@ class RecebimentoService:
         return recebimento
 
     @staticmethod
-    def concluir_doca(db: Session, recebimento_id: int, uas_rejeitadas: List[str] = [], itens_rejeitados: List[int] = [], resolucoes_sobra: dict = {}):
+    def concluir_doca(db: Session, recebimento_id: int, uas_rejeitadas: List[str] = [], itens_rejeitados: List[int] = [], resolucoes_sobra: dict = {}, is_parcial: bool = False):
         from app.models.recebimento import Recebimento, RecebimentoItem, RecebimentoLeitura, RecebimentoSessoes
         from app.models.ua import UA
         from app.models.historico_ua import HistoricoUA
@@ -1225,8 +1231,24 @@ class RecebimentoService:
         # 6. Finaliza o Romaneio via FSM
         fsm = RecebimentoFSM(recebimento)
         try:
-            recebimento.concluir()
-            recebimento.conclusao = datetime.now()
+            if is_parcial:
+                recebimento.concluir_parcial()
+                
+                # Liberação física das UAs prontas APENAS dessa fase (já aprovadas/sincronizadas)
+                uas_aceitas = db.query(UA).join(
+                    RecebimentoLeitura, UA.ua == RecebimentoLeitura.ua
+                ).join(
+                    RecebimentoItem, RecebimentoLeitura.recebimento_item_id == RecebimentoItem.id
+                ).filter(
+                    RecebimentoItem.recebimento_id == recebimento_id,
+                    UA.status.in_(["Em Conferência", "Em Análise"])
+                ).all()
+
+                for ua in uas_aceitas:
+                    ua.status = "Aguardando Armazenamento"
+            else:
+                recebimento.concluir()
+                recebimento.conclusao = datetime.now()
         except Exception as e:
             raise ValueError(f"Não foi possível concluir o romaneio: {str(e)}")
 

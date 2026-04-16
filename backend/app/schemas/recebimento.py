@@ -248,6 +248,7 @@ class ConclusaoDocaPayload(BaseModel):
     uas_rejeitadas: List[str] = []
     itens_rejeitados: List[int] = []
     resolucoes_sobra: Optional[dict] = {}
+    is_parcial: bool = False
 
 class ConclusaoDocaResponse(BaseModel):
     recebimento: RecebimentoSchema

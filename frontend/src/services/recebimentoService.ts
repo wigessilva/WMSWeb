@@ -56,12 +56,14 @@ export const recebimentoService = {
   concluirDoca: async (
     id: number, 
     rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] },
-    resolucoes_sobra: Record<number, string> = {}
+    resolucoes_sobra: Record<number, string> = {},
+    is_parcial: boolean = false
   ): Promise<{ recebimento: Recebimento, novas_uas: string[] }> => {
     const response = await api.post(`/${id}/concluir-doca`, {
       uas_rejeitadas: rejeitados.uas,
       itens_rejeitados: rejeitados.itens,
-      resolucoes_sobra
+      resolucoes_sobra,
+      is_parcial
     });
     return response.data;
   },

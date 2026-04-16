@@ -11,7 +11,8 @@ class RecebimentoFSM(object):
         'EM_CONFERENCIA',
         'EM_ANALISE',
         'FINALIZADO',
-        'REJEITADO'
+        'REJEITADO',
+        'PARCIAL'
     ]
 
     def __init__(self, recebimento_model):
@@ -28,10 +29,11 @@ class RecebimentoFSM(object):
         self.machine.add_transition(trigger='desbloquear', source='BLOQUEADO', dest='IMPORTADO')
         self.machine.add_transition(trigger='preparar_para_liberar', source=['IMPORTADO', 'PENDENTE', 'BLOQUEADO'], dest='AGUARDANDO_LIBERACAO')
         self.machine.add_transition(trigger='regredir_para_pendente', source='AGUARDANDO_LIBERACAO', dest='PENDENTE')
-        self.machine.add_transition(trigger='liberar_conferencia', source=['AGUARDANDO_LIBERACAO', 'DIVERGENTE'], dest='AGUARDANDO_CONFERENCIA')
+        self.machine.add_transition(trigger='liberar_conferencia', source=['AGUARDANDO_LIBERACAO', 'DIVERGENTE', 'PARCIAL'], dest='AGUARDANDO_CONFERENCIA')
         self.machine.add_transition(trigger='iniciar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA', 'LIBERADO'], dest='EM_CONFERENCIA')
         self.machine.add_transition(trigger='cancelar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'], dest='AGUARDANDO_LIBERACAO')
         self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_finalizado'])
+        self.machine.add_transition(trigger='concluir_parcial', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'], dest='PARCIAL')
         self.machine.add_transition(trigger='concluir', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA', 'EM_ANALISE'], dest='FINALIZADO')
 
     def is_finalizado(self):

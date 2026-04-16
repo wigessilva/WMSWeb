@@ -117,7 +117,8 @@ def concluir_doca(
             recebimento_id=id, 
             uas_rejeitadas=payload.uas_rejeitadas,
             itens_rejeitados=payload.itens_rejeitados,
-            resolucoes_sobra=payload.resolucoes_sobra
+            resolucoes_sobra=payload.resolucoes_sobra,
+            is_parcial=payload.is_parcial
         )
 
     except ValueError as e:

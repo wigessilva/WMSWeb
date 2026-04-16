@@ -6,7 +6,7 @@ import type { Recebimento } from '../types/recebimento';
 interface ConclusaoRecebimentoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (rejeitados: { uas: string[], itens: number[] }, resolucoes_sobra: Record<number, string>) => void;
+  onConfirm: (rejeitados: { uas: string[], itens: number[] }, resolucoes_sobra: Record<number, string>, isParcial: boolean) => void;
   recebimento: Recebimento | null;
   loading: boolean;
 }
@@ -40,6 +40,7 @@ export function ConclusaoRecebimentoModal({
   const [qualidadeAprovados, setQualidadeAprovados] = useState<Record<string, boolean>>({});
   const [itensComExcecao, setItensComExcecao] = useState<ItemComExcecao[]>([]);
   const [resolucoesSobra, setResolucoesSobra] = useState<Record<number, string>>({});
+  const [isParcial, setIsParcial] = useState(false);
 
 
   useEffect(() => {
@@ -150,7 +151,7 @@ export function ConclusaoRecebimentoModal({
     }
 
     const uasRejeitadas = Object.keys(qualidadeAprovados).filter(ua => !qualidadeAprovados[ua]);
-    onConfirm({ uas: uasRejeitadas, itens: [] }, resolucoesSobra);
+    onConfirm({ uas: uasRejeitadas, itens: [] }, resolucoesSobra, isParcial);
   };
 
 
@@ -343,6 +344,17 @@ export function ConclusaoRecebimentoModal({
           >
             Cancelar
           </button>
+          <div className="flex-1 flex items-center px-4">
+            <label className="flex items-center space-x-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]"
+                checked={isParcial}
+                onChange={(e) => setIsParcial(e.target.checked)}
+              />
+              <span className="text-sm font-bold text-gray-700 group-hover:text-[#1a63b6] transition-colors">Recebimento parcial</span>
+            </label>
+          </div>
           <button
             onClick={handleFinalizar}
             disabled={loading}
