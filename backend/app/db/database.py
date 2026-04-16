@@ -67,6 +67,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -75,5 +78,8 @@ def get_erp_db():
     db = SessionLocalERP()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

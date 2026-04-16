@@ -419,7 +419,7 @@ class RecebimentoService:
             usuario=usuario.login,
             observacao=f"Autorizado manualmente via modal de supervisor (Origem: {ip_address or 'Desconhecida'})"
         )
-        db.commit()
+        db.flush()
         
         # Após autorizado com sucesso, pode liberar a conferência
         return RecebimentoService.liberar_romaneio(db, recebimento.id, usuario_acao=usuario.login)
@@ -672,9 +672,6 @@ class RecebimentoService:
         # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.
         # Recalcula e persiste a quantidade recebida total de forma inteligente (busca a última sessão)
         RecebimentoService._recalcular_qtd_item(db, item)
-
-        db.commit()
-        db.refresh(item)
         
         # --- WORKFLOW SIMPLIFICADO DE STATUS DE UAs ---
         # 4. Ao finalizar a conferência do item, movemos todas as UAs da sessão para "Em Análise"
@@ -700,11 +697,14 @@ class RecebimentoService:
                     {"status": "Em Análise"},
                     synchronize_session=False
                 )
-                db.commit() # Garante a persistência dos status das UAs
+                db.flush()  # Sincroniza os status das UAs antes de verificar o romaneio pai
 
         # 5. Verifica se o romaneio pai pode ser atualizado (se todos os itens estão concluídos)
         RecebimentoService.atualizar_status_pos_conferencia(db, item.recebimento_id)
-        
+
+        # Commit único e atômico: item + UAs + status do romaneio pai
+        db.commit()
+        db.refresh(item)
         return item
 
     @staticmethod
@@ -1040,7 +1040,6 @@ class RecebimentoService:
         if all(it.status in concluidos for it in itens):
             # O Romaneio vai para EM_ANALISE para o fiscal decidir
             recebimento.status = StatusRecebimento.EM_ANALISE.value
-            db.commit()
 
     @staticmethod
     def rejeitar_romaneio(db: Session, recebimento_id: int):
@@ -1340,7 +1339,7 @@ class RecebimentoService:
         if recebimento.status == 'BLOQUEADO':
             recebimento.desbloquear()
         
-        db_wms.commit()
+        db_wms.flush()
         db_wms.refresh(recebimento)
 
         # VALIDAÇÃO DE PREÇO (Após vincular OC)
@@ -1393,7 +1392,7 @@ class RecebimentoService:
 
         # Como criamos o vínculo global acima, basta commitar.
         # O recalculo delegará a avaliação das unidades pendentes na próxima linha.
-        db.commit()
+        db.flush()
 
         from app.db.database import SessionLocalERP
         db_erp = SessionLocalERP()
@@ -1490,7 +1489,7 @@ class RecebimentoService:
         item.sku = produto_id
         item.descricao = descricao_prod
 
-        db.commit()
+        db.flush()
         
         from app.db.database import SessionLocalERP
         db_erp = SessionLocalERP()
