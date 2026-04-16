@@ -541,6 +541,10 @@ class RecebimentoService:
         except Exception as e:
             raise ValueError("Não é possível cancelar uma conferência neste status.")
 
+        # Busca CNPJ para reavaliar vínculos
+        historico = db.query(HistoricoXML).filter(HistoricoXML.nfe == recebimento.nfe).first()
+        cnpj = historico.cnpj_emitente if historico else None
+
         # Zera as contagens apagando as leituras e resetando qtd_recebida
         itens = db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id).all()
         for item in itens:
@@ -548,14 +552,30 @@ class RecebimentoService:
             from app.models.recebimento import RecebimentoLeitura
             db.query(RecebimentoLeitura).filter(RecebimentoLeitura.recebimento_item_id == item.id).delete()
             
-            # Todos os itens regressam para aguardando liberação
+            # Reavalia o vínculo (De/Para)
+            if cnpj and item.codigo_fornecedor:
+                vinculo = db.query(VinculoProdutoFornecedor).filter(
+                    VinculoProdutoFornecedor.cnpj_fornecedor == cnpj,
+                    VinculoProdutoFornecedor.codigo_fornecedor == item.codigo_fornecedor
+                ).first()
+                if vinculo:
+                    item.sku = vinculo.produto_id
+                    # Atualiza a descrição com a do produto atual
+                    prod = db.query(Produto).filter(Produto.id == vinculo.produto_id).first()
+                    if prod:
+                        item.descricao = prod.descricao
+                else:
+                    item.sku = None
+                    item.descricao = item.descricao_nota
+            
+            # Todos os itens regressam para aguardando liberação (inicialmente)
             status_avancados = [StatusRecebimentoItem.CONFERIDO.value, StatusRecebimentoItem.DIVERGENTE.value, StatusRecebimentoItem.EM_CONFERENCIA.value, StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value]
             if item.status in status_avancados:
                 item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
 
         db.commit()
-        db.refresh(recebimento)
-        return recebimento
+        # Chama o motor central para recalcular os status corretamente (mudar para PENDENTE se SKU sumiu)
+        return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
     @staticmethod
     def solicitar_reconferencia(db: Session, item_id: int, usuario: str, motivo: str = None):
