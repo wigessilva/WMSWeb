@@ -115,9 +115,9 @@ export default function Recebimentos() {
       setRecebimentoSelecionado(recAtualizado)
       toast.success(`OC ${ocDigitada} vinculada com sucesso!`)
       setModalOCAberto(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao buscar OC:", error)
-      toast.error("Erro na comunicação com o servidor ou OC não encontrada.")
+      toast.error(error.response?.data?.detail || "Erro na comunicação com o servidor ou OC não encontrada.")
     } finally {
       setCarregando(false)
     }
@@ -399,7 +399,7 @@ export default function Recebimentos() {
   const precisaVincularSKU = itemSelecionadoNaTabela && !itemSelecionadoNaTabela.sku;
 
   // Verifica se o romaneio já foi finalizado (pode mostrar quantidades)
-  const romaneioFinalizado = recebimentoSelecionado && ['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status);
+  const romaneioFinalizado = recebimentoSelecionado && ['FINALIZADO', 'REJEITADO'].includes(recebimentoSelecionado.status);
   const podeVerQuantidades = temPermissao('RECEBIMENTO.VER_QUANTIDADES') || romaneioFinalizado;
 
   return (
@@ -482,7 +482,7 @@ export default function Recebimentos() {
             ...(recebimentoSelecionado && recebimentoSelecionado.status === 'EM_ANALISE' && temPermissao('RECEBIMENTO.FINALIZAR') ? [
               { label: "Concluir", onClick: handleConcluir, className: "text-blue-600 font-bold" }
             ] : []),
-            ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO', 'CONCLUIDO'].includes(recebimentoSelecionado.status) && temPermissao('RECEBIMENTO.REJEITAR') ? [
+            ...(recebimentoSelecionado && !['FINALIZADO', 'REJEITADO'].includes(recebimentoSelecionado.status) && temPermissao('RECEBIMENTO.REJEITAR') ? [
               { label: "Rejeitar Recebimento", onClick: handleRejeitar, className: "text-red-600" }
             ] : [])
           ]}
@@ -597,10 +597,10 @@ export default function Recebimentos() {
                     <td className="px-3 py-1.5">{item.data_fabricacao ? new Date(item.data_fabricacao).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{item.data_validade ? new Date(item.data_validade).toLocaleDateString('pt-BR') : "-"}</td>
                     <td className="px-3 py-1.5">{item.data_vencimento || "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.int_embalagem !== null ? item.int_embalagem : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.int_material !== null ? item.int_material : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.identificacao !== null ? item.identificacao : "-"}</td>
-                    <td className="px-3 py-1.5 text-center">{item.cert_qual !== null ? item.cert_qual : "-"}</td>
+                    <td className={`px-3 py-1.5 text-center font-bold ${item.int_embalagem === 'Sim' ? 'text-green-600' : item.int_embalagem === 'Não' ? 'text-red-600' : ''}`}>{item.int_embalagem === 'Sim' ? 'OK' : item.int_embalagem === 'Não' ? 'Não OK' : "-"}</td>
+                    <td className={`px-3 py-1.5 text-center font-bold ${item.int_material === 'Sim' ? 'text-green-600' : item.int_material === 'Não' ? 'text-red-600' : ''}`}>{item.int_material === 'Sim' ? 'OK' : item.int_material === 'Não' ? 'Não OK' : "-"}</td>
+                    <td className={`px-3 py-1.5 text-center font-bold ${item.identificacao === 'Sim' ? 'text-green-600' : item.identificacao === 'Não' ? 'text-red-600' : ''}`}>{item.identificacao === 'Sim' ? 'OK' : item.identificacao === 'Não' ? 'Não OK' : "-"}</td>
+                    <td className={`px-3 py-1.5 text-center font-bold ${item.cert_qual === 'Sim' ? 'text-green-600' : item.cert_qual === 'Não' ? 'text-red-600' : ''}`}>{item.cert_qual !== null ? item.cert_qual : "-"}</td>
                     <td className="px-3 py-1.5">{item.destino || "-"}</td>
                     <td className="px-3 py-1.5">
                       <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">

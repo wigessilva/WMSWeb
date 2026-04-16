@@ -570,8 +570,8 @@ class RecebimentoService:
         item.qtd_recebida = 0.0
         item.status = "AGUARDANDO_CONFERENCIA"
         
-        # 5. Se o romaneio estiver em análise ou divergente, volta para aguardando conferência
-        if recebimento.status in ["EM_ANALISE", "DIVERGENTE", "CONCLUIDO"]:
+        # 5. Se o romaneio estiver em análise, divergente ou finalizado, volta para aguardando conferência
+        if recebimento.status in ["EM_ANALISE", "DIVERGENTE", "FINALIZADO"]:
             recebimento.status = "AGUARDANDO_CONFERENCIA"
             # Limpa o início da conferência para que o card mostre "Aguardando..." ou o novo horário quando assumido
             recebimento.inicio_conferencia = None
@@ -1273,6 +1273,10 @@ class RecebimentoService:
         recebimento = db_wms.query(Recebimento).filter(Recebimento.id == recebimento_id).first()
         if not recebimento:
             raise ValueError("Romaneio não encontrado.")
+
+        status_permitidos_para_edicao = ['IMPORTADO', 'PENDENTE', 'BLOQUEADO', 'AGUARDANDO_LIBERACAO', 'DIVERGENTE']
+        if recebimento.status not in status_permitidos_para_edicao:
+            raise ValueError(f"Não é possível editar a OC. A conferência já foi iniciada ou está na fila. Cancele a liberação antes.")
 
         # Vai na tabela do ERP verificar se a OC existe
         query_erp = text("SELECT 1 FROM PedidosCompra WITH (NOLOCK) WHERE NumeroOC = :oc")

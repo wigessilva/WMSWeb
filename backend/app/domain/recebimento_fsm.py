@@ -11,8 +11,7 @@ class RecebimentoFSM(object):
         'EM_CONFERENCIA',
         'EM_ANALISE',
         'FINALIZADO',
-        'REJEITADO',
-        'CONCLUIDO'             
+        'REJEITADO'
     ]
 
     def __init__(self, recebimento_model):
@@ -32,11 +31,11 @@ class RecebimentoFSM(object):
         self.machine.add_transition(trigger='liberar_conferencia', source='AGUARDANDO_LIBERACAO', dest='AGUARDANDO_CONFERENCIA')
         self.machine.add_transition(trigger='iniciar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA', 'LIBERADO'], dest='EM_CONFERENCIA')
         self.machine.add_transition(trigger='cancelar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'], dest='AGUARDANDO_LIBERACAO')
-        self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_concluido'])
+        self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_finalizado'])
         self.machine.add_transition(trigger='concluir', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA', 'EM_ANALISE'], dest='FINALIZADO')
 
-    def is_concluido(self):
-        return self.model.status == 'CONCLUIDO'
+    def is_finalizado(self):
+        return self.model.status == 'FINALIZADO'
 
 # ========================================================
 
