@@ -34,7 +34,7 @@ class RecebimentoFSM(object):
         self.machine.add_transition(trigger='iniciar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA', 'LIBERADO'], dest='EM_CONFERENCIA')
         self.machine.add_transition(trigger='cancelar_conferencia', source=['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'], dest='AGUARDANDO_LIBERACAO')
         self.machine.add_transition(trigger='rejeitar', source='*', dest='REJEITADO', unless=['is_finalizado'])
-        self.machine.add_transition(trigger='concluir_parcial', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA'], dest='PARCIAL')
+        self.machine.add_transition(trigger='concluir_parcial', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA', 'EM_ANALISE'], dest='PARCIAL')
         self.machine.add_transition(trigger='concluir', source=['EM_CONFERENCIA', 'AGUARDANDO_CONFERENCIA', 'EM_ANALISE'], dest='FINALIZADO')
 
     def is_finalizado(self):
