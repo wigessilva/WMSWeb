@@ -51,6 +51,7 @@ class RecebimentoItem(Base):
     codigo_fornecedor = Column("CodigoFornecedor", String(100), nullable=True)
 
     descricao = Column("Descricao", String(255), nullable=False)
+    descricao_nota = Column("DescricaoNota", String(255), nullable=True)
     qtd_nota = Column("QtdNota", Float, nullable=False)
     valor_unitario = Column("ValorUnitario", Float, nullable=True)
     qtd_recebida = Column("QtdRecebida", Float, nullable=True)

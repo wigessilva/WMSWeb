@@ -113,6 +113,7 @@ class RecebimentoService:
             novo_item = RecebimentoItem(
                 recebimento_id=db_receb.id,
                 descricao=descricao_final,
+                descricao_nota=item_dados.descricao,
                 qtd_nota=item_dados.qtd_nota,
                 valor_unitario=item_dados.valor_unitario,
                 und=item_dados.und,
@@ -434,6 +435,11 @@ class RecebimentoService:
             apenas_bonificacao = all(it.is_bonificacao for it in recebimento.itens)
             if not apenas_bonificacao:
                 raise ValueError("Não é possível liberar um romaneio sem OC e sem autorização do supervisor.")
+
+        # Trava de Segurança: Não permite liberar se houver itens pendentes de vínculo (Segurança anti-concorrência)
+        itens_pendentes = [it for it in recebimento.itens if it.status == StatusRecebimentoItem.PENDENTE_VINCULO.value or it.sku is None]
+        if itens_pendentes:
+            raise ValueError(f"Não é possível liberar: existem {len(itens_pendentes)} itens pendentes de vínculo de SKU.")
 
         estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)

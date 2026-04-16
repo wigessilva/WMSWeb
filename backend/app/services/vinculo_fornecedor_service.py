@@ -77,6 +77,9 @@ class VinculoFornecedorService:
                 teve_alteracao = False
                 for item in itens_afetados:
                     item.sku = None
+                    # Restaura a descrição original se ela existir
+                    if item.descricao_nota:
+                        item.descricao = item.descricao_nota
                     item.status = StatusRecebimentoItem.PENDENTE_VINCULO.value
                     teve_alteracao = True
                 
