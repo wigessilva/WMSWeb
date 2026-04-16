@@ -402,6 +402,10 @@ export default function Recebimentos() {
   const romaneioFinalizado = recebimentoSelecionado && ['FINALIZADO', 'REJEITADO'].includes(recebimentoSelecionado.status);
   const podeVerQuantidades = temPermissao('RECEBIMENTO.VER_QUANTIDADES') || romaneioFinalizado;
 
+  const divergenciasTotais = recebimentoSelecionado?.divergencia_financeira?.split(' | ') || [];
+  const divergenciasFisicas = divergenciasTotais.filter(d => d.includes('Saldo Pendente OC'));
+  const divergenciasFinanceiras = divergenciasTotais.filter(d => !d.includes('Saldo Pendente OC'));
+
   return (
     <div className="space-y-4">
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
@@ -473,7 +477,7 @@ export default function Recebimentos() {
               { label: "Alterar Destino", onClick: () => { } }
             ] : []),
             // Ações do Recebimento (FSM)
-            ...(recebimentoSelecionado && recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' && temPermissao('RECEBIMENTO.LIBERAR') ? [
+            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' || recebimentoSelecionado.status === 'DIVERGENTE') && temPermissao('RECEBIMENTO.LIBERAR') ? [
               { label: "Liberar Conferência", onClick: handleLiberar, className: "text-green-600 font-bold" }
             ] : []),
             ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') && temPermissao('RECEBIMENTO.CONFERIR') ? [
@@ -901,9 +905,9 @@ export default function Recebimentos() {
                               recebimentoSelecionado.dentro_da_tolerancia ? 'Preços dentro da tolerância' :
                                 'OC ' + recebimentoSelecionado.oc}
                         </div>
-                        {recebimentoSelecionado.divergencia_financeira && (
+                        {divergenciasFinanceiras.length > 0 && (
                           <div className={`mt-2 p-2 ${recebimentoSelecionado.dentro_da_tolerancia ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'} border rounded text-[10px] font-medium`}>
-                            {recebimentoSelecionado.divergencia_financeira.split(' | ').map((d, idx) => (
+                            {divergenciasFinanceiras.map((d, idx) => (
                               <div key={idx} className="mb-0.5">• {d}</div>
                             ))}
                           </div>
@@ -920,12 +924,15 @@ export default function Recebimentos() {
                           </div>
                           <h4 className="font-bold text-gray-700">Físico</h4>
                         </div>
-                        <div className={`text-sm font-bold ${conferenciaIniciada ? (isFisicoOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
-                          {!conferenciaIniciada ? 'Aguardando conferência...' :
-                            isFisicoOK ? 'Quantidades batem' : (
+                        <div className={`text-sm font-bold ${conferenciaIniciada ? (isFisicoOK && divergenciasFisicas.length === 0 ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
+                          {!conferenciaIniciada && divergenciasFisicas.length === 0 ? 'Aguardando conferência...' :
+                            isFisicoOK && divergenciasFisicas.length === 0 ? 'Quantidades batem' : (
                               <div className="flex flex-col space-y-1">
                                 {itensPendentesFisico.map(item => (
                                   <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
+                                ))}
+                                {divergenciasFisicas.map((div, idx) => (
+                                  <span key={`fdiv-${idx}`} className="text-red-600 uppercase text-xs">• {div}</span>
                                 ))}
                               </div>
                             )}

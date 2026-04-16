@@ -262,11 +262,29 @@ class RecebimentoService:
             if up_xml:
                 fator_xml = up_xml.fator_conversao
             
-            # Compara
+            # Compara Qtd
+            qtd_oc = float(item_oc["Qtd"])
+            qtd_recebida_oc = float(item_oc.get("QtdRecebida", 0))
+            saldo_oc = qtd_oc - qtd_recebida_oc
+            fator_relativo_xml = (fator_oc if fator_oc > 0 else 1.0) / (fator_xml if fator_xml > 0 else 1.0)
+            saldo_esperado_xml = saldo_oc * fator_relativo_xml
+            qtd_faturada = float(item.qtd_nota)
+            
+            # Compara Preço
             preco_base_oc = preco_oc / (fator_oc if fator_oc > 0 else 1.0)
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
-
             preco_xml_na_und_oc = preco_base_xml * fator_oc
+            
+            prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
+            teve_erro = False
+
+            if qtd_faturada > saldo_esperado_xml + 0.01:
+                houve_discrepancia_fora_tolerancia = True
+                item.status = StatusRecebimentoItem.DIVERGENTE.value
+                discrepancias.append(
+                    f"{prefixo}Saldo Pendente OC (Faturado: {qtd_faturada} > Saldo: {saldo_esperado_xml:.2f})"
+                )
+                teve_erro = True
             
             if preco_xml_na_und_oc > preco_oc:
                 # Calcula a diferença para ver se está na tolerância
@@ -292,12 +310,14 @@ class RecebimentoService:
                 
                 preco_xml_na_und_oc = preco_base_xml * fator_oc
                 # Remove o prefixo se houver apenas um item para evitar redundância na mensagem
-                prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
                 discrepancias.append(
                     f"{prefixo}Preço XML (R$ {preco_xml_na_und_oc:.2f}) > Preço OC (R$ {preco_oc:.2f})"
                 )
-            else:
-                # Caso o preço xml <= preço oc, e o item estava marcado como divergente, limpamos
+                if not esta_na_tolerancia:
+                    teve_erro = True
+            
+            if not teve_erro:
+                # Caso não haja erro nem de preço nem de qtd, limpamos
                 if item.status == StatusRecebimentoItem.DIVERGENTE.value:
                     item.status = StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value
 
@@ -1529,7 +1549,11 @@ class RecebimentoService:
             
             fator_relativo = fator_conversao_erp / fator_conversao_xml
             
-            qtd_esperada_xml = float(item_oc["Qtd"]) * fator_relativo
+            qtd_oc = float(item_oc["Qtd"])
+            qtd_recebida_oc = float(item_oc.get("QtdRecebida", 0))
+            saldo_esperado_oc = qtd_oc - qtd_recebida_oc
+            
+            qtd_esperada_xml = saldo_esperado_oc * fator_relativo
             preco_esperado_xml = float(item_oc["PrecoUnitario"]) / fator_relativo
 
             val_unitario_xml = float(item.valor_unitario or 0.0)
