@@ -247,7 +247,7 @@ class ConclusaoItemSchema(BaseModel):
 class ConclusaoDocaPayload(BaseModel):
     uas_rejeitadas: List[str] = []
     itens_rejeitados: List[int] = []
-    resolucoes_sobra: Optional[dict] = {} # {item_id: 'TRUNCAR' | 'BLOQUEAR_EXCESSO' | 'BLOQUEAR_ITEM' | 'ESTORNAR_EXCESSO'}
+    resolucoes_sobra: Optional[dict] = {}
 
 class ConclusaoDocaResponse(BaseModel):
     recebimento: RecebimentoSchema

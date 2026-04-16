@@ -593,13 +593,26 @@ class RecebimentoService:
         if not item:
             raise ValueError("Item não encontrado.")
 
-        # 1. Atualiza as tentativas e o status do item
-        item.tentativas = dados.tentativas
+        # 1. Atualiza o status do item (a tentativa já está controlada pelo banco nas sessões)
         item.status = dados.status_final
+        # Busca as leituras reais do banco (sessão atual) para o resumo de qualidade
+        # O frontend salva incrementalmente, então dados.leituras pode vir vazio
+        from app.models.recebimento import RecebimentoLeitura
+        sessao_atual = db.query(RecebimentoSessoes).filter(
+            RecebimentoSessoes.recebimento_item_id == item.id,
+            RecebimentoSessoes.numero_sessao == item.tentativas
+        ).first()
+        
+        leituras_db = []
+        if sessao_atual:
+            leituras_db = db.query(RecebimentoLeitura).filter(
+                RecebimentoLeitura.sessao_id == sessao_atual.id
+            ).all()
+
         # Resumo de qualidade: se QUALQUER UA tiver "Não", o item fica "Não"
         def resumo_qualidade(campo):
-            """Retorna 'Não' se qualquer UA tiver 'Não', senão 'Sim'."""
-            for leit in (dados.leituras or []):
+            """Retorna 'Não' se qualquer leitura no banco tiver 'Não', senão 'Sim'."""
+            for leit in leituras_db:
                 if getattr(leit, campo, 'Sim') == 'Não':
                     return 'Não'
             return 'Sim'
@@ -609,18 +622,18 @@ class RecebimentoService:
         item.identificacao = resumo_qualidade('identificacao')
         item.cert_qual = resumo_qualidade('cert_qual')
 
-
-        # Sincroniza o Lote e Validade finais para visualização sumarizada no Painel
-        if dados.leituras and len(dados.leituras) > 0:
+        # Sincroniza o Lote e Validade finais a partir das leituras do banco
+        if leituras_db:
             from datetime import datetime
-            prim_leit = dados.leituras[0]
+            prim_leit = leituras_db[0]
             if prim_leit.lote:
                 item.lote = prim_leit.lote
             if prim_leit.data_validade:
                 try:
-                    item.val = datetime.strptime(prim_leit.data_validade, "%d/%m/%Y")
+                    item.val = prim_leit.data_validade if isinstance(prim_leit.data_validade, datetime) else datetime.strptime(str(prim_leit.data_validade), "%d/%m/%Y")
                 except:
                     pass
+
 
         # No salvamento incremental, a quantidade já foi atualizada a cada UA.
         # Caso o frontend envie a lista completa para garantir, podemos recalcular aqui também por segurança.

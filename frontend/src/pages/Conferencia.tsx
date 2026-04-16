@@ -60,7 +60,10 @@ export default function Conferencia() {
           const uasMap: Record<number, any[]> = {};
 
           atual.itens.forEach(it => {
-            tents[it.id] = it.tentativas || 3;
+            // Se o item já foi finalizado, não precisa de tentativas. 
+            // Se está pendente ou em conferência, ganha 3 tentativas para esta sessão.
+            const statsPendente = ['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'];
+            tents[it.id] = statsPendente.includes(it.status) ? 3 : 0;
 
             // Retoma UAs bipadas anteriormente (apenas da sessão atual)
             if (it.leituras && it.leituras.length > 0) {
