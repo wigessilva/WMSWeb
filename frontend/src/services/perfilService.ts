@@ -1,52 +1,23 @@
+import apiClient from './api';
 import type { Perfil, PerfilCriar } from '../types/perfil';
-
-const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
-
-const getHeaders = () => ({
-  'Content-Type': 'application/json'
-});
 
 export const perfilService = {
   listar: async (): Promise<Perfil[]> => {
-    const response = await fetch(`${getBaseUrl()}/perfis/`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Erro ao buscar perfis');
-    return response.json();
+    const response = await apiClient.get('/perfis/');
+    return response.data;
   },
 
   criar: async (perfil: PerfilCriar): Promise<Perfil> => {
-    const response = await fetch(`${getBaseUrl()}/perfis/`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(perfil),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao criar perfil');
-    }
-    return response.json();
+    const response = await apiClient.post('/perfis/', perfil);
+    return response.data;
   },
 
   atualizar: async (id: number, perfil: PerfilCriar): Promise<Perfil> => {
-    const response = await fetch(`${getBaseUrl()}/perfis/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(perfil),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao atualizar perfil');
-    }
-    return response.json();
+    const response = await apiClient.put(`/perfis/${id}`, perfil);
+    return response.data;
   },
 
   excluir: async (id: number): Promise<void> => {
-    const response = await fetch(`${getBaseUrl()}/perfis/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao excluir perfil');
-    }
+    await apiClient.delete(`/perfis/${id}`);
   }
-};
+};

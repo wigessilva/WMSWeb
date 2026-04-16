@@ -1,28 +1,20 @@
-import axios from 'axios';
+import apiClient from './api';
 import type { UA } from '../types/ua';
-
-const api = axios.create();
-
-// Interceptor para injetar a URL base dinamicamente (seguindo o padrão das outras rotas)
-api.interceptors.request.use((config) => {
-  const urlServidorFilial = localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  config.baseURL = `${urlServidorFilial}/uas`;
-  return config;
-});
 
 export const uaService = {
   listar: async (): Promise<UA[]> => {
-    const response = await api.get('/');
+    const response = await apiClient.get('/uas/');
     return response.data;
   },
   buscarPorCodigo: async (codigo: string): Promise<UA> => {
-    const response = await api.get(`/${codigo}`);
+    const response = await apiClient.get(`/uas/${codigo}`);
     return response.data;
   },
   criarEmLote: async (quantidade: number, filialId: number): Promise<UA[]> => {
-    const response = await api.post(`/lote?quantidade=${quantidade}`, {
+    const response = await apiClient.post(`/uas/lote?quantidade=${quantidade}`, {
       filial_id: filialId
     });
     return response.data;
   }
 };
+

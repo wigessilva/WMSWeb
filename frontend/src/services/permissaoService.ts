@@ -1,8 +1,4 @@
-const getBaseUrl = () => localStorage.getItem('wms_api_url') || import.meta.env.VITE_API_URL;
-
-const getHeaders = () => ({
-  'Content-Type': 'application/json'
-});
+import apiClient from './api';
 
 export interface PermissaoInfo {
   id: number;
@@ -29,8 +25,8 @@ export const SIDEBAR_MODULOS: Record<string, string[]> = {
 
 export const permissaoService = {
   listarAgrupadas: async (): Promise<Record<string, PermissaoInfo[]>> => {
-    const response = await fetch(`${getBaseUrl()}/permissoes/`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Erro ao buscar permissões');
-    return response.json();
+    const response = await apiClient.get('/permissoes/');
+    return response.data;
   },
 };
+

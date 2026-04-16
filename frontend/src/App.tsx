@@ -34,7 +34,7 @@ export default function App() {
 
     // Se o usuário tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
     if (usuario.filiais && usuario.filiais.length > 0 && !localStorage.getItem('wms_api_url')) {
-      localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || 'http://localhost:8008');
+      localStorage.setItem('wms_api_url', usuario.filiais[0].url_api || '');
     }
 
     // Redireciona para a Home ao logar
@@ -210,7 +210,7 @@ export default function App() {
                 <option value="">Nenhuma filial vinculada</option>
               ) : (
                 usuarioLogado.filiais.map((filial) => (
-                  <option key={filial.id} value={filial.url_api || `http://localhost:8008`}>
+                  <option key={filial.id} value={filial.url_api || ''}>
                     {filial.nome}
                   </option>
                 ))

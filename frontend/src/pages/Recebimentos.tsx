@@ -12,6 +12,7 @@ import { ConclusaoRecebimentoModal } from '../components/ConclusaoRecebimentoMod
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
 import { toast } from 'react-hot-toast'
+import apiClient from '../services/api'
 
 export default function Recebimentos() {
   const { temPermissao } = usePermissao()
@@ -453,9 +454,9 @@ export default function Recebimentos() {
 
                   setCarregandoSugestao(true);
                   setSugestaoMensagem(null);
-                  fetch(`http://localhost:8000/recebimentos/${recebimentoSelecionado?.id}/itens/${item.id}/sugestao-sku`)
-                    .then(res => res.json())
-                    .then(data => {
+                  apiClient.get(`/recebimentos/${recebimentoSelecionado?.id}/itens/${item.id}/sugestao-sku`)
+                    .then(res => {
+                      const data = res.data;
                       if (data.sugestao) {
                         const p = data.sugestao;
                         setBuscaProduto(`${p.sku} - ${p.descricao}`);
@@ -728,11 +729,8 @@ export default function Recebimentos() {
                     setBuscandoProdutos(true);
                     debounceTimer.current = setTimeout(async () => {
                       try {
-                        const res = await fetch(`http://localhost:8000/produtos/?busca=${encodeURIComponent(termo)}`);
-                        if (res.ok) {
-                          const data = await res.json();
-                          setProdutosSugeridos(data);
-                        }
+                        const res = await apiClient.get(`/produtos/?busca=${encodeURIComponent(termo)}`);
+                        setProdutosSugeridos(res.data);
                       } catch (err) {
                         console.error("Erro ao buscar produtos", err);
                       } finally {
