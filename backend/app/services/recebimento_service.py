@@ -596,10 +596,19 @@ class RecebimentoService:
         # 1. Atualiza as tentativas e o status do item
         item.tentativas = dados.tentativas
         item.status = dados.status_final
-        item.int_embalagem = dados.int_embalagem
-        item.int_material = dados.int_material
-        item.identificacao = dados.identificacao
-        item.cert_qual = dados.cert_qual
+        # Resumo de qualidade: se QUALQUER UA tiver "Não", o item fica "Não"
+        def resumo_qualidade(campo):
+            """Retorna 'Não' se qualquer UA tiver 'Não', senão 'Sim'."""
+            for leit in (dados.leituras or []):
+                if getattr(leit, campo, 'Sim') == 'Não':
+                    return 'Não'
+            return 'Sim'
+
+        item.int_embalagem = resumo_qualidade('int_embalagem')
+        item.int_material = resumo_qualidade('int_material')
+        item.identificacao = resumo_qualidade('identificacao')
+        item.cert_qual = resumo_qualidade('cert_qual')
+
 
         # Sincroniza o Lote e Validade finais para visualização sumarizada no Painel
         if dados.leituras and len(dados.leituras) > 0:

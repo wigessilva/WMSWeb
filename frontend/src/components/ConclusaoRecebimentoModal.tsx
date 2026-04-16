@@ -283,7 +283,7 @@ export function ConclusaoRecebimentoModal({
                           <svg className="w-3 h-3 mr-1.5 text-gray-400 transform group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                          Exibir {item.unidades_ok.length} UAs Íntegras para Estorno Manual
+                          Exibir {item.unidades_ok.length} UAs Íntegras
                         </summary>
                         <div className="grid grid-cols-1 gap-1.5 mt-3 pl-4">
                           {item.unidades_ok.map(ua => (

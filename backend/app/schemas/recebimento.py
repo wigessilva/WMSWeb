@@ -237,11 +237,12 @@ class ConferenciaItemLeitura(BaseModel):
 class ConclusaoItemSchema(BaseModel):
     tentativas: int
     status_final: str # 'CONFERIDO' ou 'DIVERGENTE'
-    int_embalagem: str
-    int_material: str
-    identificacao: str
-    cert_qual: str
+    int_embalagem: Optional[str] = "Sim"  # Agora calculado do resumo das UAs
+    int_material: Optional[str] = "Sim"
+    identificacao: Optional[str] = "Sim"
+    cert_qual: Optional[str] = "Sim"
     leituras: List[ConferenciaItemLeitura]
+
 
 class ConclusaoDocaPayload(BaseModel):
     uas_rejeitadas: List[str] = []
