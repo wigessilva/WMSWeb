@@ -12,7 +12,8 @@ class RecebimentoFSM(object):
         'EM_ANALISE',
         'FINALIZADO',
         'REJEITADO',
-        'PARCIAL'
+        'PARCIAL',
+        'DIVERGENTE'
     ]
 
     def __init__(self, recebimento_model):

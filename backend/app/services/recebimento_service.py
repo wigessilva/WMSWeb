@@ -447,7 +447,7 @@ class RecebimentoService:
             
             # Avança os itens que estavam aguardando para a nova fase
             for item in recebimento.itens:
-                if item.status == StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value:
+                if item.status in [StatusRecebimentoItem.AGUARDANDO_LIBERACAO.value, StatusRecebimentoItem.DIVERGENTE.value]:
                     item.status = StatusRecebimentoItem.AGUARDANDO_CONFERENCIA.value
                 elif estado_anterior == StatusRecebimento.PARCIAL.value:
                     # Se estava PARCIAL e estamos liberando, os itens com falta devem ser reconferidos!

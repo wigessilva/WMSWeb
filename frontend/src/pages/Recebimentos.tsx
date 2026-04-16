@@ -478,7 +478,10 @@ export default function Recebimentos() {
               { label: "Alterar Destino", onClick: () => { } }
             ] : []),
             // Ações do Recebimento (FSM)
-            ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' || recebimentoSelecionado.status === 'DIVERGENTE' || recebimentoSelecionado.status === 'PARCIAL') && temPermissao('RECEBIMENTO.LIBERAR') ? [
+            ...(recebimentoSelecionado && (
+              ((recebimentoSelecionado.status === 'AGUARDANDO_LIBERACAO' || recebimentoSelecionado.status === 'PARCIAL') && temPermissao('RECEBIMENTO.LIBERAR')) ||
+              (recebimentoSelecionado.status === 'DIVERGENTE' && temPermissao('RECEBIMENTO.LIBERAR') && temPermissao('RECEBIMENTO.LIBERAR_DIVERGENTE'))
+            ) ? [
               { label: "Liberar Conferência", onClick: handleLiberar, className: "text-green-600 font-bold" }
             ] : []),
             ...(recebimentoSelecionado && (recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA' || recebimentoSelecionado.status === 'EM_CONFERENCIA') && temPermissao('RECEBIMENTO.CONFERIR') ? [

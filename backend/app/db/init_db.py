@@ -12,6 +12,7 @@ from ..models.parametros_mestres import ParametrosMestres
 PERMISSOES_SEED = [
     # Recebimento
     ("RECEBIMENTO.LIBERAR",           "Liberar romaneio para conferência"),
+    ("RECEBIMENTO.LIBERAR_DIVERGENTE", "Liberar romaneio com divergências financeira/quantidade"),
     ("RECEBIMENTO.LIBERAR_SEM_OC",    "Liberar romaneio sem ordem de compra"),
     ("RECEBIMENTO.CONFERIR",          "Realizar conferência física de itens"),
     ("RECEBIMENTO.FINALIZAR",         "Finalizar recebimento"),
