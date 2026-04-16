@@ -12,7 +12,7 @@ export default function Atividades() {
   const navigate = useNavigate();
 
   // Obter o nome do usuário atual
-  const usuarioInfo = sessionStorage.getItem('wms_sessao_usuario');
+  const usuarioInfo = localStorage.getItem('wms_sessao_usuario');
   const nomeUsuario = usuarioInfo ? JSON.parse(usuarioInfo).nome : 'Desconhecido';
 
   const carregarAtividades = async () => {

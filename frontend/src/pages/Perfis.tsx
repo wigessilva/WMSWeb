@@ -32,7 +32,7 @@ export default function Perfis() {
 
   // Permissões do editor (usuário logado)
   const permissoesDoEditor: string[] = (() => {
-    const sessao = sessionStorage.getItem('wms_sessao_usuario');
+    const sessao = localStorage.getItem('wms_sessao_usuario');
     return sessao ? (JSON.parse(sessao).permissoes || []) : [];
   })();
 

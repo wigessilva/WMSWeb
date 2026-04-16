@@ -186,7 +186,7 @@ export default function Conferencia() {
       // No primeiro bip, oficializa a conferência (grava conferente + muda status)
       if (recebimento?.status === 'AGUARDANDO_CONFERENCIA') {
         try {
-          const userJson = sessionStorage.getItem('wms_sessao_usuario');
+          const userJson = localStorage.getItem('wms_sessao_usuario');
           const nomeUsuario = userJson ? JSON.parse(userJson).nome : 'Coletor';
           await recebimentoService.iniciarConferencia(Number(id), nomeUsuario);
         } catch (err: any) {

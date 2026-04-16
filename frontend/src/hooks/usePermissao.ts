@@ -3,7 +3,7 @@
  * Lê diretamente do sessionStorage, sem depender de props do App.tsx.
  */
 export function usePermissao() {
-  const sessao = sessionStorage.getItem('wms_sessao_usuario');
+  const sessao = localStorage.getItem('wms_sessao_usuario');
   const usuario = sessao ? JSON.parse(sessao) : {};
   const permissoes: string[] = usuario.permissoes || [];
 

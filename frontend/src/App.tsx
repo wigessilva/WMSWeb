@@ -24,12 +24,12 @@ export default function App() {
 
   // Tenta recuperar o usuário da sessão caso ele faça F5 (recarregar a página)
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(() => {
-    const user = sessionStorage.getItem('wms_sessao_usuario');
+    const user = localStorage.getItem('wms_sessao_usuario');
     return user ? JSON.parse(user) : null;
   })
 
   const handleLogin = (usuario: Usuario) => {
-    sessionStorage.setItem('wms_sessao_usuario', JSON.stringify(usuario));
+    localStorage.setItem('wms_sessao_usuario', JSON.stringify(usuario));
     setUsuarioLogado(usuario);
 
     // Se o usuário tem filiais e não há nenhuma selecionada no localStorage, seleciona a primeira
@@ -42,7 +42,7 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    sessionStorage.removeItem('wms_sessao_usuario');
+    localStorage.removeItem('wms_sessao_usuario');
     setUsuarioLogado(null);
 
     // Reseta a rota para a Home ao deslogar

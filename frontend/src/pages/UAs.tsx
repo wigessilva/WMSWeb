@@ -16,7 +16,7 @@ export default function UAs() {
   const [gerando, setGerando] = useState(false)
 
   // Pega a filial do utilizador logado
-  const usuario = JSON.parse(sessionStorage.getItem('wms_sessao_usuario') || '{}')
+  const usuario = JSON.parse(localStorage.getItem('wms_sessao_usuario') || '{}')
   const filialId = usuario.filiais?.[0]?.id || 1
 
   const carregarUAs = async () => {

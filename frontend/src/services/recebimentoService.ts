@@ -99,7 +99,7 @@ export const recebimentoService = {
   },
 
   vincularSKU: async (recebimentoId: number, itemId: number, produtoId: number): Promise<Recebimento> => {
-    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const userJson = localStorage.getItem('wms_sessao_usuario');
     const usuarioNome = userJson ? JSON.parse(userJson).nome : null;
 
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/vincular-sku`, null, {
@@ -112,28 +112,28 @@ export const recebimentoService = {
   },
 
   registrarLeitura: async (recebimentoId: number, itemId: number, leitura: any) => {
-    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const userJson = localStorage.getItem('wms_sessao_usuario');
     const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/registrar-leitura?usuario=${user}`, leitura);
     return response.data;
   },
 
   estornarLeitura: async (recebimentoId: number, itemId: number, ua: string) => {
-    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const userJson = localStorage.getItem('wms_sessao_usuario');
     const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/estornar-leitura?ua=${ua}&usuario=${user}`);
     return response.data;
   },
 
   registrarConferenciaItem: async (recebimentoId: number, itemId: number, dados: any) => {
-    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const userJson = localStorage.getItem('wms_sessao_usuario');
     const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/registrar-conferencia?usuario=${user}`, dados);
     return response.data;
   },
 
   solicitarReconferencia: async (recebimentoId: number, itemId: number, motivo?: string) => {
-    const userJson = sessionStorage.getItem('wms_sessao_usuario');
+    const userJson = localStorage.getItem('wms_sessao_usuario');
     const user = userJson ? JSON.parse(userJson).nome : 'Coletor';
     const response = await api.post(`/${recebimentoId}/itens/${itemId}/solicitar-reconferencia?usuario=${user}${motivo ? `&motivo=${encodeURIComponent(motivo)}` : ''}`);
     return response.data;

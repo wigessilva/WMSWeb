@@ -121,7 +121,7 @@ export default function Usuarios() {
     if (temErro) return;
 
     // Recupera o ID de quem está logado na sessão do WMS
-    const sessao = sessionStorage.getItem('wms_sessao_usuario');
+    const sessao = localStorage.getItem('wms_sessao_usuario');
     const usuarioLogadoId = sessao ? JSON.parse(sessao).id : 1;
 
     setCarregando(true);
