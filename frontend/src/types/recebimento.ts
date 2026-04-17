@@ -73,6 +73,8 @@ export interface RecebimentoItem {
   fracionavel_recebimento?: boolean;
   is_bonificacao?: boolean;
   valor_unitario_oc?: number;
+  qtd_oc?: number;
+  und_oc?: string;
 }
 
 export interface Recebimento {

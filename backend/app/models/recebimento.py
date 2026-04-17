@@ -76,6 +76,8 @@ class RecebimentoItem(Base):
     cfop = Column("CFOP", String(10), nullable=True)
     is_bonificacao = Column("IsBonificacao", Boolean, default=False, nullable=True)
     valor_unitario_oc = Column("ValorUnitarioOC", Float, nullable=True)
+    qtd_oc = Column("QtdOC", Float, nullable=True)
+    und_oc = Column("UndOC", String(20), nullable=True)
     tentativas = Column("Tentativas", Integer, default=0, nullable=False)
 
     # Relacionamentos

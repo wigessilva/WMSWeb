@@ -289,6 +289,8 @@ class RecebimentoService:
             
             # Salva o preço da OC convertido para a unidade da NF para exibição no painel
             item.valor_unitario_oc = preco_base_oc * (fator_xml if fator_xml > 0 else 1.0)
+            item.qtd_oc = qtd_oc
+            item.und_oc = und_oc_sigla
 
             prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
             teve_erro = False

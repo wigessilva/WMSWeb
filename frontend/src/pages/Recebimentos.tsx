@@ -901,7 +901,7 @@ export default function Recebimentos() {
 
                 itens.forEach(item => {
                   if (item.sku && (item.valor_unitario_oc || item.is_bonificacao)) {
-                    fisicoMsgs.push(`${getPrefixo(item)}Esperado: ${item.qtd_nota} ${item.und} (Nota) | ${item.valor_unitario_oc ? 'Disponível na OC' : 'Bonificação'}`);
+                    fisicoMsgs.push(`${getPrefixo(item)}Esperado: ${item.qtd_nota} ${item.und} (Nota) | ${item.valor_unitario_oc ? `${item.qtd_oc || 0} ${item.und_oc || item.und} (OC)` : 'Bonificação'}`);
                   }
                 });
 
