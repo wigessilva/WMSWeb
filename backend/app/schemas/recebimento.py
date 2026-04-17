@@ -55,6 +55,7 @@ class RecebimentoItemBase(BaseModel):
     identificacao: Optional[str] = None
     cert_qual: Optional[str] = None
     destino_id: Optional[int] = None
+    valor_unitario_oc: Optional[float] = None
     status: StatusRecebimentoItem = StatusRecebimentoItem.PENDENTE_VINCULO
 
 class RecebimentoItemCriar(RecebimentoItemBase):
@@ -70,6 +71,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
     descricoes_visuais: List[str] = []
     leituras: List[RecebimentoLeituraSchema] = []
     is_bonificacao: Optional[bool] = False
+    valor_unitario_oc: Optional[float] = None
     
     # Parâmetros de conferência do produto
     lote_obrigatorio: Optional[bool] = None

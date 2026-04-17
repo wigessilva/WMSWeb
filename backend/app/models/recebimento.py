@@ -75,6 +75,7 @@ class RecebimentoItem(Base):
     status = Column("Status", String(50), default="Pendente", nullable=False)
     cfop = Column("CFOP", String(10), nullable=True)
     is_bonificacao = Column("IsBonificacao", Boolean, default=False, nullable=True)
+    valor_unitario_oc = Column("ValorUnitarioOC", Float, nullable=True)
     tentativas = Column("Tentativas", Integer, default=0, nullable=False)
 
     # Relacionamentos

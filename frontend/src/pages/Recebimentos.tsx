@@ -405,8 +405,6 @@ export default function Recebimentos() {
   const podeVerQuantidades = temPermissao('RECEBIMENTO.VER_QUANTIDADES') || romaneioFinalizado;
 
   const divergenciasTotais = recebimentoSelecionado?.divergencia_financeira?.split(' | ') || [];
-  const divergenciasFisicas = divergenciasTotais.filter(d => d.includes('Saldo Pendente OC'));
-  const divergenciasFinanceiras = divergenciasTotais.filter(d => !d.includes('Saldo Pendente OC'));
 
   return (
     <div className="space-y-4">
@@ -846,188 +844,204 @@ export default function Recebimentos() {
           </div>
 
           {recebimentoSelecionado && (() => {
-            const isFinanceiroOK = !!recebimentoSelecionado.oc && (recebimentoSelecionado.status !== 'DIVERGENTE' || recebimentoSelecionado.dentro_da_tolerancia);
-            const itensPendentesFisico = recebimentoSelecionado.itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
+            const itens = recebimentoSelecionado.itens;
+            const hasOC = !!recebimentoSelecionado.oc;
             const conferenciaIniciada = !!recebimentoSelecionado.inicio;
-            const isFisicoOK = itensPendentesFisico.length === 0;
-            const isQualidadeOK = recebimentoSelecionado.status !== 'BLOQUEADO';
+            const conferenciaFinalizada = recebimentoSelecionado.status === 'FINALIZADO' || recebimentoSelecionado.status === 'EM_ANALISE';
+            const totalItens = itens.length;
+            const multiItens = totalItens > 1;
 
-            // Está PRONTO se financeiro, físico e qualidade estão OK
-            const isPronto = isFinanceiroOK && isFisicoOK && isQualidadeOK;
+            const formatMoeda = (val?: number) => val !== undefined ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '---';
+            const plural = (qtd: number, singular: string, plural: string) => qtd === 1 ? singular : plural;
+            const getPrefixo = (item: any) => multiItens ? `${item.sku || item.codigo_fornecedor}: ` : "";
 
-            let vereditoTexto = conferenciaIniciada ? "Em Conferência" : "Pronto para Conferência";
+            // --- Lógica FINANCEIRA ---
+            const financeiroMsgs: string[] = [];
+            let financeiroStatus: 'neutral' | 'ok' | 'problem' = hasOC ? 'ok' : 'neutral';
 
-            if (recebimentoSelecionado.status === 'EM_ANALISE') vereditoTexto = "Aguardando Análise Fiscal";
-            if (recebimentoSelecionado.status === 'FINALIZADO') vereditoTexto = "Conferência Concluída";
-            if (recebimentoSelecionado.status === 'REJEITADO') vereditoTexto = "Recebimento Rejeitado";
-            let vereditoCor = isPronto ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200";
-            let vereditoIcone = isPronto ? (
-              <svg className="w-6 h-6 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            );
-
-            if (!isPronto) {
-              if (!isFinanceiroOK) vereditoTexto = "Verifique as pendências em Financeiro";
-              else if (!isFisicoOK) vereditoTexto = "Verifique as pendências em Físico";
-              else if (!isQualidadeOK) vereditoTexto = "Verifique as pendências em Qualidade";
+            if (hasOC) {
+              const semVinculo = itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
+              if (semVinculo.length > 0) {
+                financeiroMsgs.push(`Há ${semVinculo.length} ${plural(semVinculo.length, 'item', 'itens')} sem vínculo (impossível validar preços)`);
+                financeiroStatus = 'problem';
+              } else {
+                itens.forEach(item => {
+                  if (item.is_bonificacao) return;
+                  const valorNota = item.valor_unitario || 0;
+                  const valorOC = item.valor_unitario_oc || 0;
+                  const diff = Math.abs(valorNota - valorOC);
+                  
+                  if (diff < 0.001) {
+                    financeiroMsgs.push(`${getPrefixo(item)}Preço unitário: ${formatMoeda(valorNota)} (Igual à OC)`);
+                  } else {
+                    financeiroMsgs.push(`${getPrefixo(item)}Preço unitário: ${formatMoeda(valorNota)} (Nota) vs ${formatMoeda(valorOC)} (OC)`);
+                    // Se estiver fora da tolerância (de acordo com a flag do cabeçalho pro romaneio todo)
+                    if (!recebimentoSelecionado.dentro_da_tolerancia) financeiroStatus = 'problem';
+                  }
+                });
+              }
+            } else {
+              const cobrados = itens.filter(i => !i.is_bonificacao);
+              const bonificacao = itens.filter(i => i.is_bonificacao);
+              if (cobrados.length > 0) financeiroMsgs.push("Impossível validar preços (sem OC)");
+              if (bonificacao.length > 0) financeiroMsgs.push("Bonificação identificada");
+              financeiroStatus = 'neutral';
             }
 
-            const multiItens = recebimentoSelecionado.itens.length > 1;
-            const getPrefixoItem = (item: any) => multiItens ? `${item.sku || item.codigo_fornecedor}: ` : "";
+            // --- Lógica FÍSICA ---
+            const fisicoMsgs: string[] = [];
+            let fisicoStatus: 'neutral' | 'ok' | 'problem' = 'neutral';
+
+            if (hasOC) {
+              if (!conferenciaIniciada) {
+                fisicoStatus = 'neutral';
+                const itensSemVinculo = itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
+                const itensNaoComprados = itens.filter(i => i.sku && !i.valor_unitario_oc && !i.is_bonificacao); // Simplificação: se não tem preço OC e não é bonifa
+                const bonus = itens.filter(i => i.is_bonificacao);
+
+                itens.forEach(item => {
+                  if (item.sku && (item.valor_unitario_oc || item.is_bonificacao)) {
+                    fisicoMsgs.push(`${getPrefixo(item)}Esperado: ${item.qtd_nota} ${item.und} (Nota) | ${item.valor_unitario_oc ? 'Disponível na OC' : 'Bonificação'}`);
+                  }
+                });
+
+                if (itensSemVinculo.length > 0) fisicoMsgs.push(`Há ${itensSemVinculo.length} ${plural(itensSemVinculo.length, 'item', 'itens')} aguardando vínculo`);
+                if (itensNaoComprados.length > 0) fisicoMsgs.push(`Há ${itensNaoComprados.length} ${plural(itensNaoComprados.length, 'item', 'itens')} não comprado(s) na nota`);
+                if (bonus.length > 0) fisicoMsgs.push(`Há ${bonus.length} ${plural(bonus.length, 'item', 'itens')} de bonificação`);
+              } else {
+                // Conferência em andamento ou finalizada
+                fisicoStatus = 'ok';
+                itens.forEach(item => {
+                  fisicoMsgs.push(`${getPrefixo(item)}Conferência: ${item.qtd_recebida || 0} ${item.und} | Nota: ${item.qtd_nota} ${item.und} | OC: ---`); // Qtd OC não está no item, mas a lógica comparativa já é feita no backend
+                  if (item.descricoes_visuais && item.descricoes_visuais.length > 0) {
+                    item.descricoes_visuais.forEach(obs => fisicoMsgs.push(`${getPrefixo(item)}Obs. visual: ${obs}`));
+                  }
+                  if (Math.abs((item.qtd_recebida || 0) - item.qtd_nota) > 0.01) fisicoStatus = 'problem';
+                });
+              }
+            } else {
+              // Sem OC
+              fisicoStatus = 'neutral';
+              const cobrados = itens.filter(i => !i.is_bonificacao);
+              const bonus = itens.filter(i => i.is_bonificacao);
+              const semVinculo = itens.filter(i => !i.sku || i.status === 'PENDENTE_VINCULO');
+
+              if (cobrados.length > 0) fisicoMsgs.push(`Há ${cobrados.length} ${plural(cobrados.length, 'item', 'itens')} não comprado(s)`);
+              if (bonus.length > 0) fisicoMsgs.push(`Há ${bonus.length} ${plural(bonus.length, 'item', 'itens')} de bonificação`);
+              if (semVinculo.length > 0) fisicoMsgs.push(`Há ${semVinculo.length} ${plural(semVinculo.length, 'item', 'itens')} aguardando vínculo`);
+            }
+
+            // --- Lógica QUALIDADE ---
+            const qualidadeMsgs: string[] = [];
+            let qualidadeStatus: 'neutral' | 'ok' | 'problem' = 'neutral';
+
+            if (!conferenciaIniciada) {
+              qualidadeMsgs.push(hasOC ? "Aguardando conferência..." : "Aguardando decisão...");
+              qualidadeStatus = 'neutral';
+            } else {
+              qualidadeStatus = 'ok';
+              itens.forEach(item => {
+                let itemProblema = false;
+                if (item.vencimento_minimo && item.leituras) {
+                  const hoje = new Date();
+                  hoje.setHours(0,0,0,0);
+                  item.leituras.forEach(l => {
+                    if (l.data_validade) {
+                      const dataVal = new Date(l.data_validade);
+                      const diffDays = Math.ceil((dataVal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+                      if (diffDays < 0) {
+                        qualidadeMsgs.push(`${getPrefixo(item)}O produto está vencido`);
+                        itemProblema = true;
+                      } else if (diffDays < (item.vencimento_minimo || 0)) {
+                        qualidadeMsgs.push(`${getPrefixo(item)}Produto vence em ${diffDays} dias, abaixo do mínimo aceitável (${item.vencimento_minimo} dias)`);
+                        itemProblema = true;
+                      }
+                    }
+                  });
+                }
+                if (item.int_material === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}produto avariado`); itemProblema = true; }
+                if (item.int_embalagem === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}Embalagem danificada`); itemProblema = true; }
+                if (item.cert_qual === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}Sem certificado de qualidade`); itemProblema = true; }
+                
+                if (itemProblema) qualidadeStatus = 'problem';
+              });
+
+              if (conferenciaFinalizada && qualidadeStatus === 'ok') {
+                qualidadeMsgs.length = 0;
+                qualidadeMsgs.push("Nenhum problema de qualidade identificado");
+              }
+            }
+
+            // --- Veredito ---
+            const isPronto = financeiroStatus === 'ok' && fisicoStatus === 'ok' && qualidadeStatus === 'ok';
+            let vereditoTexto = conferenciaIniciada ? (conferenciaFinalizada ? "Conferência Concluída" : "Em Conferência") : "Pronto para Conferência";
+            if (recebimentoSelecionado.status === 'REJEITADO') vereditoTexto = "Recebimento Rejeitado";
+            
+            const getBorderClass = (status: string) => {
+              if (status === 'ok') return 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.1)]';
+              if (status === 'problem') return 'border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.1)]';
+              return 'border-gray-200';
+            };
+
+            const getIcon = (status: string) => {
+              if (status === 'ok') return <div className="p-1.5 bg-green-100 rounded-full text-green-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></div>;
+              if (status === 'problem') return <div className="p-1.5 bg-yellow-100 rounded-full text-yellow-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>;
+              return <div className="p-1.5 bg-gray-100 rounded-full text-gray-400"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg></div>;
+            };
 
             return (
               <div className="space-y-6">
                 {abaAtiva === 'painel' ? (
                   <>
-                    <div className={`flex items-center p-4 rounded-lg border font-bold text-lg shadow-sm ${vereditoCor}`}>
-                      {vereditoIcone}
+                    <div className={`flex items-center p-4 rounded-xl border-2 font-black text-xl shadow-lg transition-all ${isPronto ? 'bg-green-50 border-green-500 text-green-800' : 'bg-white border-yellow-400 text-gray-800'}`}>
+                      {isPronto ? (
+                        <svg className="w-8 h-8 mr-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      ) : (
+                        <svg className="w-8 h-8 mr-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                      )}
                       {vereditoTexto}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Card FINANCEIRO */}
-                      <div className={`p-4 rounded-xl border bg-white shadow-sm transition-all ${!isFinanceiroOK ? 'border-yellow-300 ring-1 ring-yellow-300' : 'border-gray-100'}`}>
-                        <div className="flex items-center mb-3">
-                          <div className={`p-2 rounded-lg mr-2 ${isFinanceiroOK ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 14c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-                            </svg>
-                          </div>
-                          <h4 className="font-bold text-gray-700">Financeiro</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* FINANCEIRO */}
+                      <div className={`flex flex-col p-5 bg-white rounded-2xl border-2 transition-all duration-300 ${getBorderClass(financeiroStatus)}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-black uppercase tracking-widest text-gray-400">Financeiro</h4>
+                          {getIcon(financeiroStatus)}
                         </div>
-                        <div className={`text-sm font-bold ${recebimentoSelecionado.dentro_da_tolerancia ? 'text-green-600' : (isFinanceiroOK ? 'text-green-600' : 'text-red-600')}`}>
-                          {!recebimentoSelecionado.oc ? 'OC Não Localizada' :
-                            recebimentoSelecionado.status === 'DIVERGENTE' ? 'Divergência de Preço' :
-                              recebimentoSelecionado.dentro_da_tolerancia ? 'Preços dentro da tolerância' :
-                                'OC ' + recebimentoSelecionado.oc}
-                        </div>
-                        {divergenciasFinanceiras.length > 0 && (
-                          <div className={`mt-2 p-2 ${recebimentoSelecionado.dentro_da_tolerancia ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'} border rounded text-[10px] font-medium`}>
-                            {divergenciasFinanceiras.map((d, idx) => (
-                              <div key={idx} className="mb-0.5">• {d}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Card FÍSICO */}
-                      <div className={`p-4 rounded-xl border bg-white shadow-sm transition-all ${!isFisicoOK ? 'border-yellow-300 ring-1 ring-yellow-300' : 'border-gray-100'}`}>
-                        <div className="flex items-center mb-3">
-                          <div className={`p-2 rounded-lg mr-2 ${isFisicoOK ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                          </div>
-                          <h4 className="font-bold text-gray-700">Físico</h4>
-                        </div>
-                        <div className={`text-sm font-bold ${conferenciaIniciada ? (isFisicoOK && divergenciasFisicas.length === 0 ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
-                          {!conferenciaIniciada && divergenciasFisicas.length === 0 ? 'Aguardando conferência...' :
-                            isFisicoOK && divergenciasFisicas.length === 0 ? 'Quantidades batem' : (
-                              <div className="flex flex-col space-y-1">
-                                {itensPendentesFisico.map(item => (
-                                  <span key={item.id}>{getPrefixoItem(item)}Aguardando Vínculo</span>
-                                ))}
-                                {divergenciasFisicas.map((div, idx) => (
-                                  <span key={`fdiv-${idx}`} className="text-red-600 uppercase text-xs">• {div}</span>
-                                ))}
-                              </div>
-                            )}
-                          {conferenciaIniciada && recebimentoSelecionado.itens.filter(i => i.descricoes_visuais && i.descricoes_visuais.length > 0).map(item => (
-                            <div key={item.id} className="mt-2 text-[10px] text-gray-500">
-                              <span className="font-black uppercase block mb-0.5 text-gray-700">Identificação Visual{multiItens ? ` (${item.sku || item.codigo_fornecedor})` : ""}:</span>
-                              {item.descricoes_visuais?.map((d, idx) => (
-                                <div key={idx} className="italic pl-2">• "{d}"</div>
-                              ))}
-                            </div>
+                        <div className="space-y-2">
+                          {financeiroMsgs.map((msg, i) => (
+                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
                           ))}
-                          {/* Aviso de Bonificação */}
-                          {recebimentoSelecionado.itens.some(i => i.is_bonificacao) && (
-                            <div className="mt-2 text-[11px] text-green-600 font-bold uppercase tracking-tight">
-                              {recebimentoSelecionado.itens.filter(i => i.is_bonificacao).map((item, _, array) => (
-                                <div key={item.id}>
-                                  {array.length > 1 ? `${item.sku}: Item de bonificação` : "Item de bonificação"}
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
 
-                      {/* Card QUALIDADE */}
-                      {(() => {
-                        const problemas = new Set<string>();
-                        const totalItens = recebimentoSelecionado.itens.length;
+                      {/* FÍSICO */}
+                      <div className={`flex flex-col p-5 bg-white rounded-2xl border-2 transition-all duration-300 ${getBorderClass(fisicoStatus)}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-black uppercase tracking-widest text-gray-400">Físico</h4>
+                          {getIcon(fisicoStatus)}
+                        </div>
+                        <div className="space-y-2">
+                          {fisicoMsgs.map((msg, i) => (
+                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
+                          ))}
+                        </div>
+                      </div>
 
-                        recebimentoSelecionado.itens.forEach(item => {
-                          if (item.int_embalagem === 'Não') problemas.add("Embalagem não íntegra");
-                          if (item.cert_qual === 'Não') problemas.add("Sem certificado de qualidade");
-                          if (item.int_material === 'Não') problemas.add("Material danificado");
-                          if (item.identificacao === 'Não') problemas.add("Identificação incorreta");
-
-                          // Validação de Vencimento Mínimo (Shelf Life)
-                          if (item.vencimento_minimo && item.leituras) {
-                            const tentativaAtual = item.tentativas || 1;
-                            const leiturasSessao = item.leituras.filter(l => (l.numero_sessao || 1) === tentativaAtual);
-
-                            for (const l of leiturasSessao) {
-                              if (l.data_validade) {
-                                try {
-                                  // No JSON do backend, data_validade vem como string ISO
-                                  const dataVal = new Date(l.data_validade);
-                                  const hoje = new Date();
-                                  hoje.setHours(0, 0, 0, 0);
-                                  
-                                  const diffTime = dataVal.getTime() - hoje.getTime();
-                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                  if (diffDays < item.vencimento_minimo) {
-                                    const msg = `Produto vence em ${diffDays} dias, abaixo do mínimo permitido (${item.vencimento_minimo} dias)`;
-                                    const prefixo = totalItens > 1 ? `${item.sku || item.codigo_fornecedor}: ` : "";
-                                    problemas.add(`${prefixo}${msg}`);
-                                    break; // Mostra apenas um alerta de vencimento por item
-                                  }
-                                } catch (e) {
-                                  console.error("Erro ao validar vencimento:", e);
-                                }
-                              }
-                            }
-                          }
-                        });
-                        const temProblema = problemas.size > 0;
-                        const isQualidadeRealOK = isQualidadeOK && !temProblema;
-
-                        return (
-                          <div className={`p-4 rounded-xl border bg-white shadow-sm transition-all ${!isQualidadeRealOK ? 'border-yellow-300 ring-1 ring-yellow-300' : 'border-gray-100'}`}>
-                            <div className="flex items-center mb-3">
-                              <div className={`p-2 rounded-lg mr-2 ${isQualidadeRealOK ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                              </div>
-                              <h4 className="font-bold text-gray-700">Qualidade</h4>
-                            </div>
-                            <div className={`text-sm font-bold ${conferenciaIniciada ? (isQualidadeRealOK ? 'text-green-600' : 'text-yellow-600') : 'text-gray-400'}`}>
-                              {!conferenciaIniciada ? 'Aguardando conferência...' :
-                                isQualidadeRealOK ? 'Nenhum problema de qualidade apontado' : (
-                                  <div className="flex flex-col space-y-1">
-                                    {recebimentoSelecionado.status === 'BLOQUEADO' && <span>Nota Bloqueada</span>}
-                                    {Array.from(problemas).map((p, idx) => (
-                                      <span key={idx}>{p}</span>
-                                    ))}
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      {/* QUALIDADE */}
+                      <div className={`flex flex-col p-5 bg-white rounded-2xl border-2 transition-all duration-300 ${getBorderClass(qualidadeStatus)}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-black uppercase tracking-widest text-gray-400">Qualidade</h4>
+                          {getIcon(qualidadeStatus)}
+                        </div>
+                        <div className="space-y-2">
+                          {qualidadeMsgs.map((msg, i) => (
+                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-
                   </>
                 ) : (
                   <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white shadow-sm">

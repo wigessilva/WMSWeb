@@ -48,6 +48,7 @@ export interface RecebimentoItem {
   codigo_fornecedor: string | null;
   descricao: string;
   qtd_nota: number;
+  valor_unitario?: number;
   qtd_recebida: number | null;
   und: string;
   lote: string | null;
@@ -71,6 +72,7 @@ export interface RecebimentoItem {
   vencimento_minimo?: number;
   fracionavel_recebimento?: boolean;
   is_bonificacao?: boolean;
+  valor_unitario_oc?: number;
 }
 
 export interface Recebimento {

@@ -287,6 +287,9 @@ class RecebimentoService:
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
             preco_xml_na_und_oc = preco_base_xml * fator_oc
             
+            # Salva o preço da OC convertido para a unidade da NF para exibição no painel
+            item.valor_unitario_oc = preco_base_oc * (fator_xml if fator_xml > 0 else 1.0)
+
             prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
             teve_erro = False
 
