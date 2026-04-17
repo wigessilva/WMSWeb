@@ -97,6 +97,21 @@ def reset_recebimento():
         print("  -> Limpando UAs...")
         db.query(UA).delete(synchronize_session=False)
 
+        # Reseta os contadores de ID (Identity Seed) no SQL Server para começarem do 1
+        print("\n🔧 Resetando contadores de ID...")
+        from sqlalchemy import text
+        tabelas = [
+            'LogTransicoes', 'HistoricoXML', 'RecebimentoLeituras', 
+            'RecebimentoSessoes', 'RecebimentoItens', 'Recebimentos',
+            'HistoricoUA', 'UAs'
+        ]
+        for tabela in tabelas:
+            try:
+                db.execute(text(f"DBCC CHECKIDENT ('{tabela}', RESEED, 0)"))
+            except Exception as e:
+                # Algumas tabelas podem não ter coluna identity, apenas ignoramos
+                pass
+
         db.commit()
         print("\n✨ Reset concluído com sucesso!")
 

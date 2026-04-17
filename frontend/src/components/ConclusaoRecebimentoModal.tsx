@@ -344,17 +344,19 @@ export function ConclusaoRecebimentoModal({
           >
             Cancelar
           </button>
-          <div className="flex-1 flex items-center px-4">
-            <label className="flex items-center space-x-2 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]"
-                checked={isParcial}
-                onChange={(e) => setIsParcial(e.target.checked)}
-              />
-              <span className="text-sm font-bold text-gray-700 group-hover:text-[#1a63b6] transition-colors">Recebimento parcial</span>
-            </label>
-          </div>
+          {itensComExcecao.some(it => calcularQtdEfetiva(it) < it.qtd_nota) && (
+            <div className="flex-1 flex items-center px-4">
+              <label className="flex items-center space-x-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 text-[#1a63b6] rounded border-gray-300 focus:ring-[#1a63b6]"
+                  checked={isParcial}
+                  onChange={(e) => setIsParcial(e.target.checked)}
+                />
+                <span className="text-sm font-bold text-gray-700 group-hover:text-[#1a63b6] transition-colors">Recebimento parcial</span>
+              </label>
+            </div>
+          )}
           <button
             onClick={handleFinalizar}
             disabled={loading}
