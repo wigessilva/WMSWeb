@@ -939,7 +939,7 @@ class RecebimentoService:
             # Regra de Qualidade Automática
             if leit.int_material == "Não":
                 ua_existente.estado = "Ruim"
-                ua_existente.observacoes = "Material avariado"
+                ua_existente.observacoes = RecebimentoService._acumular_texto(ua_existente.observacoes, "Material avariado")
             else:
                 ua_existente.estado = "Bom"
         else:
@@ -1710,6 +1710,17 @@ class RecebimentoService:
                 return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: item com quantidade e preços correspondentes."}
 
         return {"sugestao": None, "mensagem": "Múltiplos itens compatíveis."}
+
+    @staticmethod
+    def _acumular_texto(atual: Optional[str], novo: Optional[str], separador: str = " | ") -> Optional[str]:
+        if not novo:
+            return atual
+        if not atual:
+            return novo
+        # Se o novo já está contido no atual, não duplica para evitar flooding redundante
+        if novo in atual:
+            return atual
+        return f"{atual}{separador}{novo}"
 
     @staticmethod
     def _gerar_proxima_ua(db: Session):
