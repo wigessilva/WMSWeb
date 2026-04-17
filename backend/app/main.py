@@ -111,7 +111,7 @@ app.include_router(familia_router.router, prefix="/familias", tags=["Famílias"]
 app.include_router(endereco_router.router, prefix="/enderecos", tags=["Endereçamento"])
 
 # AQUI ESTÁ A ROTA DA CONFIGURAÇÃO!
-app.include_router(configuracao_router.router, prefix="/api/v1/configuracao", tags=["Configurações"])
+app.include_router(configuracao_router.router, prefix="/configuracao", tags=["Configurações"])
 
 # Cadastros de Apoio do Endereçamento
 app.include_router(filial_router.router, prefix="/filiais", tags=["Unidades e Filiais"])
