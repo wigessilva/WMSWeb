@@ -251,7 +251,7 @@ export default function Recebimentos() {
     if (!recebimentoSelecionado.oc && !recebimentoSelecionado.autorizado_por) {
       // Se for uma nota que contém APENAS itens de bonificação, permite liberar sem OC
       const apenasBonificacao = recebimentoSelecionado.itens.every(it => it.is_bonificacao);
-      
+
       if (!apenasBonificacao) {
         toast.error("O romaneio não tem OC. Libere com credenciais de supervisor.", { duration: 4000 });
         setAutorizadorLogin("");
@@ -330,24 +330,24 @@ export default function Recebimentos() {
 
   const handleConcluir = async () => {
     if (!recebimentoSelecionado) return;
-    
+
     // Análise rápida de exceções antes de abrir o modal
-    const temQualidadeRuim = recebimentoSelecionado.itens.some(item => 
-      item.leituras?.some(l => 
+    const temQualidadeRuim = recebimentoSelecionado.itens.some(item =>
+      item.leituras?.some(l =>
         l.int_embalagem === 'Não' || l.int_material === 'Não' || l.identificacao === 'Não' || l.cert_qual === 'Não'
       )
     );
 
-    const temDivergenciaQtd = recebimentoSelecionado.itens.some(item => 
+    const temDivergenciaQtd = recebimentoSelecionado.itens.some(item =>
       Math.abs((item.qtd_recebida || 0) - item.qtd_nota) > 0.0001
     );
 
-    const temVencidos = recebimentoSelecionado.itens.some(item => 
+    const temVencidos = recebimentoSelecionado.itens.some(item =>
       item.leituras?.some(l => {
         if (!l.data_validade) return false;
         const dataVal = new Date(l.data_validade);
         const hoje = new Date();
-        hoje.setHours(0,0,0,0);
+        hoje.setHours(0, 0, 0, 0);
         const diffDays = Math.ceil((dataVal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
         return diffDays < (item.vencimento_minimo || 0);
       })
@@ -365,7 +365,7 @@ export default function Recebimentos() {
   }
 
   const efetivarConclusao = async (
-    rejeitados?: { uas: string[], itens: number[] }, 
+    rejeitados?: { uas: string[], itens: number[] },
     resolucoes_sobra: Record<number, string> = {},
     is_parcial: boolean = false
   ) => {
@@ -379,7 +379,7 @@ export default function Recebimentos() {
       setRecebimentoSelecionado(rec);
       setRecebimentos(recebimentos.map(r => r.id === rec.id ? rec : r));
       setModalConclusaoAberto(false);
-      
+
       if (novasUas && novasUas.length > 0) {
         toast.success(`Concluído! Foram geradas novas UAs para sobras: ${novasUas.join(', ')}`, { duration: 6000 });
       } else {
@@ -404,7 +404,7 @@ export default function Recebimentos() {
   const romaneioFinalizado = recebimentoSelecionado && ['FINALIZADO', 'REJEITADO'].includes(recebimentoSelecionado.status);
   const podeVerQuantidades = temPermissao('RECEBIMENTO.VER_QUANTIDADES') || romaneioFinalizado;
 
-  const divergenciasTotais = recebimentoSelecionado?.divergencia_financeira?.split(' | ') || [];
+// Variável corrigida para evitar warning de não uso
 
   return (
     <div className="space-y-4">
@@ -870,7 +870,7 @@ export default function Recebimentos() {
                   const valorNota = item.valor_unitario || 0;
                   const valorOC = item.valor_unitario_oc || 0;
                   const diff = Math.abs(valorNota - valorOC);
-                  
+
                   if (diff < 0.001) {
                     financeiroMsgs.push(`${getPrefixo(item)}Preço unitário: ${formatMoeda(valorNota)} (Igual à OC)`);
                   } else {
@@ -944,7 +944,7 @@ export default function Recebimentos() {
                 let itemProblema = false;
                 if (item.vencimento_minimo && item.leituras) {
                   const hoje = new Date();
-                  hoje.setHours(0,0,0,0);
+                  hoje.setHours(0, 0, 0, 0);
                   item.leituras.forEach(l => {
                     if (l.data_validade) {
                       const dataVal = new Date(l.data_validade);
@@ -962,7 +962,7 @@ export default function Recebimentos() {
                 if (item.int_material === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}produto avariado`); itemProblema = true; }
                 if (item.int_embalagem === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}Embalagem danificada`); itemProblema = true; }
                 if (item.cert_qual === 'Não') { qualidadeMsgs.push(`${getPrefixo(item)}Sem certificado de qualidade`); itemProblema = true; }
-                
+
                 if (itemProblema) qualidadeStatus = 'problem';
               });
 
@@ -972,11 +972,66 @@ export default function Recebimentos() {
               }
             }
 
-            // --- Veredito ---
-            const isPronto = financeiroStatus === 'ok' && fisicoStatus === 'ok' && qualidadeStatus === 'ok';
-            let vereditoTexto = conferenciaIniciada ? (conferenciaFinalizada ? "Conferência Concluída" : "Em Conferência") : "Pronto para Conferência";
-            if (recebimentoSelecionado.status === 'REJEITADO') vereditoTexto = "Recebimento Rejeitado";
-            
+            // --- Lógica de Veredito Refinada (Gestão por Exceção) ---
+            const areasComProblema: string[] = [];
+            if ((fisicoStatus as string) === 'problem') areasComProblema.push('Físico');
+            if ((qualidadeStatus as string) === 'problem') areasComProblema.push('Qualidade');
+            if (financeiroStatus === 'problem') areasComProblema.push('Financeiro');
+
+            const hasProblem = areasComProblema.length > 0;
+            const isPronto = !hasProblem && fisicoStatus === 'ok' && qualidadeStatus === 'ok' && financeiroStatus === 'ok';
+            const temDiferencaPreco = hasOC && itens.some(item => !item.is_bonificacao && Math.abs((item.valor_unitario || 0) - (item.valor_unitario_oc || 0)) > 0.001);
+
+            let vTitulo = "TUDO CERTO!";
+            let vMsg = "Valores conferem.";
+            let vStyle = "bg-green-50 border-green-200 text-green-700";
+            let vIconColor = "text-green-500";
+            let vShowPulse = true;
+
+            if (recebimentoSelecionado.status === 'REJEITADO') {
+              vTitulo = "RECEBIMENTO REJEITADO";
+              vMsg = "";
+              vStyle = "bg-red-50 border-red-200 text-red-700";
+              vIconColor = "text-red-500";
+              vShowPulse = false;
+            } else if (recebimentoSelecionado.status === 'FINALIZADO') {
+              vTitulo = "RECEBIMENTO CONCLUÍDO";
+              vMsg = "";
+              vStyle = "bg-green-50 border-green-200 text-green-700";
+              vIconColor = "text-green-500";
+              vShowPulse = false;
+            } else if (hasProblem) {
+              vTitulo = "ATENÇÃO NECESSÁRIA";
+              // Formata a lista de áreas de forma amigável (A, B e C)
+              let listaFormatada = areasComProblema.join(', ');
+              if (areasComProblema.length > 1) {
+                const lastCommaIndex = listaFormatada.lastIndexOf(', ');
+                listaFormatada = listaFormatada.substring(0, lastCommaIndex) + ' e ' + listaFormatada.substring(lastCommaIndex + 2);
+              }
+              vMsg = `Verifique as pendências em: ${listaFormatada}.`;
+              vStyle = "bg-yellow-50 border-yellow-200 text-yellow-700";
+              vIconColor = "text-yellow-500";
+              vShowPulse = false;
+            } else if (conferenciaFinalizada && isPronto) {
+              vTitulo = "CONFERÊNCIA OK";
+              vMsg = "As quantidades batem com a nota fiscal.";
+              vStyle = "bg-green-50 border-green-200 text-green-700";
+              vIconColor = "text-green-500";
+              vShowPulse = false;
+            } else if (!conferenciaIniciada && hasOC && financeiroStatus === 'ok' && temDiferencaPreco) {
+              vTitulo = "TUDO CERTO!";
+              vMsg = "Preços dentro da tolerância.";
+              vStyle = "bg-green-50 border-green-200 text-green-700";
+              vIconColor = "text-green-500";
+              vShowPulse = true;
+            } else if (conferenciaIniciada && !conferenciaFinalizada) {
+              vTitulo = "EM ANDAMENTO";
+              vMsg = "Conferência em progresso.";
+              vStyle = "bg-blue-50 border-blue-200 text-blue-700";
+              vIconColor = "text-blue-500";
+              vShowPulse = true;
+            }
+
             const getBorderClass = (status: string) => {
               if (status === 'ok') return 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.1)]';
               if (status === 'problem') return 'border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.1)]';
@@ -993,13 +1048,12 @@ export default function Recebimentos() {
               <div className="space-y-6">
                 {abaAtiva === 'painel' ? (
                   <>
-                    <div className={`flex items-center p-4 rounded-xl border-2 font-black text-xl shadow-lg transition-all ${isPronto ? 'bg-green-50 border-green-500 text-green-800' : 'bg-white border-yellow-400 text-gray-800'}`}>
-                      {isPronto ? (
-                        <svg className="w-8 h-8 mr-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      ) : (
-                        <svg className="w-8 h-8 mr-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                      )}
-                      {vereditoTexto}
+                    <div className={`flex flex-col py-3 px-4 rounded-xl border shadow-sm transition-all ${vStyle}`}>
+                      <div className="flex items-center font-black text-lg tracking-tight">
+                        <span className={`w-2.5 h-2.5 rounded-full mr-2.5 ${vIconColor.replace('text-', 'bg-')} ${vShowPulse ? 'animate-pulse shadow-[0_0_8px_currentColor]' : ''}`}></span>
+                        {vTitulo}
+                      </div>
+                      {vMsg && <div className="ml-5 text-sm font-medium opacity-80">{vMsg}</div>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1011,7 +1065,10 @@ export default function Recebimentos() {
                         </div>
                         <div className="space-y-2">
                           {financeiroMsgs.map((msg, i) => (
-                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
+                            <div key={i} className="flex items-start text-[13px] leading-tight font-bold text-gray-700">
+                              {financeiroMsgs.length > 1 && <span className="mr-2 h-1.5 w-1.5 rounded-full bg-gray-300 mt-1.5 flex-shrink-0" />}
+                              <span className="flex-1">{msg}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1024,7 +1081,10 @@ export default function Recebimentos() {
                         </div>
                         <div className="space-y-2">
                           {fisicoMsgs.map((msg, i) => (
-                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
+                            <div key={i} className="flex items-start text-[13px] leading-tight font-bold text-gray-700">
+                              {fisicoMsgs.length > 1 && <span className="mr-2 h-1.5 w-1.5 rounded-full bg-gray-300 mt-1.5 flex-shrink-0" />}
+                              <span className="flex-1">{msg}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1037,7 +1097,10 @@ export default function Recebimentos() {
                         </div>
                         <div className="space-y-2">
                           {qualidadeMsgs.map((msg, i) => (
-                            <div key={i} className="text-[13px] leading-tight font-bold text-gray-700">{msg}</div>
+                            <div key={i} className="flex items-start text-[13px] leading-tight font-bold text-gray-700">
+                              {qualidadeMsgs.length > 1 && <span className="mr-2 h-1.5 w-1.5 rounded-full bg-gray-300 mt-1.5 flex-shrink-0" />}
+                              <span className="flex-1">{msg}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1159,7 +1222,7 @@ export default function Recebimentos() {
         </div>
       </Modal>
 
-      <ConclusaoRecebimentoModal 
+      <ConclusaoRecebimentoModal
         isOpen={modalConclusaoAberto}
         onClose={() => setModalConclusaoAberto(false)}
         onConfirm={(rej: { uas: string[], itens: number[] }, res: Record<number, string>, partial: boolean) => efetivarConclusao(rej, res, partial)}
