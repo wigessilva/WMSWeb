@@ -49,6 +49,7 @@ class RecebimentoItemBase(BaseModel):
     val: Optional[datetime] = None
     vencimento: Optional[str] = None
     cfop: Optional[str] = None
+    ean: Optional[str] = None
     int_embalagem: Optional[str] = None
     int_material: Optional[str] = None
     identificacao: Optional[str] = None
@@ -120,6 +121,7 @@ class RecebimentoItemSchema(RecebimentoItemBase):
             ret = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
             ret['sku'] = sku_real
             ret['produto_id'] = getattr(data, 'sku', None) # No banco o campo Sku é o ID
+            ret['ean_nota'] = getattr(data, 'ean_nota', None)
             ret['descricoes_visuais'] = desc_visuais
             ret['leituras'] = leituras_filtradas # Sobrescreve com a lista filtrada
 

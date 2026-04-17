@@ -122,7 +122,8 @@ class RecebimentoService:
                 sku=sku_encontrado,
                 status=status_item,
                 cfop=item_dados.cfop,
-                is_bonificacao=f_bonificacao
+                is_bonificacao=f_bonificacao,
+                ean_nota=item_dados.ean
             )
             db.add(novo_item)
 
@@ -805,6 +806,22 @@ class RecebimentoService:
         lote_obrigatorio = resolve_param('lote_obrigatorio', 'lote_obrigatorio', 'lote_obrigatorio', False)
         bloquear_sem_lote = resolve_param('bloquear_sem_lote', 'bloquear_sem_lote', 'bloquear_sem_lote', False)
 
+        # VALIDAÇÃO DE EAN (Para integridade do produto)
+        if leit.ean:
+            from app.models.unidade_produto import UnidadeProduto
+            # Busca se o EAN bipado pertence ao produto que está sendo conferido
+            # (Pode pertencer a qualquer uma das unidades dele: base ou caixas)
+            ead_valido = db.query(UnidadeProduto).filter(
+                UnidadeProduto.produto_id == item.sku,
+                UnidadeProduto.ean == leit.ean
+            ).first()
+            
+            if not ead_valido:
+                # Se não bateu com o cadastro, mas o XML tem um EAN e ele bate com o bipe,
+                # significa que o cadastro ainda não foi atualizado (aprendizado passivo pendente)
+                if item.ean_nota != leit.ean:
+                    raise ValueError(f"EAN divergente: o código {leit.ean} não corresponde ao produto esperado.")
+
         if (lote_obrigatorio or bloquear_sem_lote) and (not leit.lote or not leit.lote.strip()):
             raise ValueError(f"Lote é obrigatório.")
         
@@ -1431,8 +1448,45 @@ class RecebimentoService:
         finally:
             db_erp.close()
 
-        # Aciona o motor central que recalcula itens e cabeçalho
+        # Tenta o aprendizado de EAN ANTES do commit (que acontece no atualizar_status_pai)
+        for item in db.query(RecebimentoItem).filter(RecebimentoItem.recebimento_id == recebimento_id, RecebimentoItem.und == unidade_externa).all():
+            RecebimentoService._tentar_gravar_ean_aprendizado(db, item.id)
+
+        # Aciona o motor central que recalcula itens e cabeçalho (e faz o COMMIT)
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
+
+    @staticmethod
+    def _tentar_gravar_ean_aprendizado(db: Session, item_id: int):
+        from app.models.unidade_produto import UnidadeProduto
+        from app.models.unidade_medida import UnidadeMedida
+        from app.models.vinculo_unidade import VinculoUnidade
+        
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        if not item or not item.sku or not item.ean_nota:
+            return
+
+        # Busca a unidade resolvida
+        unidade_resolvida = db.query(UnidadeMedida).filter(UnidadeMedida.sigla.ilike(item.und)).first() or \
+                            db.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa.ilike(item.und)).first()
+        
+        if not unidade_resolvida:
+            return
+            
+        # Diferencia se é a Unidade Direta ou um Vínculo para pegar o ID correto da Unidade de Medida
+        if isinstance(unidade_resolvida, VinculoUnidade):
+            unidade_id = unidade_resolvida.unidade_medida_id
+        else:
+            unidade_id = unidade_resolvida.id
+        
+        # Procura no cadastro do produto
+        prod_und = db.query(UnidadeProduto).filter(
+            UnidadeProduto.produto_id == item.sku,
+            UnidadeProduto.unidade_medida_id == unidade_id
+        ).first()
+        
+        if prod_und and (not prod_und.ean or not prod_und.ean.strip()):
+            prod_und.ean = item.ean_nota
+            db.flush()
 
     @staticmethod
     def vincular_sku_pendente(db: Session, recebimento_id: int, item_id: int, produto_id: int, criado_por: str = None):
@@ -1536,7 +1590,10 @@ class RecebimentoService:
         finally:
             db_erp.close()
 
-        # Atualiza a nota clicada e a devolve pra tela
+        # Tenta o aprendizado de EAN ANTES do commit
+        RecebimentoService._tentar_gravar_ean_aprendizado(db, item.id)
+
+        # Atualiza a nota clicada e a devolve pra tela (e faz commit)
         return RecebimentoService.atualizar_status_pai(db, recebimento_id)
 
     @staticmethod

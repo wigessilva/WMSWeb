@@ -56,6 +56,7 @@ class RecebimentoItem(Base):
     valor_unitario = Column("ValorUnitario", Float, nullable=True)
     qtd_recebida = Column("QtdRecebida", Float, nullable=True)
     und = Column("Und", String(20), nullable=False)
+    ean_nota = Column("EanNota", String(50), nullable=True)
 
     # Rastreabilidade e Qualidade
     lote = Column("Lote", String(50), nullable=True)

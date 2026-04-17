@@ -483,13 +483,29 @@ export default function Conferencia() {
                         await salvarLeituraIncremental(uaAtual);
                         setStep('BIPAR_UA');
                       } catch (e: any) {
-                        let msg = "Erro ao salvar UA.";
-                        if (e.response?.data?.detail) {
-                          msg = Array.isArray(e.response.data.detail)
-                            ? e.response.data.detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join(', ')
-                            : e.response.data.detail;
+                        console.error("Erro ao salvar UA:", e);
+                        let msg = e.response?.data?.detail || "Erro ao salvar UA.";
+                        
+                        // Tratamento especial para erro de EAN (Destaque Visual)
+                        if (typeof msg === 'string' && msg.includes("EAN divergente")) {
+                          toast.error(msg, {
+                            duration: 6000,
+                            icon: '⚠️',
+                            style: {
+                              border: '2px solid #ef4444',
+                              padding: '16px',
+                              color: '#7f1d1d',
+                              background: '#fef2f2',
+                              fontWeight: '900',
+                              borderRadius: '1rem',
+                              fontSize: '1.05rem',
+                              textAlign: 'center'
+                            }
+                          });
+                          return;
                         }
-                        toast.error(msg);
+
+                        toast.error(typeof msg === 'string' ? msg : "Erro técnico na operação.");
                       } finally {
                         setFinalizando(false);
                       }
@@ -861,8 +877,28 @@ export default function Conferencia() {
                           }
                         }
                       } catch (error: any) {
-                        console.error(error);
-                        toast.error(error.message || "Erro ao salvar conferência.");
+                        console.error("Erro ao finalizar:", error);
+                        const msg = error.response?.data?.detail || error.message || "Erro ao salvar conferência.";
+                        
+                        if (typeof msg === 'string' && msg.includes("EAN divergente")) {
+                          toast.error(msg, {
+                            duration: 6000,
+                            icon: '⚠️',
+                            style: {
+                              border: '2px solid #ef4444',
+                              padding: '16px',
+                              color: '#7f1d1d',
+                              background: '#fef2f2',
+                              fontWeight: '900',
+                              borderRadius: '1rem',
+                              fontSize: '1.05rem',
+                              textAlign: 'center'
+                            }
+                          });
+                          return;
+                        }
+
+                        toast.error(typeof msg === 'string' ? msg : "Erro ao salvar conferência.");
                       } finally {
                         setFinalizando(false);
                       }
