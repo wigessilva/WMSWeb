@@ -912,7 +912,8 @@ export default function Recebimentos() {
                 // Conferência em andamento ou finalizada
                 fisicoStatus = 'ok';
                 itens.forEach(item => {
-                  fisicoMsgs.push(`${getPrefixo(item)}Conferência: ${item.qtd_recebida || 0} ${item.und} | Nota: ${item.qtd_nota} ${item.und} | OC: ---`); // Qtd OC não está no item, mas a lógica comparativa já é feita no backend
+                  const ocText = item.valor_unitario_oc ? `${item.qtd_oc || 0} ${item.und_oc || item.und}` : '---';
+                  fisicoMsgs.push(`${getPrefixo(item)}Conferência: ${item.qtd_recebida || 0} ${item.und} | Nota: ${item.qtd_nota} ${item.und} | OC: ${ocText}`); // Qtd OC agora buscando do item
                   if (item.descricoes_visuais && item.descricoes_visuais.length > 0) {
                     item.descricoes_visuais.forEach(obs => fisicoMsgs.push(`${getPrefixo(item)}Obs. visual: ${obs}`));
                   }
@@ -935,7 +936,7 @@ export default function Recebimentos() {
             const qualidadeMsgs: string[] = [];
             let qualidadeStatus: 'neutral' | 'ok' | 'problem' = 'neutral';
 
-            if (!conferenciaIniciada) {
+            if (!conferenciaIniciada || recebimentoSelecionado.status === 'AGUARDANDO_CONFERENCIA') {
               qualidadeMsgs.push(hasOC ? "Aguardando conferência..." : "Aguardando decisão...");
               qualidadeStatus = 'neutral';
             } else {
@@ -1002,13 +1003,7 @@ export default function Recebimentos() {
               vShowPulse = false;
             } else if (hasProblem) {
               vTitulo = "ATENÇÃO NECESSÁRIA";
-              // Formata a lista de áreas de forma amigável (A, B e C)
-              let listaFormatada = areasComProblema.join(', ');
-              if (areasComProblema.length > 1) {
-                const lastCommaIndex = listaFormatada.lastIndexOf(', ');
-                listaFormatada = listaFormatada.substring(0, lastCommaIndex) + ' e ' + listaFormatada.substring(lastCommaIndex + 2);
-              }
-              vMsg = `Verifique as pendências em: ${listaFormatada}.`;
+              vMsg = "";
               vStyle = "bg-yellow-50 border-yellow-200 text-yellow-700";
               vIconColor = "text-yellow-500";
               vShowPulse = false;
