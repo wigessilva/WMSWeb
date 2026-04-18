@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from ..models.ua import UA
 from ..models.produto import Produto
+from ..models.unidade_produto import UnidadeProduto
 from ..schemas.ua import UACriar, UASchema, UAExpedirTransferencia, UAReceberTransferencia
 from ..core.conversores import ConversorDimensional
 
@@ -124,7 +125,8 @@ class UAService:
         ).options(
             joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
             joinedload(UA.produto).joinedload(Produto.familia_relacao),
-            joinedload(UA.unidade_medida_operacional)
+            joinedload(UA.unidade_medida_operacional),
+            joinedload(UA.unidade_produto).joinedload(UnidadeProduto.unidade_medida_relacao)
         ).first()
         if not ua:
             return None
@@ -134,7 +136,12 @@ class UAService:
         if ua.produto:
             schema.sku = ua.produto.sku
             schema.descricao = ua.produto.descricao
-            schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
+            
+            # Prioriza a sigla da unidade_produto vinculada à UA, fallback para a unidade_medida do produto
+            if ua.unidade_produto and ua.unidade_produto.unidade_medida_relacao:
+                schema.unidade_base_sigla = ua.unidade_produto.unidade_medida_relacao.sigla
+            else:
+                schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
             
             # Resolução de Sigla e Quantidade Operacional
             valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade
@@ -159,7 +166,8 @@ class UAService:
         uas = db.query(UA).filter(UA.status != 'ESTORNADA').options(
             joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
             joinedload(UA.produto).joinedload(Produto.familia_relacao),
-            joinedload(UA.unidade_medida_operacional)
+            joinedload(UA.unidade_medida_operacional),
+            joinedload(UA.unidade_produto).joinedload(UnidadeProduto.unidade_medida_relacao)
         ).all()
         # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema
         resultado = []
@@ -168,7 +176,12 @@ class UAService:
             if ua.produto:
                 schema.sku = ua.produto.sku
                 schema.descricao = ua.produto.descricao
-                schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
+                
+                # Resolução de Sigla da Base
+                if ua.unidade_produto and ua.unidade_produto.unidade_medida_relacao:
+                    schema.unidade_base_sigla = ua.unidade_produto.unidade_medida_relacao.sigla
+                else:
+                    schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
                 
                 # Resolução de Sigla e Quantidade Operacional
                 valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade

@@ -620,8 +620,12 @@ export default function Conferencia() {
                     <div className="bg-emerald-600 text-white p-5 rounded-[2rem] shadow-lg shadow-emerald-200">
                       <label className="text-[9px] font-black uppercase tracking-widest block opacity-70 mb-1">Total Bipado</label>
                       <div className="text-3xl font-black">
-                        {totalExibicao !== null ? totalExibicao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }) : "-"}
-                        <span className="text-xs ml-1 opacity-50 uppercase">{siglaAtiva}</span>
+                        {totalExibicao !== null ? (
+                          <>
+                            {totalExibicao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 })}
+                            <span className="text-xs ml-1 opacity-50 uppercase">{siglaAtiva}</span>
+                          </>
+                        ) : "-"}
                       </div>
                     </div>
                   </div>
@@ -648,7 +652,7 @@ export default function Conferencia() {
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 pl-2">Lote</label>
                         <input
                           type="text"
-                          className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all uppercase"
+                          className="w-full bg-white border-2 border-gray-100 rounded-2xl p-4 font-black text-lg text-gray-800 focus:border-blue-500 focus:outline-none transition-all"
                           value={uaAtual?.lote || ''}
                           onChange={(e) => {
                             const val = e.target.value;

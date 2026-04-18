@@ -129,10 +129,20 @@ export default function UAs() {
                     <td className="px-3 py-2 font-medium text-gray-700">{ua.sku || "-"}</td>
                     <td className="px-3 py-2 text-gray-600 truncate max-w-xs" title={ua.descricao || ""}>{ua.descricao || "-"}</td>
                     <td className="px-3 py-2 text-center font-semibold text-blue-600">
-                      {ua.quantidade !== undefined && ua.quantidade !== null ? ua.quantidade.toLocaleString('pt-BR') : "-"} {ua.unidade_sigla || ""}
+                      {ua.quantidade !== undefined && ua.quantidade !== null ? (
+                        <>
+                          {ua.quantidade.toLocaleString('pt-BR')}
+                          <span className="ml-1 text-[10px] opacity-70">{ua.unidade_sigla || ""}</span>
+                        </>
+                      ) : "-"}
                     </td>
                     <td className="px-3 py-2 text-center font-medium text-gray-500">
-                      {ua.quantidade_base !== undefined && ua.quantidade_base !== null ? ua.quantidade_base.toLocaleString('pt-BR') : "0"} {ua.unidade_base_sigla || ""}
+                      {ua.quantidade_base !== undefined && ua.quantidade_base !== null ? (
+                        <>
+                          {ua.quantidade_base.toLocaleString('pt-BR')}
+                          <span className="ml-1 text-[10px] opacity-70">{ua.unidade_base_sigla || ""}</span>
+                        </>
+                      ) : "-"}
                     </td>
                     <td className="px-3 py-2">
                       {ua.data_validade ? new Date(ua.data_validade).toLocaleDateString('pt-BR') : "-"}
