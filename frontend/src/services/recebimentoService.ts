@@ -2,9 +2,9 @@ import apiClient from './api';
 import type { Recebimento } from '../types/recebimento';
 
 const api = {
-    get: (url: string, config?: any) => apiClient.get(`/recebimentos${url}`, config),
-    post: (url: string, data?: any, config?: any) => apiClient.post(`/recebimentos${url}`, data, config),
-    put: (url: string, data?: any, config?: any) => apiClient.put(`/recebimentos${url}`, data, config),
+  get: (url: string, config?: any) => apiClient.get(`/recebimentos${url}`, config),
+  post: (url: string, data?: any, config?: any) => apiClient.post(`/recebimentos${url}`, data, config),
+  put: (url: string, data?: any, config?: any) => apiClient.put(`/recebimentos${url}`, data, config),
 };
 
 export const recebimentoService = {
@@ -51,7 +51,7 @@ export const recebimentoService = {
   },
 
   concluirDoca: async (
-    id: number, 
+    id: number,
     rejeitados: { uas: string[], itens: number[] } = { uas: [], itens: [] },
     resolucoes_sobra: Record<number, string> = {},
     is_parcial: boolean = false

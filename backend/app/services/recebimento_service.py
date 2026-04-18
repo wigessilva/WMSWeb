@@ -927,6 +927,18 @@ class RecebimentoService:
         # Upsert da UA
         filial_id = item.destino_id or 1
         ua_existente = db.query(UA).filter(UA.ua == leit.ua).first()
+
+        # CRITICAL FIX: The system must normalize all UAs to the base unit
+        # to avoid discrepancies between the quantity (converted to base) and the unit ID.
+        unidade_base = db.query(UnidadeProduto).filter(
+            UnidadeProduto.produto_id == item.sku,
+            UnidadeProduto.tipo == 'base'
+        ).first()
+
+        # Se não encontrar a unidade base (o que é improvável), mantém a original da leitura
+        id_unidade_fina = unidade_base.id if unidade_base else leit.unidade_produto_id
+        fator_unidade_fina = 1.0 if unidade_base else (leit.fator_conversao or 1.0)
+
         if ua_existente:
             if ua_existente.status == "ESTORNADA":
                 raise ValueError(f"A UA {leit.ua} foi estornada e não pode ser reutilizada. Utilize uma nova etiqueta.")
@@ -940,8 +952,8 @@ class RecebimentoService:
             ua_existente.data_validade = data_val
             ua_existente.quantidade = qtd_operacional
             ua_existente.quantidade_base = qtd_base
-            ua_existente.unidade_produto_id = leit.unidade_produto_id
-            ua_existente.fator_conversao = leit.fator_conversao
+            ua_existente.unidade_produto_id = id_unidade_fina
+            ua_existente.fator_conversao = fator_unidade_fina
             ua_existente.status = "Em Conferência"
             ua_existente.descricao_visual = leit.descricao_visual
             ua_existente.atualizado_por = usuario
@@ -965,8 +977,8 @@ class RecebimentoService:
                 data_validade=data_val,
                 quantidade=qtd_operacional,
                 quantidade_base=qtd_base,
-                unidade_produto_id=leit.unidade_produto_id,
-                fator_conversao=leit.fator_conversao,
+                unidade_produto_id=id_unidade_fina,
+                fator_conversao=fator_unidade_fina,
                 status="Em Conferência",
                 estado="Ruim" if leit.int_material == "Não" else "Bom",
                 observacoes="Material avariado" if leit.int_material == "Não" else None,
@@ -1265,15 +1277,24 @@ class RecebimentoService:
                         ua.quantidade = round(nova_qtd_orig, 4)
                         
                         nova_ua_code = RecebimentoService._gerar_proxima_ua(db)
+                        
+                        # Busca a unidade base para garantir que a nova UA (Sobra/Split) também esteja normalizada
+                        unidade_base = db.query(UnidadeProduto).filter(
+                            UnidadeProduto.produto_id == ua.produto_id,
+                            UnidadeProduto.tipo == 'base'
+                        ).first()
+                        id_unidade_fina = unidade_base.id if unidade_base else ua.unidade_produto_id
+                        fator_unidade_fina = 1.0 if unidade_base else (ua.fator_conversao or 1.0)
+
                         nova_ua = UA(
                             ua=nova_ua_code,
                             filial_id=ua.filial_id,
                             produto_id=ua.produto_id,
                             lote=ua.lote,
                             data_validade=ua.data_validade,
-                            quantidade=round(reducao_base / (ua.fator_conversao or 1.0), 4),
-                            unidade_produto_id=ua.unidade_produto_id,
-                            fator_conversao=ua.fator_conversao,
+                            quantidade=round(reducao_base / fator_unidade_fina, 4),
+                            unidade_produto_id=id_unidade_fina,
+                            fator_conversao=fator_unidade_fina,
                             status="ESTORNADA",
                             estado=ua.estado,
                             observacoes="Sobra estornada fisicamente (Split)",

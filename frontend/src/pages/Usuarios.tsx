@@ -216,9 +216,8 @@ export default function Usuarios() {
                   <tr
                     key={u.id}
                     onClick={() => setUsuarioSelecionado(u)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      usuarioSelecionado?.id === u.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${usuarioSelecionado?.id === u.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-4 py-2 font-medium">{u.nome}</td>
                     <td className="px-4 py-2 font-bold text-blue-900">{u.login}</td>
@@ -238,88 +237,88 @@ export default function Usuarios() {
       </div>
 
       <Modal isOpen={modalAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Usuário' : 'Criar Usuário'}</h3>
-              <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-md w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Usuário' : 'Criar Usuário'}</h3>
+            <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              label="Nome"
+              value={nome}
+              onChange={(e) => {
+                setNome(e.target.value);
+                if (e.target.value.trim()) setErros({ ...erros, nome: '' });
+              }}
+              error={erros.nome}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Login"
+                value={login}
+                onChange={(e) => {
+                  setLogin(e.target.value);
+                  if (e.target.value.trim()) setErros({ ...erros, login: '' });
+                }}
+                error={erros.login}
+              />
+              <Input
+                label="Senha"
+                type="password"
+                maxLength={6}
+                value={senha}
+                onChange={(e) => {
+                  setSenha(e.target.value.replace(/\D/g, ''));
+                  setErros({ ...erros, senha: '' });
+                }}
+                error={erros.senha}
+              />
             </div>
 
-            <div className="space-y-4">
-              <Input
-                label="Nome"
-                value={nome}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Perfil de Acesso</label>
+              <select
+                value={perfilId}
                 onChange={(e) => {
-                  setNome(e.target.value);
-                  if (e.target.value.trim()) setErros({...erros, nome: ''});
+                  setPerfilId(Number(e.target.value));
+                  setErros({ ...erros, perfilId: '' });
                 }}
-                error={erros.nome}
-              />
+                className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.perfilId ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
+              >
+                <option value="" disabled>Selecione...</option>
+                {perfis.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+              {erros.perfilId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.perfilId}</span>}
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
+            {modoEdicao && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
                 <Input
-                  label="Login"
-                  value={login}
-                  onChange={(e) => {
-                    setLogin(e.target.value);
-                    if (e.target.value.trim()) setErros({...erros, login: ''});
-                  }}
-                  error={erros.login}
-                />
-                <Input
-                  label="Senha"
+                  label="Senha atual"
                   type="password"
                   maxLength={6}
-                  value={senha}
+                  value={senhaAutorizacao}
+                  placeholder="Digite a sua senha para confirmar"
                   onChange={(e) => {
-                    setSenha(e.target.value.replace(/\D/g, ''));
-                    setErros({...erros, senha: ''});
+                    setSenhaAutorizacao(e.target.value.replace(/\D/g, ''));
+                    setErros({ ...erros, senhaAutorizacao: '' });
                   }}
-                  error={erros.senha}
+                  error={erros.senhaAutorizacao}
                 />
+                {!erros.senhaAutorizacao && <p className="text-xs text-red-600 mt-1">Confirme que é você para salvar as alterações</p>}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Perfil de Acesso</label>
-                <select
-                  value={perfilId}
-                  onChange={(e) => {
-                    setPerfilId(Number(e.target.value));
-                    setErros({...erros, perfilId: ''});
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.perfilId ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                >
-                  <option value="" disabled>Selecione...</option>
-                  {perfis.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nome}</option>
-                  ))}
-                </select>
-                {erros.perfilId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.perfilId}</span>}
-              </div>
-
-              {modoEdicao && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
-                  <Input
-                    label="Senha atual"
-                    type="password"
-                    maxLength={6}
-                    value={senhaAutorizacao}
-                    placeholder="Digite a sua senha para confirmar"
-                    onChange={(e) => {
-                      setSenhaAutorizacao(e.target.value.replace(/\D/g, ''));
-                      setErros({...erros, senhaAutorizacao: ''});
-                    }}
-                    error={erros.senhaAutorizacao}
-                  />
-                  {!erros.senhaAutorizacao && <p className="text-xs text-red-600 mt-1">Confirme que é você para salvar as alterações</p>}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
-              <Button variant="primary" loading={carregando} loadingText="Salvando..." onClick={salvarUsuario}>Salvar</Button>
-            </div>
+            )}
           </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} loadingText="Salvando..." onClick={salvarUsuario}>Salvar</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

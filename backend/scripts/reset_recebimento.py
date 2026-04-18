@@ -9,7 +9,6 @@ root_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(root_dir))
 
 from app.db.database import SessionLocal
-from app.db.database import SessionLocal
 
 # Importa dinamicamente todos os modelos para registrar no SQLAlchemy
 import glob

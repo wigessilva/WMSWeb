@@ -172,9 +172,8 @@ export default function VinculosUnidades() {
                   <tr
                     key={v.id}
                     onClick={() => setVinculoSelecionado(v)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      vinculoSelecionado?.id === v.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${vinculoSelecionado?.id === v.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-4 py-2 font-bold text-gray-800">{v.unidade_externa}</td>
                     <td className="px-4 py-2 font-bold text-[#1a63b6]">{getSiglaUnidade(v.unidade_medida_id)}</td>
@@ -187,47 +186,47 @@ export default function VinculosUnidades() {
       </div>
 
       <Modal isOpen={modalAberto}>
-          <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Vínculo' : 'Criar Vínculo'}</h3>
-              <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            </div>
+        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-bold text-gray-800">{modoEdicao ? 'Editar Vínculo' : 'Criar Vínculo'}</h3>
+            <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+          </div>
 
-            <div className="space-y-4">
-              <Input
-                label="Unidade Externa (Ex: ROL)"
-                value={unidadeExterna}
+          <div className="space-y-4">
+            <Input
+              label="Unidade Externa (Ex: ROL)"
+              value={unidadeExterna}
+              onChange={(e) => {
+                setUnidadeExterna(e.target.value.toUpperCase());
+                if (e.target.value.trim()) setErros({ ...erros, unidadeExterna: '' });
+              }}
+              error={erros.unidadeExterna}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna (Ex: RL)</label>
+              <select
+                value={unidadeMedidaId}
                 onChange={(e) => {
-                  setUnidadeExterna(e.target.value.toUpperCase());
-                  if (e.target.value.trim()) setErros({...erros, unidadeExterna: ''});
+                  setUnidadeMedidaId(Number(e.target.value));
+                  setErros({ ...erros, unidadeMedidaId: '' });
                 }}
-                error={erros.unidadeExterna}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade Interna (Ex: RL)</label>
-                <select
-                  value={unidadeMedidaId}
-                  onChange={(e) => {
-                    setUnidadeMedidaId(Number(e.target.value));
-                    setErros({...erros, unidadeMedidaId: ''});
-                  }}
-                  className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.unidadeMedidaId ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
-                >
-                  <option value="" disabled>Selecione...</option>
-                  {unidades.map((u) => (
-                     <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
-                  ))}
-                </select>
-                {erros.unidadeMedidaId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.unidadeMedidaId}</span>}
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
-              <Button variant="primary" loading={carregando} onClick={salvarVinculo}>Salvar</Button>
+                className={`w-full border p-2 rounded focus:outline-none focus:ring-2 bg-white ${erros.unidadeMedidaId ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-[#1a63b6]'}`}
+              >
+                <option value="" disabled>Selecione...</option>
+                {unidades.map((u) => (
+                  <option key={u.id} value={u.id}>{u.sigla} - {u.desc}</option>
+                ))}
+              </select>
+              {erros.unidadeMedidaId && <span className="text-xs text-red-500 font-medium mt-1 inline-block">{erros.unidadeMedidaId}</span>}
             </div>
           </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
+            <Button variant="primary" loading={carregando} onClick={salvarVinculo}>Salvar</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

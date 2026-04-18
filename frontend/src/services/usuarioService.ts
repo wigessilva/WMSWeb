@@ -21,4 +21,4 @@ export const usuarioService = {
     const response = await apiClient.put(`/usuarios/${id}/inativar`);
     return response.data;
   }
-};
+};

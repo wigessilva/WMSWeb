@@ -88,9 +88,8 @@ export default function VinculosFornecedores() {
                   <tr
                     key={v.id}
                     onClick={() => setVinculoSelecionado(v)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      vinculoSelecionado?.id === v.id ? "bg-blue-100" : ""
-                    }`}
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${vinculoSelecionado?.id === v.id ? "bg-blue-100" : ""
+                      }`}
                   >
                     <td className="px-4 py-2 font-bold text-gray-800">{v.sku}</td>
                     <td className="px-4 py-2 text-gray-800">{v.descricao}</td>
