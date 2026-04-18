@@ -35,11 +35,6 @@ class UA(Base):
     # Localização Física (Opcional, pois pode estar 'Em Trânsito' na empilhadora)
     endereco_id = Column("EnderecoId", Integer, ForeignKey("Enderecos.Id"), nullable=True)
 
-    # Dimensões Físicas Específicas da UA (LCA)
-    largura = Column("Largura", Float, nullable=True)
-    comprimento = Column("Comprimento", Float, nullable=True)
-    altura = Column("Altura", Float, nullable=True)
-
     # Qualidade e Status de Ciclo de Vida
     estado = Column("Estado", String(10), default="Bom", nullable=False)
     status = Column("Status", String(50), default="Gerada", nullable=False)

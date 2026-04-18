@@ -97,7 +97,6 @@ export default function UAs() {
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Val</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Lote</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Endereço</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Dimensões</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Estado</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Status</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Observações</th>
@@ -152,9 +151,6 @@ export default function UAs() {
                       <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono text-xs">
                         {ua.endereco_id ? `ID: ${ua.endereco_id}` : "-"}
                       </span>
-                    </td>
-                    <td className="px-3 py-2 text-center text-xs">
-                      {ua.largura || 0}x{ua.comprimento || 0}x{ua.altura || 0}
                     </td>
                     <td className="px-3 py-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${ua.estado === "Bom" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"

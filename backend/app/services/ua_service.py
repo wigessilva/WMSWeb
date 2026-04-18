@@ -35,9 +35,6 @@ class UAService:
             quantidade=dados.quantidade,
             unidade_produto_id=dados.unidade_produto_id,
             endereco_id=dados.endereco_id,
-            largura=dados.largura,
-            comprimento=dados.comprimento,
-            altura=dados.altura,
             estado=dados.estado,
             observacoes=dados.observacoes,
             status="Gerada"
@@ -82,9 +79,6 @@ class UAService:
                 quantidade=dados.quantidade,
                 unidade_produto_id=dados.unidade_produto_id,
                 endereco_id=dados.endereco_id,
-                largura=dados.largura,
-                comprimento=dados.comprimento,
-                altura=dados.altura,
                 estado=dados.estado,
                 observacoes=dados.observacoes,
                 status="Gerada"

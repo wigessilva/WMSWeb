@@ -14,10 +14,6 @@ class UABase(BaseModel):
     unidade_produto_id: Optional[int] = None
     endereco_id: Optional[int] = None
 
-    largura: Optional[float] = None
-    comprimento: Optional[float] = None
-    altura: Optional[float] = None
-
     estado: str = Field(default="Bom")
     descricao_visual: Optional[str] = None
     observacoes: Optional[str] = None
