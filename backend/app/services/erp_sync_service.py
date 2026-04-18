@@ -170,6 +170,8 @@ class ServicoSincronizacaoERP:
                 nova_unidade = UnidadeMedida(
                     sigla=sigla_erp,
                     desc=desc_erp,
+                    natureza="Discreta",
+                    fator_conversao=1.0,
                     decimais=False,
                     atualizado_por=usuario
                 )

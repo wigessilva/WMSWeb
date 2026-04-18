@@ -16,22 +16,22 @@ class UnidadeProdutoBase(BaseModel):
     fator_conversao: float = 1.0
     peso_bruto: Optional[float] = None
     largura: Optional[float] = None
-    largura_unidade: Optional[str] = "mm"
+    largura_unidade_id: Optional[int] = None
     comprimento: Optional[float] = None
-    comprimento_unidade: Optional[str] = "mm"
+    comprimento_unidade_id: Optional[int] = None
     altura: Optional[float] = None
-    altura_unidade: Optional[str] = "mm"
+    altura_unidade_id: Optional[int] = None
     ean: Optional[str] = None
 
 
 class UnidadeProdutoEditar(BaseModel):
     tipo: Optional[str] = None
     largura: Optional[float] = None
-    largura_unidade: Optional[str] = None
+    largura_unidade_id: Optional[int] = None
     comprimento: Optional[float] = None
-    comprimento_unidade: Optional[str] = None
+    comprimento_unidade_id: Optional[int] = None
     altura: Optional[float] = None
-    altura_unidade: Optional[str] = None
+    altura_unidade_id: Optional[int] = None
     peso_bruto: Optional[float] = None
     ean: Optional[str] = None
 
@@ -43,6 +43,9 @@ class UnidadeProdutoSchema(UnidadeProdutoBase):
     id: int
     produto_id: int
     unidade_medida_relacao: Optional[UnidadeMedidaRelacaoSchema] = None
+    largura_unidade_rel: Optional[UnidadeMedidaRelacaoSchema] = None
+    comprimento_unidade_rel: Optional[UnidadeMedidaRelacaoSchema] = None
+    altura_unidade_rel: Optional[UnidadeMedidaRelacaoSchema] = None
 
     class Config:
         from_attributes = True

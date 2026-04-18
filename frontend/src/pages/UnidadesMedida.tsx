@@ -17,6 +17,7 @@ export default function UnidadesMedida() {
   const [modalAberto, setModalAberto] = useState(false);
   const [editDecimais, setEditDecimais] = useState(false);
   const [editNatureza, setEditNatureza] = useState('Discreta');
+  const [editFator, setEditFator] = useState(1.0);
   const [salvando, setSalvando] = useState(false);
 
   const carregarUnidades = async () => {
@@ -49,11 +50,18 @@ export default function UnidadesMedida() {
     }
     setEditDecimais(unidadeSelecionada.decimais);
     setEditNatureza(unidadeSelecionada.natureza || 'Discreta');
+    setEditFator(unidadeSelecionada.fator_conversao || 1.0);
     setModalAberto(true);
   };
 
   const salvarEdicao = async () => {
     if (!unidadeSelecionada) return;
+
+    if (editNatureza !== 'Discreta' && editFator <= 0) {
+      toast.error("O fator de conversão deve ser maior que zero.");
+      return;
+    }
+
     setSalvando(true);
     try {
       const sessaoStr = localStorage.getItem('wms_sessao_usuario');
@@ -70,6 +78,7 @@ export default function UnidadesMedida() {
       const unidadeAtualizada = await unidadeMedidaService.atualizar(unidadeSelecionada.id, {
         decimais: editDecimais,
         natureza: editNatureza,
+        fator_conversao: editNatureza === 'Discreta' ? 1.0 : editFator,
         usuario: usuarioLogado
       });
       setUnidades(unidades.map(u => u.id === unidadeSelecionada.id ? unidadeAtualizada : u));
@@ -135,6 +144,7 @@ export default function UnidadesMedida() {
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 w-24 text-center">Sigla</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200">Descrição</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Natureza</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Fator</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Decimais</th>
               </tr>
             </thead>
@@ -165,6 +175,9 @@ export default function UnidadesMedida() {
                       }`}>
                         {u.natureza || 'Discreta'}
                       </span>
+                    </td>
+                    <td className="px-4 py-2 text-center font-mono text-xs">
+                      {u.fator_conversao}
                     </td>
                     <td className="px-4 py-2 text-center font-bold">
                       {u.decimais ? <span className="text-green-600">Sim</span> : <span className="text-gray-400">Não</span>}
@@ -214,6 +227,24 @@ export default function UnidadesMedida() {
               </select>
               <p className="mt-2 text-[10px] text-gray-400 italic">Determina o tipo de mensuração do produto.</p>
             </div>
+
+            {editNatureza !== 'Discreta' ? (
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Fator de Conversão</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={editFator}
+                  onChange={(e) => setEditFator(Number(e.target.value))}
+                  className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] text-sm bg-gray-50"
+                />
+                <p className="mt-2 text-[10px] text-gray-400 italic">Conversão em relação à unidade base da mesma natureza.</p>
+              </div>
+            ) : (
+              <div className="bg-blue-50 p-3 rounded border border-blue-100 italic text-[10px] text-blue-600">
+                Unidades discretas (UN, CX, etc) não possuem fator global. O fator é definido individualmente em cada SKU.
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3">

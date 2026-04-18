@@ -25,11 +25,11 @@ class UnidadeProduto(Base):
     # Medidas e Peso
     peso_bruto = Column("PesoBruto", Float, nullable=True)
     largura = Column("Largura", Float, nullable=True)
-    largura_unidade = Column("LarguraUnidade", String(5), default="mm")
+    largura_unidade_id = Column("LarguraUnidadeId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
     comprimento = Column("Comprimento", Float, nullable=True)
-    comprimento_unidade = Column("ComprimentoUnidade", String(5), default="mm")
+    comprimento_unidade_id = Column("ComprimentoUnidadeId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
     altura = Column("Altura", Float, nullable=True)
-    altura_unidade = Column("AlturaUnidade", String(5), default="mm")
+    altura_unidade_id = Column("AlturaUnidadeId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
     ean = Column("Ean", String(50), nullable=True)
 
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
@@ -39,7 +39,10 @@ class UnidadeProduto(Base):
     rowversion = Column("Rowversion", Integer, default=1, nullable=False)
 
     produto = relationship("Produto", back_populates="unidades")
-    unidade_medida_relacao = relationship("UnidadeMedida")
+    unidade_medida_relacao = relationship("UnidadeMedida", foreign_keys=[unidade_medida_id])
+    largura_unidade_rel = relationship("UnidadeMedida", foreign_keys=[largura_unidade_id])
+    comprimento_unidade_rel = relationship("UnidadeMedida", foreign_keys=[comprimento_unidade_id])
+    altura_unidade_rel = relationship("UnidadeMedida", foreign_keys=[altura_unidade_id])
 
     __mapper_args__ = {
         "version_id_col": rowversion

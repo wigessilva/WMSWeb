@@ -68,8 +68,12 @@ class ProdutoService:
                 fator_conversao=und.fator_conversao,
                 peso_bruto=und.peso_bruto,
                 largura=und.largura,
+                largura_unidade_id=und.largura_unidade_id,
                 comprimento=und.comprimento,
-                altura=und.altura
+                comprimento_unidade_id=und.comprimento_unidade_id,
+                altura=und.altura,
+                altura_unidade_id=und.altura_unidade_id,
+                ean=und.ean
             )
             db.add(nova_und)
 

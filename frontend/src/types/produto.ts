@@ -5,13 +5,22 @@ export interface UnidadeProduto {
   fator_conversao: number;
   peso_bruto: number | null;
   largura: number | null;
-  largura_unidade?: string;
+  largura_unidade_id: number | null;
   comprimento: number | null;
-  comprimento_unidade?: string;
+  comprimento_unidade_id: number | null;
   altura: number | null;
-  altura_unidade?: string;
+  altura_unidade_id: number | null;
   ean: string | null;
   unidade_medida_relacao?: {
+    sigla: string;
+  };
+  largura_unidade_rel?: {
+    sigla: string;
+  };
+  comprimento_unidade_rel?: {
+    sigla: string;
+  };
+  altura_unidade_rel?: {
     sigla: string;
   };
 }
@@ -39,11 +48,6 @@ export interface Produto {
   bloquear_reprovado?: boolean | null;
   fracionavel_recebimento?: boolean | null;
   unidade_medida_id: number | null;
-  status: string;
-  largura_mm: number | null;
-  comprimento_m: number | null;
-  bloqueado: boolean;
-  motivo_bloqueio: string | null;
   criado_em: string;
   atualizado_em: string;
   unidades?: UnidadeProduto[];

@@ -5,11 +5,14 @@ from ..schemas.unidade_medida import UnidadeMedidaCriar
 
 class UnidadeMedidaService:
     @staticmethod
-    def listar_todas(db: Session):
-        return db.query(UnidadeMedida).all()
+    def listar_todas(db: Session, natureza: str | None = None):
+        query = db.query(UnidadeMedida)
+        if natureza:
+            query = query.filter(UnidadeMedida.natureza == natureza)
+        return query.all()
 
     @staticmethod
-    def atualizar(db: Session, unidade_id: int, decimais: bool | None = None, natureza: str | None = None, usuario: str | None = None):
+    def atualizar(db: Session, unidade_id: int, decimais: bool | None = None, natureza: str | None = None, fator_conversao: float | None = None, usuario: str | None = None):
         db_obj = db.query(UnidadeMedida).filter(UnidadeMedida.id == unidade_id).first()
         if not db_obj:
             raise HTTPException(status_code=404, detail="Unidade de medida não encontrada")
@@ -18,6 +21,10 @@ class UnidadeMedidaService:
             db_obj.decimais = decimais
         if natureza is not None:
             db_obj.natureza = natureza
+        if fator_conversao is not None:
+            if fator_conversao <= 0:
+                raise HTTPException(status_code=400, detail="O fator de conversão deve ser maior que zero")
+            db_obj.fator_conversao = fator_conversao
         if usuario is not None:
             db_obj.atualizado_por = usuario
 

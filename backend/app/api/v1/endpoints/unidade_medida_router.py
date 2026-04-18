@@ -8,8 +8,8 @@ from app.services.erp_sync_service import ServicoSincronizacaoERP
 router = APIRouter()
 
 @router.get("/", response_model=list[UnidadeMedidaSchema])
-def listar_unidades_medida(db: Session = Depends(get_db)):
-    return UnidadeMedidaService.listar_todas(db)
+def listar_unidades_medida(natureza: str | None = Query(None), db: Session = Depends(get_db)):
+    return UnidadeMedidaService.listar_todas(db, natureza=natureza)
 
 @router.patch("/{unidade_id}", response_model=UnidadeMedidaSchema)
 def atualizar_unidade(unidade_id: int, payload: UnidadeMedidaUpdate, db: Session = Depends(get_db)):
@@ -18,6 +18,7 @@ def atualizar_unidade(unidade_id: int, payload: UnidadeMedidaUpdate, db: Session
         unidade_id=unidade_id, 
         decimais=payload.decimais,
         natureza=payload.natureza,
+        fator_conversao=payload.fator_conversao,
         usuario=payload.usuario
     )
 

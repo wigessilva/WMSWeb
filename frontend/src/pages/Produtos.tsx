@@ -48,6 +48,7 @@ export default function Produtos() {
   const [familias, setFamilias] = useState<Familia[]>([])
   const [parametrosGlobais, setParametrosGlobais] = useState<any>(null)
   const [unidadesMedida, setUnidadesMedida] = useState<UnidadeMedida[]>([])
+  const [unidadesLineares, setUnidadesLineares] = useState<UnidadeMedida[]>([])
 
   // Estados dos Cadeados (Locks)
   const [lockVariavel, setLockVariavel] = useState(true)
@@ -72,11 +73,11 @@ export default function Produtos() {
   const [unidadeEditando, setUnidadeEditando] = useState<any>(null)
   const [tipoUnidade, setTipoUnidade] = useState("produto")
   const [largura, setLargura] = useState("")
-  const [unidadeLargura, setUnidadeLargura] = useState("mm")
+  const [unidadeLarguraId, setUnidadeLarguraId] = useState<number | "">("")
   const [comprimento, setComprimento] = useState("")
-  const [unidadeComprimento, setUnidadeComprimento] = useState("mm")
+  const [unidadeComprimentoId, setUnidadeComprimentoId] = useState<number | "">("")
   const [altura, setAltura] = useState("")
-  const [unidadeAltura, setUnidadeAltura] = useState("mm")
+  const [unidadeAlturaId, setUnidadeAlturaId] = useState<number | "">("")
   const [pesoBruto, setPesoBruto] = useState("")
   const [eanGtin, setEanGtin] = useState("")
 
@@ -88,11 +89,11 @@ export default function Produtos() {
     setUnidadeEditando(und)
     setTipoUnidade(und.tipo || "produto")
     setLargura(und.largura?.toString() || "")
-    setUnidadeLargura(und.largura_unidade || "mm")
+    setUnidadeLarguraId(und.largura_unidade_id || (unidadesLineares.length > 0 ? unidadesLineares[0].id : ""))
     setComprimento(und.comprimento?.toString() || "")
-    setUnidadeComprimento(und.comprimento_unidade || "mm")
+    setUnidadeComprimentoId(und.comprimento_unidade_id || (unidadesLineares.length > 0 ? unidadesLineares[0].id : ""))
     setAltura(und.altura?.toString() || "")
-    setUnidadeAltura(und.altura_unidade || "mm")
+    setUnidadeAlturaId(und.altura_unidade_id || (unidadesLineares.length > 0 ? unidadesLineares[0].id : ""))
     setPesoBruto(und.peso_bruto?.toString() || "")
     setEanGtin(und.ean || "")
     setModalEditarUnidadeAberto(true)
@@ -138,11 +139,11 @@ export default function Produtos() {
     const payload = {
       tipo: tipoUnidade,
       largura: largura ? Number(largura) : null,
-      largura_unidade: unidadeLargura,
+      largura_unidade_id: largura ? (unidadeLarguraId || null) : null,
       comprimento: comprimento ? Number(comprimento) : null,
-      comprimento_unidade: unidadeComprimento,
+      comprimento_unidade_id: comprimento ? (unidadeComprimentoId || null) : null,
       altura: altura ? Number(altura) : null,
-      altura_unidade: unidadeAltura,
+      altura_unidade_id: altura ? (unidadeAlturaId || null) : null,
       peso_bruto: pesoAtual,
       ean: eanGtin || null
     };
@@ -219,6 +220,8 @@ export default function Produtos() {
       setParametrosGlobais(globais)
       const unds = await unidadeMedidaService.listar()
       setUnidadesMedida(unds)
+      const lineares = await unidadeMedidaService.listar("Linear")
+      setUnidadesLineares(lineares)
     } catch (error) {
       console.error("Erro ao carregar dependências:", error)
     }
@@ -412,11 +415,11 @@ export default function Produtos() {
           await produtoService.editarUnidade(und.id, {
             tipo: und.tipo,
             largura: und.largura,
-            largura_unidade: und.largura_unidade,
+            largura_unidade_id: und.largura_unidade_id,
             comprimento: und.comprimento,
-            comprimento_unidade: und.comprimento_unidade,
+            comprimento_unidade_id: und.comprimento_unidade_id,
             altura: und.altura,
-            altura_unidade: und.altura_unidade,
+            altura_unidade_id: und.altura_unidade_id,
             peso_bruto: und.peso_bruto,
             ean: und.ean
           });
@@ -670,9 +673,9 @@ export default function Produtos() {
                                 </td>
                                 <td className="px-3 py-2 uppercase text-xs font-semibold">{und.tipo}</td>
                                 <td className="px-3 py-2">{und.fator_conversao}</td>
-                                <td className="px-3 py-2">{und.largura ? `${und.largura}${und.largura_unidade || 'mm'}` : '-'}</td>
-                                <td className="px-3 py-2">{und.comprimento ? `${und.comprimento}${und.comprimento_unidade || 'mm'}` : '-'}</td>
-                                <td className="px-3 py-2">{und.altura ? `${und.altura}${und.altura_unidade || 'mm'}` : '-'}</td>
+                                <td className="px-3 py-2">{und.largura ? `${und.largura}${und.largura_unidade_rel?.sigla || ''}` : '-'}</td>
+                                <td className="px-3 py-2">{und.comprimento ? `${und.comprimento}${und.comprimento_unidade_rel?.sigla || ''}` : '-'}</td>
+                                <td className="px-3 py-2">{und.altura ? `${und.altura}${und.altura_unidade_rel?.sigla || ''}` : '-'}</td>
                                 <td className="px-3 py-2">{und.peso_bruto || '-'}</td>
                                 <td className="px-3 py-2">{und.ean || '-'}</td>
                               </tr>
@@ -927,15 +930,16 @@ export default function Produtos() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid grid-cols-2 gap-4 ${unidadesLineares.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Largura</label>
                 <div className="flex">
                   <input type="number" value={largura} onChange={(e) => setLargura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                  <select value={unidadeLargura} onChange={(e) => setUnidadeLargura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                    <option value="mm">mm</option>
-                    <option value="cm">cm</option>
-                    <option value="m">m</option>
+                  <select value={unidadeLarguraId} onChange={(e) => setUnidadeLarguraId(e.target.value ? Number(e.target.value) : "")} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="">...</option>
+                    {unidadesLineares.map(u => (
+                      <option key={u.id} value={u.id}>{u.sigla}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -944,10 +948,11 @@ export default function Produtos() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento</label>
                 <div className="flex">
                   <input type="number" value={comprimento} onChange={(e) => setComprimento(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                  <select value={unidadeComprimento} onChange={(e) => setUnidadeComprimento(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                    <option value="mm">mm</option>
-                    <option value="cm">cm</option>
-                    <option value="m">m</option>
+                  <select value={unidadeComprimentoId} onChange={(e) => setUnidadeComprimentoId(e.target.value ? Number(e.target.value) : "")} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="">...</option>
+                    {unidadesLineares.map(u => (
+                      <option key={u.id} value={u.id}>{u.sigla}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -956,10 +961,11 @@ export default function Produtos() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Altura</label>
                 <div className="flex">
                   <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} className="w-full border border-gray-300 p-2 rounded-l text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
-                  <select value={unidadeAltura} onChange={(e) => setUnidadeAltura(e.target.value)} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
-                    <option value="mm">mm</option>
-                    <option value="cm">cm</option>
-                    <option value="m">m</option>
+                  <select value={unidadeAlturaId} onChange={(e) => setUnidadeAlturaId(e.target.value ? Number(e.target.value) : "")} className="border-t border-b border-r border-gray-300 bg-gray-50 p-2 rounded-r text-sm focus:outline-none">
+                    <option value="">...</option>
+                    {unidadesLineares.map(u => (
+                      <option key={u.id} value={u.id}>{u.sigla}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -969,6 +975,10 @@ export default function Produtos() {
                 <input type="number" value={pesoBruto} onChange={(e) => setPesoBruto(e.target.value)} className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a63b6]" />
               </div>
             </div>
+
+            {unidadesLineares.length === 0 && (
+              <p className="text-xs text-red-500 font-medium">Cadastre unidades lineares para habilitar dimensões.</p>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">EAN/GTIN</label>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, CheckConstraint
 from datetime import datetime
 from ..db.database import Base
 
@@ -6,11 +6,16 @@ from ..db.database import Base
 class UnidadeMedida(Base):
     __tablename__ = "UnidadesMedida"
 
+    __table_args__ = (
+        CheckConstraint("FatorConversao > 0", name="check_fator_positivo"),
+    )
+
     # O primeiro parâmetro (ex: "Id", "Sigla") força o nome da coluna no banco em PascalCase
     id = Column("Id", Integer, primary_key=True, index=True)
     sigla = Column("Sigla", String(10), unique=True, index=True, nullable=False)
     desc = Column("Desc", String(100), nullable=False)
     natureza = Column("Natureza", String(20), default="Discreta", nullable=False)
+    fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)
 
     # Se False (não), o sistema bloqueará entradas fracionadas (ex: 1.5) no futuro
     decimais = Column("Decimais", Boolean, default=False, nullable=False)
