@@ -5,6 +5,7 @@ class UnidadeMedidaBase(BaseModel):
     sigla: str
     desc: str
     decimais: bool = False
+    natureza: str = "Discreta"
 
 class UnidadeMedidaCriar(UnidadeMedidaBase):
     pass
@@ -18,5 +19,6 @@ class UnidadeMedidaSchema(UnidadeMedidaBase):
         from_attributes = True # Permite ler do SQLAlchemy
 
 
-class UnidadeMedidaAtualizarDecimais(BaseModel):
-    decimais: bool
+class UnidadeMedidaUpdate(BaseModel):
+    decimais: bool | None = None
+    natureza: str | None = None

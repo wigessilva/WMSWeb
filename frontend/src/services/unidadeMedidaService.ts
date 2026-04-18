@@ -7,8 +7,8 @@ export const unidadeMedidaService = {
     return response.data;
   },
 
-  atualizarDecimais: async (id: number, decimais: boolean): Promise<UnidadeMedida> => {
-    const response = await apiClient.patch(`/unidades-medida/${id}`, { decimais });
+  atualizar: async (id: number, dados: { decimais?: boolean, natureza?: string }): Promise<UnidadeMedida> => {
+    const response = await apiClient.patch(`/unidades-medida/${id}`, dados);
     return response.data;
   },
 
@@ -16,4 +16,4 @@ export const unidadeMedidaService = {
     const response = await apiClient.post('/unidades-medida/sincronizar');
     return response.data;
   }
-};
+};

@@ -3,6 +3,7 @@ export interface UnidadeMedida {
   sigla: string;
   desc: string;
   decimais: boolean;
+  natureza: string;
   criado_em: string;
   atualizado_em: string;
 }

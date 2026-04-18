@@ -1,3 +1,0 @@
-No momento em que a UA é bipada, o sistema deve ir até o cadastro, verificar a variável de consumo. Se for largura ou comprimento, ele deve ir na tabela UnidadesProduto, encontrar a unidade onde o tipo for "PRODUTO", buscar a largura ou o comprimento. Se a variável for comprimento, ele deve buscar a largura, fazer a conversão de m ou cm para mm se necessário; se for largura, ele deve buscar o comprimento e fazer a conversão se necessário.
-
-O problema é se a unidade base for m2 ou m? Como proceder a partir daqui? Se for m2 é fácil, basta pegar o fator e dividir pela largura ou comprimento, certo? Tem algo de errado com essa minha lógica?

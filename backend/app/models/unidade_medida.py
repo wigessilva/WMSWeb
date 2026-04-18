@@ -10,6 +10,7 @@ class UnidadeMedida(Base):
     id = Column("Id", Integer, primary_key=True, index=True)
     sigla = Column("Sigla", String(10), unique=True, index=True, nullable=False)
     desc = Column("Desc", String(100), nullable=False)
+    natureza = Column("Natureza", String(20), default="Discreta", nullable=False)
 
     # Se False (não), o sistema bloqueará entradas fracionadas (ex: 1.5) no futuro
     decimais = Column("Decimais", Boolean, default=False, nullable=False)
