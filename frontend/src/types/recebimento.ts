@@ -1,3 +1,5 @@
+import type { Produto } from './produto';
+
 export const StatusRecebimento = {
   IMPORTADO: "IMPORTADO",
   PENDENTE: "PENDENTE",
@@ -75,6 +77,7 @@ export interface RecebimentoItem {
   valor_unitario_oc?: number;
   qtd_oc?: number;
   und_oc?: string;
+  produto?: Produto;
 }
 
 export interface Recebimento {

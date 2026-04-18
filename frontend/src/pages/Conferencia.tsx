@@ -324,13 +324,47 @@ export default function Conferencia() {
 
   const totalBase = uasDoItem.reduce((acc, curr: any) => acc + (Number(curr.quantidade) || 0) * (curr.fator_conversao || 1), 0);
   const unidadesProd = itemAtual ? (unidadesCache[itemAtual.produto_id!] || []) : [];
+  
   const unidadeAtiva = unidadesProd.find(u =>
     (uaAtual?.unidade_medida_id && u.unidade_medida_id === uaAtual.unidade_medida_id) ||
     (uaAtual?.unidade_produto_id && u.id === uaAtual.unidade_produto_id)
   );
-  const fatorAtivo = unidadeAtiva?.fator_conversao || uaAtual?.fator_conversao || 1;
-  const siglaAtiva = unidadeAtiva?.unidade_medida_relacao?.sigla || uaAtual?.und || itemAtual?.und || '';
-  const totalExibicao = totalBase / (fatorAtivo || 1);
+
+  // Lógica de Variável de Consumo para exibição do Total
+  const variavel = itemAtual?.produto?.variavel_consumo?.toLowerCase();
+  const unidadePrincipal = unidadesProd.find(u => u.tipo === 'produto');
+  
+  let totalExibicao: number | null = 0;
+  let siglaAtiva = 'un';
+
+  if (variavel && variavel !== 'unidade') {
+    if (!unidadePrincipal) {
+      totalExibicao = null;
+      siglaAtiva = 'm'; // Sigla padrão caso falhe
+    } else {
+      // Busca a sigla da unidade de fator 1.0 para a natureza da variável (Linear para comprimento/largura)
+      const unidadeOperacional = unidadesProd.find(u => 
+        u.unidade_medida_relacao?.natureza === 'Linear' && u.fator_conversao === 1.0
+      );
+      
+      siglaAtiva = unidadeOperacional?.unidade_medida_relacao?.sigla || (variavel === 'peso' ? 'kg' : 'm'); 
+      
+      if (variavel === 'comprimento' || variavel === 'largura') {
+         const dim = variavel === 'comprimento' ? unidadePrincipal.largura : unidadePrincipal.comprimento;
+         const um = variavel === 'comprimento' ? (unidadePrincipal as any).largura_unidade_rel : (unidadePrincipal as any).comprimento_unidade_rel;
+         const fatorDim = um?.fator_conversao || 1.0;
+         
+         const dimPadrao = (dim || 0) * fatorDim;
+         totalExibicao = dimPadrao > 0 ? totalBase / dimPadrao : null;
+      } else {
+         totalExibicao = totalBase;
+      }
+    }
+  } else {
+    const fatorAtivo = unidadeAtiva?.fator_conversao || uaAtual?.fator_conversao || 1;
+    siglaAtiva = unidadeAtiva?.unidade_medida_relacao?.sigla || uaAtual?.und || itemAtual?.und || '';
+    totalExibicao = totalBase / (fatorAtivo || 1);
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans p-4">
@@ -586,7 +620,7 @@ export default function Conferencia() {
                     <div className="bg-emerald-600 text-white p-5 rounded-[2rem] shadow-lg shadow-emerald-200">
                       <label className="text-[9px] font-black uppercase tracking-widest block opacity-70 mb-1">Total Bipado</label>
                       <div className="text-3xl font-black">
-                        {totalExibicao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 })}
+                        {totalExibicao !== null ? totalExibicao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }) : "-"}
                         <span className="text-xs ml-1 opacity-50 uppercase">{siglaAtiva}</span>
                       </div>
                     </div>

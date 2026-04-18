@@ -92,7 +92,8 @@ export default function UAs() {
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">UA</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">SKU</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Descrição</th>
-                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd Variável</th>
+                <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Qtd Base</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Val</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200">Lote</th>
                 <th className="px-3 py-2 font-semibold border-b border-gray-200 text-center">Endereço</th>
@@ -105,7 +106,7 @@ export default function UAs() {
             <tbody className="text-gray-600 text-sm">
               {carregando ? (
                 <tr>
-                  <td colSpan={13} className="px-3 py-10 text-center">
+                  <td colSpan={12} className="px-3 py-10 text-center">
                     <div className="flex flex-col items-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wms-sidebar mb-2"></div>
                       <span>Carregando UAs...</span>
@@ -114,7 +115,7 @@ export default function UAs() {
                 </tr>
               ) : uasFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-3 py-4 text-center text-gray-500">
+                  <td colSpan={12} className="px-3 py-4 text-center text-gray-500">
                     Nenhuma UA encontrada.
                   </td>
                 </tr>
@@ -128,7 +129,10 @@ export default function UAs() {
                     <td className="px-3 py-2 font-medium text-gray-700">{ua.sku || "-"}</td>
                     <td className="px-3 py-2 text-gray-600 truncate max-w-xs" title={ua.descricao || ""}>{ua.descricao || "-"}</td>
                     <td className="px-3 py-2 text-center font-semibold text-blue-600">
-                      {ua.quantidade || "0"}
+                      {ua.quantidade !== undefined && ua.quantidade !== null ? ua.quantidade.toLocaleString('pt-BR') : "-"} {ua.unidade_sigla || ""}
+                    </td>
+                    <td className="px-3 py-2 text-center font-medium text-gray-500">
+                      {ua.quantidade_base !== undefined && ua.quantidade_base !== null ? ua.quantidade_base.toLocaleString('pt-BR') : "0"} {ua.unidade_base_sigla || ""}
                     </td>
                     <td className="px-3 py-2">
                       {ua.data_validade ? new Date(ua.data_validade).toLocaleDateString('pt-BR') : "-"}

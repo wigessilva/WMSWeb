@@ -2,7 +2,9 @@ import random
 from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from ..models.ua import UA
+from ..models.produto import Produto
 from ..schemas.ua import UACriar, UASchema, UAExpedirTransferencia, UAReceberTransferencia
+from ..core.conversores import ConversorDimensional
 
 # Importamos os modelos extras para validações e histórico
 from ..models.historico_ua import HistoricoUA
@@ -119,7 +121,10 @@ class UAService:
         ua = db.query(UA).filter(
             UA.ua == ua_codigo,
             UA.status != 'ESTORNADA'
-        ).options(joinedload(UA.produto)).first()
+        ).options(
+            joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
+            joinedload(UA.produto).joinedload(Produto.familia_relacao)
+        ).first()
         if not ua:
             return None
         
@@ -128,11 +133,22 @@ class UAService:
         if ua.produto:
             schema.sku = ua.produto.sku
             schema.descricao = ua.produto.descricao
+            schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
+            
+            # Resolução de Sigla e Quantidade Operacional
+            valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade
+            qtd_op, sigla = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
+            schema.quantidade = qtd_op
+            schema.unidade_sigla = sigla
+            
         return schema
 
     @staticmethod
     def listar_todas(db: Session):
-        uas = db.query(UA).filter(UA.status != 'ESTORNADA').options(joinedload(UA.produto)).all()
+        uas = db.query(UA).filter(UA.status != 'ESTORNADA').options(
+            joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
+            joinedload(UA.produto).joinedload(Produto.familia_relacao)
+        ).all()
         # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema
         resultado = []
         for ua in uas:
@@ -140,6 +156,14 @@ class UAService:
             if ua.produto:
                 schema.sku = ua.produto.sku
                 schema.descricao = ua.produto.descricao
+                schema.unidade_base_sigla = ua.produto.unidade_medida_relacao.sigla if ua.produto.unidade_medida_relacao else None
+                
+                # Resolução de Sigla e Quantidade Operacional
+                valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade
+                qtd_op, sigla = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
+                schema.quantidade = qtd_op
+                schema.unidade_sigla = sigla
+                
             resultado.append(schema)
         return resultado
 

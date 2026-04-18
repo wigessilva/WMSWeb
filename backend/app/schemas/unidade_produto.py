@@ -5,6 +5,7 @@ from typing import Optional
 # Schema auxiliar para trazer a sigla do banco de dados
 class UnidadeMedidaRelacaoSchema(BaseModel):
     sigla: str
+    natureza: str
 
     class Config:
         from_attributes = True

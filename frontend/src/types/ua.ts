@@ -9,6 +9,7 @@ export interface UA {
   lote?: string | null;
   data_validade?: string | null;
   quantidade?: number | null;
+  quantidade_base?: number | null;
   unidade_produto_id?: number | null;
   fator_conversao?: number | null;
   unidade_medida_id?: number | null;
@@ -19,6 +20,8 @@ export interface UA {
   estado: string;
   status: string;
   observacoes?: string | null;
+  unidade_sigla?: string | null;
+  unidade_base_sigla?: string | null;
   ean?: string | null;
   descricao_visual?: string | null;
   sem_gtin?: boolean; // Campo auxiliar para UI de conferência

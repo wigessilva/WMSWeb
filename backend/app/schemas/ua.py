@@ -10,6 +10,7 @@ class UABase(BaseModel):
     lote: Optional[str] = None
     data_validade: Optional[datetime] = None
     quantidade: Optional[float] = None
+    quantidade_base: Optional[float] = None
     unidade_produto_id: Optional[int] = None
     endereco_id: Optional[int] = None
 
@@ -56,6 +57,8 @@ class UASchema(UABase):
     
     criado_em: datetime
     atualizado_em: datetime
+    unidade_sigla: Optional[str] = None
+    unidade_base_sigla: Optional[str] = None
     rowversion: int
 
     class Config:

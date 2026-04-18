@@ -28,6 +28,7 @@ from ..models.ua import UA
 from ..models.historico_ua import HistoricoUA
 from ..models.configuracao_integracao import ConfiguracaoIntegracao
 from ..core.erp_schema import ERPSchema
+from ..core.conversores import ConversorDimensional
 
 
 class RecebimentoService:
@@ -750,7 +751,11 @@ class RecebimentoService:
         from app.models.unidade_produto import UnidadeProduto
         from app.models.unidade_medida import UnidadeMedida
 
-        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).first()
+        from sqlalchemy.orm import joinedload
+        from app.models.produto import Produto
+        item = db.query(RecebimentoItem).filter(RecebimentoItem.id == item_id).options(
+            joinedload(RecebimentoItem.produto).joinedload(Produto.familia_relacao)
+        ).first()
         if not item:
             raise ValueError("Item não encontrado.")
 
@@ -926,10 +931,15 @@ class RecebimentoService:
             if ua_existente.status == "ESTORNADA":
                 raise ValueError(f"A UA {leit.ua} foi estornada e não pode ser reutilizada. Utilize uma nova etiqueta.")
             
+            # Cálculo da Quantidade Operacional vs Base
+            qtd_base = leit.quantidade * (leit.fator_conversao or 1.0)
+            qtd_operacional, _ = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
+
             ua_existente.produto_id = item.sku
             ua_existente.lote = leit.lote
             ua_existente.data_validade = data_val
-            ua_existente.quantidade = leit.quantidade
+            ua_existente.quantidade = qtd_operacional
+            ua_existente.quantidade_base = qtd_base
             ua_existente.unidade_produto_id = leit.unidade_produto_id
             ua_existente.fator_conversao = leit.fator_conversao
             ua_existente.status = "Em Conferência"
@@ -943,13 +953,18 @@ class RecebimentoService:
             else:
                 ua_existente.estado = "Bom"
         else:
+            # Cálculo da Quantidade Operacional vs Base
+            qtd_base = leit.quantidade * (leit.fator_conversao or 1.0)
+            qtd_operacional, _ = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
+
             nova_ua = UA(
                 ua=leit.ua,
                 filial_id=filial_id,
                 produto_id=item.sku,
                 lote=leit.lote,
                 data_validade=data_val,
-                quantidade=leit.quantidade,
+                quantidade=qtd_operacional,
+                quantidade_base=qtd_base,
                 unidade_produto_id=leit.unidade_produto_id,
                 fator_conversao=leit.fator_conversao,
                 status="Em Conferência",

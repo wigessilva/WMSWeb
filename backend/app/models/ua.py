@@ -26,7 +26,8 @@ class UA(Base):
     data_validade = Column("DataValidade", DateTime, nullable=True)
 
     # Quantidade amarrada à Unidade específica daquele Produto
-    quantidade = Column("Quantidade", Float, nullable=True)
+    quantidade = Column("Quantidade", Float, nullable=True) # Quantidade Operacional (Variável)
+    quantidade_base = Column("QuantidadeBase", Float, nullable=True) # Quantidade Contábil (Base)
     unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("UnidadesProduto.Id"), nullable=True)
     fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)
 
