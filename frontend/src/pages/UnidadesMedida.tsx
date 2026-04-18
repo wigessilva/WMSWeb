@@ -136,13 +136,12 @@ export default function UnidadesMedida() {
                 <th className="px-4 py-3 font-semibold border-b border-gray-200">Descrição</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Natureza</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Decimais</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-right">Última Atualização</th>
               </tr>
             </thead>
             <tbody className="text-gray-600 text-sm">
               {unidadesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
                     Nenhuma unidade encontrada.
                   </td>
                 </tr>
@@ -167,9 +166,6 @@ export default function UnidadesMedida() {
                     </td>
                     <td className="px-4 py-2 text-center font-bold">
                       {u.decimais ? <span className="text-green-600">Sim</span> : <span className="text-gray-400">Não</span>}
-                    </td>
-                    <td className="px-4 py-2 text-right text-xs text-gray-400">
-                      {new Date(u.atualizado_em).toLocaleString('pt-BR')}
                     </td>
                   </tr>
                 ))
