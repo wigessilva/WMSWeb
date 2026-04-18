@@ -1666,21 +1666,17 @@ class RecebimentoService:
         
         qtd_xml = float(item.qtd_nota or 0.0)
         preco_xml = float(item.valor_unitario or 0.0)
-        TOLERANCIA = 0.01 # Tolerância fixa para centavos
 
         candidatos_perfeitos = []
         candidatos_qtd = []
 
-        # =========================================================
-        # REPLICAÇÃO EXATA DA LÓGICA DO SISTEMA ANTIGO
-        # =========================================================
         for item_oc in itens_oc:
             sku_oc = str(item_oc["Sku"])
             qtd_oc = float(item_oc.get("Qtd", 0))
             preco_oc = float(item_oc.get("PrecoUnitario", 0))
 
             match_qtd = (qtd_xml == qtd_oc)
-            match_preco = abs(preco_xml - preco_oc) <= TOLERANCIA
+            match_preco = (preco_xml == preco_oc)
 
             obj_candidato = {
                 "sku": sku_oc,
@@ -1708,9 +1704,6 @@ class RecebimentoService:
             motivo_sugestao = ""
             sugestao_sku = None
 
-        # =========================================================
-        # FORMATAÇÃO DO RETORNO PARA A NOVA INTERFACE
-        # =========================================================
         if sugestao_sku:
             # Verifica se o produto sugerido existe na base do WMS
             prod_wms = db_wms.query(Produto).filter(Produto.sku == sugestao_sku["sku"]).first()
