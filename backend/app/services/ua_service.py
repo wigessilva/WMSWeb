@@ -123,7 +123,8 @@ class UAService:
             UA.status != 'ESTORNADA'
         ).options(
             joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
-            joinedload(UA.produto).joinedload(Produto.familia_relacao)
+            joinedload(UA.produto).joinedload(Produto.familia_relacao),
+            joinedload(UA.unidade_medida_operacional)
         ).first()
         if not ua:
             return None
@@ -137,9 +138,19 @@ class UAService:
             
             # Resolução de Sigla e Quantidade Operacional
             valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade
-            qtd_op, sigla = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
-            schema.quantidade = qtd_op
-            schema.unidade_sigla = sigla
+            
+            # Se já temos o ID da unidade operacional gravado, usamos ele (Performance)
+            if ua.unidade_medida_operacional:
+                schema.quantidade = ua.quantidade
+                schema.unidade_sigla = ua.unidade_medida_operacional.sigla
+            else:
+                # Fallback para UAs antigas que não possuem o ID gravado
+                qtd_op, id_um_op = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
+                schema.quantidade = qtd_op
+                if id_um_op:
+                    from ..models.unidade_medida import UnidadeMedida
+                    um_op = db.query(UnidadeMedida).filter(UnidadeMedida.id == id_um_op).first()
+                    schema.unidade_sigla = um_op.sigla if um_op else None
             
         return schema
 
@@ -147,7 +158,8 @@ class UAService:
     def listar_todas(db: Session):
         uas = db.query(UA).filter(UA.status != 'ESTORNADA').options(
             joinedload(UA.produto).joinedload(Produto.unidade_medida_relacao),
-            joinedload(UA.produto).joinedload(Produto.familia_relacao)
+            joinedload(UA.produto).joinedload(Produto.familia_relacao),
+            joinedload(UA.unidade_medida_operacional)
         ).all()
         # Mapeia manualmente para injetar SKU e Descrição do Produto no topo do Schema
         resultado = []
@@ -160,9 +172,19 @@ class UAService:
                 
                 # Resolução de Sigla e Quantidade Operacional
                 valor_base = ua.quantidade_base if ua.quantidade_base is not None else ua.quantidade
-                qtd_op, sigla = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
-                schema.quantidade = qtd_op
-                schema.unidade_sigla = sigla
+                
+                # Se já temos o ID da unidade operacional gravado, usamos ele (Performance)
+                if ua.unidade_medida_operacional:
+                    schema.quantidade = ua.quantidade
+                    schema.unidade_sigla = ua.unidade_medida_operacional.sigla
+                else:
+                    # Fallback para UAs antigas
+                    qtd_op, id_um_op = ConversorDimensional.converter_para_operacional(db, ua.produto_id, valor_base)
+                    schema.quantidade = qtd_op
+                    if id_um_op:
+                        from ..models.unidade_medida import UnidadeMedida
+                        um_op = db.query(UnidadeMedida).filter(UnidadeMedida.id == id_um_op).first()
+                        schema.unidade_sigla = um_op.sigla if um_op else None
                 
             resultado.append(schema)
         return resultado

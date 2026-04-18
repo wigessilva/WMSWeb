@@ -29,6 +29,7 @@ class UA(Base):
     quantidade = Column("Quantidade", Float, nullable=True) # Quantidade Operacional (Variável)
     quantidade_base = Column("QuantidadeBase", Float, nullable=True) # Quantidade Contábil (Base)
     unidade_produto_id = Column("UnidadeProdutoId", Integer, ForeignKey("UnidadesProduto.Id"), nullable=True)
+    unidade_medida_operacional_id = Column("UnidadeMedidaOperacionalId", Integer, ForeignKey("UnidadesMedida.Id"), nullable=True)
     fator_conversao = Column("FatorConversao", Float, default=1.0, nullable=False)
 
     # Localização Física (Opcional, pois pode estar 'Em Trânsito' na empilhadora)
@@ -59,6 +60,7 @@ class UA(Base):
 
     produto = relationship("Produto")
     unidade_produto = relationship("UnidadeProduto")
+    unidade_medida_operacional = relationship("UnidadeMedida", foreign_keys=[unidade_medida_operacional_id])
     endereco = relationship("Endereco")
 
     __mapper_args__ = {

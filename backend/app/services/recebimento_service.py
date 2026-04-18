@@ -945,7 +945,7 @@ class RecebimentoService:
             
             # Cálculo da Quantidade Operacional vs Base
             qtd_base = leit.quantidade * (leit.fator_conversao or 1.0)
-            qtd_operacional, _ = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
+            qtd_operacional, id_um_op = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
 
             ua_existente.produto_id = item.sku
             ua_existente.lote = leit.lote
@@ -953,6 +953,7 @@ class RecebimentoService:
             ua_existente.quantidade = qtd_operacional
             ua_existente.quantidade_base = qtd_base
             ua_existente.unidade_produto_id = id_unidade_fina
+            ua_existente.unidade_medida_operacional_id = id_um_op
             ua_existente.fator_conversao = fator_unidade_fina
             ua_existente.status = "Em Conferência"
             ua_existente.descricao_visual = leit.descricao_visual
@@ -967,7 +968,7 @@ class RecebimentoService:
         else:
             # Cálculo da Quantidade Operacional vs Base
             qtd_base = leit.quantidade * (leit.fator_conversao or 1.0)
-            qtd_operacional, _ = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
+            qtd_operacional, id_um_op = ConversorDimensional.converter_para_operacional(db, item.sku, qtd_base)
 
             nova_ua = UA(
                 ua=leit.ua,
@@ -978,6 +979,7 @@ class RecebimentoService:
                 quantidade=qtd_operacional,
                 quantidade_base=qtd_base,
                 unidade_produto_id=id_unidade_fina,
+                unidade_medida_operacional_id=id_um_op,
                 fator_conversao=fator_unidade_fina,
                 status="Em Conferência",
                 estado="Ruim" if leit.int_material == "Não" else "Bom",
@@ -1294,6 +1296,7 @@ class RecebimentoService:
                             data_validade=ua.data_validade,
                             quantidade=round(reducao_base / fator_unidade_fina, 4),
                             unidade_produto_id=id_unidade_fina,
+                            unidade_medida_operacional_id=ua.unidade_medida_operacional_id,
                             fator_conversao=fator_unidade_fina,
                             status="ESTORNADA",
                             estado=ua.estado,
