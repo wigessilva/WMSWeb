@@ -7,13 +7,13 @@ export const unidadeMedidaService = {
     return response.data;
   },
 
-  atualizar: async (id: number, dados: { decimais?: boolean, natureza?: string }): Promise<UnidadeMedida> => {
+  atualizar: async (id: number, dados: { decimais?: boolean, natureza?: string, usuario?: string }): Promise<UnidadeMedida> => {
     const response = await apiClient.patch(`/unidades-medida/${id}`, dados);
     return response.data;
   },
 
-  sincronizarERP: async (): Promise<{ inseridas: number, atualizadas: number }> => {
-    const response = await apiClient.post('/unidades-medida/sincronizar');
+  sincronizarERP: async (usuario?: string): Promise<{ inseridas: number, atualizadas: number }> => {
+    const response = await apiClient.post(`/unidades-medida/sincronizar${usuario ? `?usuario=${usuario}` : ''}`);
     return response.data;
   }
 };

@@ -17,7 +17,6 @@ class UnidadeMedida(Base):
 
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
     atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)
-    criado_por = Column("CriadoPor", String(100), nullable=True)
     atualizado_por = Column("AtualizadoPor", String(100), nullable=True)
     rowversion = Column("Rowversion", Integer, default=1, nullable=False)
 

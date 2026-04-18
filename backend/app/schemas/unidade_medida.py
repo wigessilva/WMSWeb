@@ -22,3 +22,4 @@ class UnidadeMedidaSchema(UnidadeMedidaBase):
 class UnidadeMedidaUpdate(BaseModel):
     decimais: bool | None = None
     natureza: str | None = None
+    usuario: str | None = None

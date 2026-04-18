@@ -149,7 +149,7 @@ class ServicoSincronizacaoERP:
         }
 
     @staticmethod
-    def sincronizar_unidades_medida(db_wms: Session, db_erp: Session):
+    def sincronizar_unidades_medida(db_wms: Session, db_erp: Session, usuario: str | None = None):
         query_erp = text(f"SELECT {ERPSchema.COL_UM_SIGLA}, {ERPSchema.COL_UM_DESCRICAO} FROM {ERPSchema.TABELA_UNIDADES_MEDIDA} WITH (NOLOCK)")
 
         # Lendo os dados do ERP
@@ -170,15 +170,21 @@ class ServicoSincronizacaoERP:
                 nova_unidade = UnidadeMedida(
                     sigla=sigla_erp,
                     desc=desc_erp,
-                    decimais=False
+                    decimais=False,
+                    atualizado_por=usuario
                 )
                 db_wms.add(nova_unidade)
                 unidades_adicionadas += 1
             else:
                 # Se já existe, atualiza apenas a descrição.
                 # NUNCA atualiza os decimais aqui, pois o WMS agora é o dono dessa informação.
+                atualizou = False
                 if unidade_existente.desc != desc_erp:
                     unidade_existente.desc = desc_erp
+                    atualizou = True
+                
+                if atualizou:
+                    unidade_existente.atualizado_por = usuario
                     unidades_atualizadas += 1
 
         # Salva as alterações no WMS

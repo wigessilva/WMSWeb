@@ -56,9 +56,21 @@ export default function UnidadesMedida() {
     if (!unidadeSelecionada) return;
     setSalvando(true);
     try {
+      const sessaoStr = localStorage.getItem('wms_sessao_usuario');
+      let usuarioLogado = 'sistema';
+      if (sessaoStr) {
+        try {
+          const sessao = JSON.parse(sessaoStr);
+          usuarioLogado = sessao.login || 'sistema';
+        } catch (e) {
+          console.error("Erro ao fazer parse da sessão:", e);
+        }
+      }
+
       const unidadeAtualizada = await unidadeMedidaService.atualizar(unidadeSelecionada.id, {
         decimais: editDecimais,
-        natureza: editNatureza
+        natureza: editNatureza,
+        usuario: usuarioLogado
       });
       setUnidades(unidades.map(u => u.id === unidadeSelecionada.id ? unidadeAtualizada : u));
       setUnidadeSelecionada(unidadeAtualizada);
@@ -74,7 +86,18 @@ export default function UnidadesMedida() {
 
   const sincronizarComERP = async () => {
     try {
-      const resultado = await unidadeMedidaService.sincronizarERP();
+      const sessaoStr = localStorage.getItem('wms_sessao_usuario');
+      let usuarioLogado = 'sistema';
+      if (sessaoStr) {
+        try {
+          const sessao = JSON.parse(sessaoStr);
+          usuarioLogado = sessao.login || 'sistema';
+        } catch (e) {
+          console.error("Erro ao fazer parse da sessão:", e);
+        }
+      }
+
+      const resultado = await unidadeMedidaService.sincronizarERP(usuarioLogado);
       toast.success(`Sincronização concluída! ${resultado.inseridas} novas, ${resultado.atualizadas} atualizadas.`);
       carregarUnidades();
     } catch (error: any) {
