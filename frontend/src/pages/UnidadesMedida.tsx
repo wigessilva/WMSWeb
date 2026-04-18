@@ -156,9 +156,11 @@ export default function UnidadesMedida() {
                     <td className="px-4 py-2 font-medium">{u.desc}</td>
                     <td className="px-4 py-2 text-center text-xs font-semibold uppercase">
                       <span className={`px-2 py-1 rounded bg-gray-100 ${
-                        u.natureza === 'Peso' ? 'text-green-700 bg-green-50' : 
+                        u.natureza === 'Massa' ? 'text-green-700 bg-green-50' : 
                         u.natureza === 'Discreta' ? 'text-blue-700 bg-blue-50' : 
                         u.natureza === 'Área' ? 'text-purple-700 bg-purple-50' :
+                        u.natureza === 'Linear' ? 'text-cyan-700 bg-cyan-50' :
+                        u.natureza === 'Volume' ? 'text-indigo-700 bg-indigo-50' :
                         'text-orange-700 bg-orange-50'
                       }`}>
                         {u.natureza || 'Discreta'}
@@ -205,10 +207,10 @@ export default function UnidadesMedida() {
                 className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:ring-2 focus:ring-[#1a63b6] text-sm bg-gray-50"
               >
                 <option value="Discreta">Discreta</option>
-                <option value="Peso">Peso</option>
-                <option value="Largura">Largura</option>
-                <option value="Comprimento">Comprimento</option>
+                <option value="Linear">Linear</option>
                 <option value="Área">Área</option>
+                <option value="Volume">Volume</option>
+                <option value="Massa">Massa</option>
               </select>
               <p className="mt-2 text-[10px] text-gray-400 italic">Determina o tipo de mensuração do produto.</p>
             </div>
