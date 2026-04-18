@@ -1648,107 +1648,82 @@ class RecebimentoService:
         if not rec or not item:
             return {"sugestao": None, "mensagem": "Recebimento ou Item não encontrado."}
 
-        # 1. Verificar se há pendência de unidade
-        unidade_interna_direta = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == item.und).first()
-        vinculo_und = None
-        if not unidade_interna_direta:
-            vinculo_und = db_wms.query(VinculoUnidade).filter(VinculoUnidade.unidade_externa == item.und).first()
-
-        unidade_resolvida = unidade_interna_direta or vinculo_und
-        
-        if not unidade_resolvida:
-            return {"sugestao": None, "mensagem": "Unidade pendente"}
-
-        id_und_wms = unidade_interna_direta.id if unidade_interna_direta else vinculo_und.unidade_medida_id
-
-        # 2. Verificar se tem OC
         if not rec.oc:
             return {"sugestao": None, "mensagem": "Sem OC vinculada."}
 
-        # 3. Buscar OC no ERP
-        query_erp = text(f"""
-            SELECT 
-                {ERPSchema.COL_IT_SKU} as Sku, 
-                {ERPSchema.COL_IT_UND} as Und, 
-                {ERPSchema.COL_IT_QTD} as Qtd, 
-                {ERPSchema.COL_IT_QTD_RECEBIDA} as QtdRecebida, 
-                {ERPSchema.COL_IT_PRECO} as PrecoUnitario, 
-                {ERPSchema.COL_IT_DESCRICAO} as Descricao
-            FROM {ERPSchema.TABELA_PEDIDOS_COMPRA_ITENS} WITH (NOLOCK) 
-            WHERE {ERPSchema.COL_IT_OC_NUMERO} = :oc
-        """)
-        itens_oc = db_erp.execute(query_erp, {"oc": rec.oc}).mappings().all()
+        # Pega a primeira OC em caso de múltiplas
+        oc_numero_raw = str(rec.oc)
+        num_oc = oc_numero_raw.split(",")[0].strip()
+
+        # Busca itens da OC no ERP
+        query_erp = text(f"SELECT {ERPSchema.COL_IT_SKU} as Sku, {ERPSchema.COL_IT_QTD} as Qtd, {ERPSchema.COL_IT_PRECO} as PrecoUnitario, {ERPSchema.COL_IT_DESCRICAO} as Descricao FROM {ERPSchema.TABELA_PEDIDOS_COMPRA_ITENS} WITH (NOLOCK) WHERE {ERPSchema.COL_IT_OC_NUMERO} = :oc")
+        itens_oc = db_erp.execute(query_erp, {"oc": num_oc}).mappings().all()
 
         if not itens_oc:
-            return {"sugestao": None, "mensagem": "OC não encontrada ou sem itens."}
+            return {"sugestao": None, "mensagem": "OC não encontrada no ERP ou sem itens."}
 
         from app.models.produto import Produto
-        from app.models.unidade_produto import UnidadeProduto
+        
+        qtd_xml = float(item.qtd_nota or 0.0)
+        preco_xml = float(item.valor_unitario or 0.0)
+        TOLERANCIA = 0.01 # Tolerância fixa para centavos
 
-        candidatos = []
+        candidatos_perfeitos = []
+        candidatos_qtd = []
 
+        # =========================================================
+        # REPLICAÇÃO EXATA DA LÓGICA DO SISTEMA ANTIGO
+        # =========================================================
         for item_oc in itens_oc:
-            prod = db_wms.query(Produto).filter(Produto.sku == str(item_oc["Sku"])).first()
-            if not prod:
-                continue
+            sku_oc = str(item_oc["Sku"])
+            qtd_oc = float(item_oc.get("Qtd", 0))
+            preco_oc = float(item_oc.get("PrecoUnitario", 0))
 
-            und_erp_str = str(item_oc["Und"]).upper()
-            und_medida_oc = db_wms.query(UnidadeMedida).filter(UnidadeMedida.sigla == und_erp_str).first()
-            
-            fator_conversao_erp = 1.0
-            if und_medida_oc:
-                prod_und_erp = db_wms.query(UnidadeProduto).filter(
-                    UnidadeProduto.produto_id == prod.id,
-                    UnidadeProduto.unidade_medida_id == und_medida_oc.id
-                ).first()
-                if prod_und_erp:
-                    fator_conversao_erp = prod_und_erp.fator_conversao
-                
-            fator_conversao_xml = 1.0
-            prod_und_xml = db_wms.query(UnidadeProduto).filter(
-                UnidadeProduto.produto_id == prod.id,
-                UnidadeProduto.unidade_medida_id == id_und_wms
-            ).first()
+            match_qtd = (qtd_xml == qtd_oc)
+            match_preco = abs(preco_xml - preco_oc) <= TOLERANCIA
 
-            if prod_und_xml:
-                fator_conversao_xml = prod_und_xml.fator_conversao
+            obj_candidato = {
+                "sku": sku_oc,
+                "descricao": item_oc["Descricao"]
+            }
+
+            if match_qtd and match_preco:
+                candidatos_perfeitos.append(obj_candidato)
+            if match_qtd:
+                candidatos_qtd.append(obj_candidato)
+
+        sugestao_sku = None
+        motivo_sugestao = ""
+
+        if len(candidatos_perfeitos) == 1:
+            sugestao_sku = candidatos_perfeitos[0]
+            motivo_sugestao = f"Sugestão: item da OC {num_oc} compatível (Qtd e Preço)."
+        elif len(candidatos_perfeitos) > 1:
+            motivo_sugestao = "Atenção: Múltiplos itens na OC com mesma Qtd/Preço. Verifique a descrição."
+            sugestao_sku = None
+        elif len(itens_oc) == 1 and len(candidatos_qtd) == 1:
+            sugestao_sku = candidatos_qtd[0]
+            motivo_sugestao = "Sugestão: item da OC com quantidade compatível."
+        else:
+            motivo_sugestao = ""
+            sugestao_sku = None
+
+        # =========================================================
+        # FORMATAÇÃO DO RETORNO PARA A NOVA INTERFACE
+        # =========================================================
+        if sugestao_sku:
+            # Verifica se o produto sugerido existe na base do WMS
+            prod_wms = db_wms.query(Produto).filter(Produto.sku == sugestao_sku["sku"]).first()
+            if prod_wms:
+                sugestao_sku["id"] = prod_wms.id
+                return {"sugestao": sugestao_sku, "mensagem": motivo_sugestao}
             else:
-                return {"sugestao": None, "mensagem": "Unidade pendente"}
-            
-            fator_relativo = fator_conversao_erp / fator_conversao_xml
-            
-            qtd_oc = float(item_oc["Qtd"])
-            qtd_recebida_oc = float(item_oc.get("QtdRecebida", 0))
-            saldo_esperado_oc = qtd_oc - qtd_recebida_oc
-            
-            qtd_esperada_xml = saldo_esperado_oc * fator_relativo
-            preco_esperado_xml = float(item_oc["PrecoUnitario"]) / fator_relativo
+                return {
+                    "sugestao": None, 
+                    "mensagem": f"Encontramos o SKU '{sugestao_sku['sku']}' na OC {num_oc}, mas ele não está cadastrado."
+                }
 
-            val_unitario_xml = float(item.valor_unitario or 0.0)
-
-            # Margem de tolerância
-            margem = 0.01
-
-            match_qtd = abs(float(item.qtd_nota) - qtd_esperada_xml) <= margem
-            match_preco = abs(val_unitario_xml - preco_esperado_xml) <= margem
-
-            if len(itens_oc) == 1 or (match_qtd and match_preco):
-                candidatos.append({
-                    "produto": prod,
-                    "item_oc_desc": item_oc["Descricao"]
-                })
-
-        if not candidatos:
-            return {"sugestao": None, "mensagem": "Nenhum item compatível verificado no ERP."}
-
-        if len(candidatos) == 1:
-            sug_prod = candidatos[0]["produto"]
-            if len(itens_oc) == 1:
-                return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: OC com item único"}
-            else:
-                return {"sugestao": {"id": sug_prod.id, "sku": sug_prod.sku, "descricao": sug_prod.descricao}, "mensagem": "Sugestão: item com quantidade e preços correspondentes."}
-
-        return {"sugestao": None, "mensagem": "Múltiplos itens compatíveis."}
+        return {"sugestao": None, "mensagem": motivo_sugestao}
 
     @staticmethod
     def _acumular_texto(atual: Optional[str], novo: Optional[str], separador: str = " | ") -> Optional[str]:
