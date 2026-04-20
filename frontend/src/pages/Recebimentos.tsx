@@ -903,6 +903,9 @@ export default function Recebimentos() {
                   if (item.sku && (item.valor_unitario_oc || item.is_bonificacao)) {
                     fisicoMsgs.push(`${getPrefixo(item)}Esperado: ${item.qtd_nota} ${item.und} (Nota) | ${item.valor_unitario_oc ? `${item.qtd_oc || 0} ${item.und_oc || item.und} (OC)` : 'Bonificação'}`);
                   }
+                  if (item.valor_unitario_oc && item.qtd_nota > (item.qtd_oc || 0) + 0.01) {
+                    fisicoStatus = 'problem';
+                  }
                 });
 
                 if (itensSemVinculo.length > 0) fisicoMsgs.push(`Há ${itensSemVinculo.length} ${plural(itensSemVinculo.length, 'item', 'itens')} aguardando vínculo`);
@@ -918,6 +921,9 @@ export default function Recebimentos() {
                     item.descricoes_visuais.forEach(obs => fisicoMsgs.push(`${getPrefixo(item)}Obs. visual: ${obs}`));
                   }
                   if (Math.abs((item.qtd_recebida || 0) - item.qtd_nota) > 0.01) fisicoStatus = 'problem';
+                  if (item.valor_unitario_oc && item.qtd_nota > (item.qtd_oc || 0) + 0.01) {
+                    fisicoStatus = 'problem';
+                  }
                 });
               }
             } else {

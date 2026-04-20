@@ -288,10 +288,10 @@ class RecebimentoService:
             preco_base_xml = float(item.valor_unitario or 0.0) / (fator_xml if fator_xml > 0 else 1.0)
             preco_xml_na_und_oc = preco_base_xml * fator_oc
             
-            # Salva o preço da OC convertido para a unidade da NF para exibição no painel
+            # Salva o saldo da OC convertido para a unidade da NF para exibição e comparação no painel
             item.valor_unitario_oc = preco_base_oc * (fator_xml if fator_xml > 0 else 1.0)
-            item.qtd_oc = qtd_oc
-            item.und_oc = und_oc_sigla
+            item.qtd_oc = round(saldo_esperado_xml, 4)
+            item.und_oc = item.und
 
             prefixo = f"{prod.sku}: " if total_itens_nota > 1 else ""
             teve_erro = False
@@ -475,7 +475,7 @@ class RecebimentoService:
                 itens_invalidos.append(f"SKU {p.sku} ({', '.join(erros)})")
         
         if itens_invalidos:
-            raise ValueError(f"Não é possível liberar: existem itens com cadastro inválido ou bloqueados: {'; '.join(itens_invalidos)}")
+            raise ValueError(f"Não é possível liberar: existem itens inativos, bloqueados ou com cadastro pendente")
 
         estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)
