@@ -269,7 +269,7 @@ export default function ParametrosMestres() {
 
     try {
       setSalvando(true)
-      await parametrosMestresService.atualizar(idParametros, {
+      await parametrosMestresService.atualizar({
         validade_obrigatoria: validadeObrigatoria === "obrigatoria",
         lote_obrigatorio: controleLote === "obrigatorio",
         modelo_giro: modeloGiro,
@@ -278,9 +278,11 @@ export default function ParametrosMestres() {
         bloquear_sem_validade: bloquearSemValidade,
         bloquear_sem_lote: bloquearSemLote,
         tolerancia_financeira_tipo: toleranciaTipo,
-        tolerancia_financeira_valor: toleranciaValor
+        tolerancia_financeira_valor: toleranciaValor,
+        resetar_excecoes: resetarExcecoesConfirm
       })
       toast.success("Parâmetros mestres atualizados com sucesso!")
+      setResetarExcecoesConfirm(false)
     } catch (error) {
       toast.error("Erro ao salvar os parâmetros mestres.")
     } finally {

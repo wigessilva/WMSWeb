@@ -23,4 +23,5 @@ export interface ParametrosMestresEditar {
   bloquear_sem_lote?: boolean;
   tolerancia_financeira_tipo?: string;
   tolerancia_financeira_valor?: number;
+  resetar_excecoes?: boolean;
 }

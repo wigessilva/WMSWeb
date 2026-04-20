@@ -23,6 +23,7 @@ class ParametrosMestresEditar(BaseModel):
     bloquear_sem_lote: Optional[bool] = None
     tolerancia_financeira_tipo: Optional[str] = None
     tolerancia_financeira_valor: Optional[float] = None
+    resetar_excecoes: Optional[bool] = False
 
 class ParametrosMestresSchema(ParametrosMestresBase):
     id: int
