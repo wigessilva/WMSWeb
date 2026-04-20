@@ -458,6 +458,25 @@ class RecebimentoService:
         if itens_pendentes:
             raise ValueError(f"Não é possível liberar: existem {len(itens_pendentes)} itens pendentes de vínculo de SKU.")
 
+        # Nova Trava: Não permite liberar se houver itens inativos, pendentes no cadastro ou bloqueados
+        itens_invalidos = []
+        for it in recebimento.itens:
+            if not it.produto:
+                continue
+            
+            p = it.produto
+            erros = []
+            if p.status != "ativo":
+                erros.append(f"Status: {p.status}")
+            if p.bloqueado:
+                erros.append(f"Bloqueado: {p.motivo_bloqueio or 'Sim'}")
+            
+            if erros:
+                itens_invalidos.append(f"SKU {p.sku} ({', '.join(erros)})")
+        
+        if itens_invalidos:
+            raise ValueError(f"Não é possível liberar: existem itens com cadastro inválido ou bloqueados: {'; '.join(itens_invalidos)}")
+
         estado_anterior = recebimento.status
         fsm = RecebimentoFSM(recebimento)
         try:
@@ -511,6 +530,25 @@ class RecebimentoService:
                 raise ValueError(f"Esta atividade já está sendo conferida por {recebimento.conferente}.")
             # Se for a mesma pessoa voltando, apenas retorna
             return recebimento
+
+        # Validação de Segurança: Se algum item foi bloqueado/inativado após a liberação
+        itens_invalidos = []
+        for it in recebimento.itens:
+            if not it.produto:
+                continue
+            
+            p = it.produto
+            erros = []
+            if p.status != "ativo":
+                erros.append(f"Status: {p.status}")
+            if p.bloqueado:
+                erros.append(f"Bloqueado: {p.motivo_bloqueio or 'Sim'}")
+            
+            if erros:
+                itens_invalidos.append(f"SKU {p.sku} ({', '.join(erros)})")
+        
+        if itens_invalidos:
+            raise ValueError(f"Não é possível iniciar a conferência: existem itens bloqueados ou com cadastro inválido: {'; '.join(itens_invalidos)}")
 
         fsm = RecebimentoFSM(recebimento)
         try:
@@ -763,6 +801,18 @@ class RecebimentoService:
         if item.recebimento and item.recebimento.status == StatusRecebimento.EM_CONFERENCIA.value:
             if item.recebimento.conferente and item.recebimento.conferente != usuario:
                 raise ValueError(f"Este romaneio está sendo conferido por {item.recebimento.conferente}. Você não pode registrar leituras nele.")
+
+        # Validação de Segurança: Item Ativo/Bloqueado no momento da leitura
+        p = item.produto
+        if p:
+            erros = []
+            if p.status != "ativo":
+                erros.append(f"Status: {p.status}")
+            if p.bloqueado:
+                erros.append(f"Bloqueado: {p.motivo_bloqueio or 'Sim'}")
+            
+            if erros:
+                raise ValueError(f"Não é possível receber este item: SKU {p.sku} está com cadastro inválido ou bloqueado ({', '.join(erros)}).")
 
 
         # Validação de Lote e Validade respeitando a cadeia de herança:
