@@ -30,7 +30,6 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 - ✅ **Recebimento:** Gestão de entrada de mercadorias, conferência e integração com XMLs.
 - ✅ **Gestão de UAs (Unidades de Armazenamento):** Rastreabilidade total de volumes através de etiquetas e histórico.
 - ✅ **Cadastros Mestres:** Gestão de Produtos, Unidades de Medida, Famílias e Fornecedores.
-- ✅ **Endereçamento Logístico:** Estruturação completa do armazém (Filiais, Áreas, Estruturas e Endereços).
 - ✅ **Gestão de Acessos:** Autenticação, Perfis de Usuário, Permissões e Auditoria.
 - ✅ **Transparência de Dados:** Log de transições e histórico detalhado de movimentações.
 
