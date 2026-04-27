@@ -45,3 +45,6 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 ---
 
 Este projeto visa simplificar a complexidade logística de indústrias que lidam com dimensional variado e processos de transformação contínua.
+<img width="1917" height="1037" alt="image" src="https://github.com/user-attachments/assets/acf63dc2-dfb4-4be9-983b-d7fb127f7fc6" />
+<img width="1919" height="1035" alt="image" src="https://github.com/user-attachments/assets/70095d4b-4804-4961-ab21-1e3c87754e8a" />
+<img width="1919" height="1035" alt="image" src="https://github.com/user-attachments/assets/54da909c-0bf0-4d0b-8273-9831e52a3624" />
