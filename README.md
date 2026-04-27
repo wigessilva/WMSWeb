@@ -1,4 +1,4 @@
-# WMS Project - Indústrias de Conversão 🚀
+# WMS para Indústrias de Conversão 🚀
 
 ### ⚠️ Work In Progress
 
@@ -37,7 +37,7 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 
 ---
 
-## 🗓️ Roadmap (Próximos Passos)
+## 🗓️ Próximos Passos
 
 - [ ] **Módulo de Armazenamento:** Lógica de otimização de espaço, inventário e endereçamento dinâmico.
 - [ ] **Módulo de Produção:** Controle de matérias-primas, com liberação e retorno para o estoque.
