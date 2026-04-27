@@ -17,10 +17,9 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 - **Banco de Dados:** SQL Server
 
 ### Frontend
-- **Framework:** React 19 (Vite)
+- **Framework:** React (Vite)
 - **Linguagem:** TypeScript
 - **Estilização:** Tailwind CSS
-- **Navegação:** React Router Dom
 - **Comunicação:** Axios
 
 ---
@@ -37,7 +36,7 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 
 ## 🗓️ Próximos Passos
 
-- [ ] **Módulo de Armazenamento:** Endereçamentos, Lógica de otimização de espaço, inventário.
+- [ ] **Módulo de Armazenamento:** Endereçamento, Lógica de otimização de espaço, inventário.
 - [ ] **Módulo de Produção:** Controle de matérias-primas, com liberação para produção e retorno para o estoque.
 - [ ] **Módulo de Expedição:** Gestão de pedidos, picking, packing e carregamento.
 
