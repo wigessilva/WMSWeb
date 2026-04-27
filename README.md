@@ -27,7 +27,7 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 
 ## 📦 Módulos Prontos
 
-- ✅ **Recebimento (Inbound):** Gestão de entrada de mercadorias, conferência e integração com XMLs.
+- ✅ **Recebimento:** Gestão de entrada de mercadorias, conferência e integração com XMLs.
 - ✅ **Gestão de UAs (Unidades de Armazenamento):** Rastreabilidade total de volumes através de etiquetas e histórico.
 - ✅ **Cadastros Mestres:** Gestão de Produtos, Unidades de Medida, Famílias e Fornecedores.
 - ✅ **Endereçamento Logístico:** Estruturação completa do armazém (Filiais, Áreas, Estruturas e Endereços).
@@ -38,8 +38,8 @@ O objetivo do sistema é controlar o armazenamento e a movimentação de produto
 
 ## 🗓️ Próximos Passos
 
-- [ ] **Módulo de Armazenamento:** Lógica de otimização de espaço, inventário e endereçamento dinâmico.
-- [ ] **Módulo de Produção:** Controle de matérias-primas, com liberação e retorno para o estoque.
+- [ ] **Módulo de Armazenamento:** Endereçamentos, Lógica de otimização de espaço, inventário.
+- [ ] **Módulo de Produção:** Controle de matérias-primas, com liberação para produção e retorno para o estoque.
 - [ ] **Módulo de Expedição:** Gestão de pedidos, picking, packing e carregamento.
 
 ---
