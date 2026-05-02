@@ -1,6 +1,7 @@
 import './App.css'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { authService } from './services/authService'
 import Perfis from './pages/Perfis'
 import Usuarios from './pages/Usuarios'
 import Login from './pages/Login'
@@ -54,6 +55,46 @@ export default function App() {
     if (!usuarioLogado?.permissoes) return false;
     return prefixos.some(prefixo => 
       usuarioLogado.permissoes!.some(p => p.startsWith(prefixo))
+    );
+  }
+
+  const [verificando, setVerificando] = useState(true);
+
+  // Efeito para verificar a validade da sessão ao carregar o App
+  useEffect(() => {
+    const validarSessao = async () => {
+      const sessaoLocal = localStorage.getItem('wms_sessao_usuario');
+      
+      if (sessaoLocal) {
+        try {
+          // Chama o backend para validar o token
+          const usuarioAtualizado = await authService.verificarSessao();
+          
+          // Se o token for válido, atualiza o estado e o localStorage com os dados mais recentes (permissões, etc)
+          setUsuarioLogado(usuarioAtualizado);
+          localStorage.setItem('wms_sessao_usuario', JSON.stringify(usuarioAtualizado));
+        } catch (error) {
+          // O interceptor no api.ts já trata o 401 limpando o localStorage e redirecionando.
+          // Apenas garantimos que o estado local seja limpo se algo falhar.
+          console.error("Erro ao validar sessão:", error);
+          setUsuarioLogado(null);
+        }
+      }
+      
+      setVerificando(false);
+    };
+
+    validarSessao();
+  }, []);
+
+  // Enquanto estiver validando uma sessão existente, mostra tela de loading
+  // para evitar o "flicker" de conteúdo protegido
+  if (verificando && localStorage.getItem('wms_sessao_usuario')) {
+    return (
+      <div className="min-h-screen bg-wms-fundo flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-[#1d6197] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 font-medium animate-pulse">Validando sua sessão...</p>
+      </div>
     );
   }
 
