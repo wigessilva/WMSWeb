@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePermissao } from '../hooks/usePermissao'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
+import { ConfirmacaoSenhaModal } from '../components/ConfirmacaoSenhaModal'
 import { parametrosMestresService } from '../services/parametrosMestresService'
 import { produtoService } from '../services/produtoService'
 import { familiaService } from '../services/familiaService'
@@ -34,6 +35,7 @@ export default function ParametrosMestres() {
   const [produtosExcecao, setProdutosExcecao] = useState<Produto[]>([])
   const [familiasExcecao, setFamiliasExcecao] = useState<Familia[]>([])
   const [carregandoExcecoes, setCarregandoExcecoes] = useState(false)
+  const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
 
   const carregarParametros = async () => {
     try {
@@ -260,13 +262,16 @@ export default function ParametrosMestres() {
     }
   }
 
-  const handleSalvar = async (e: React.FormEvent) => {
+  const handleSalvar = (e: React.FormEvent) => {
     e.preventDefault()
     if (!idParametros) {
       toast.error("Nenhum parâmetro carregado para atualizar.")
       return
     }
+    setModalSenhaAberto(true)
+  }
 
+  const executarSalvar = async () => {
     try {
       setSalvando(true)
       await parametrosMestresService.atualizar({
@@ -283,6 +288,7 @@ export default function ParametrosMestres() {
       })
       toast.success("Parâmetros mestres atualizados com sucesso!")
       setResetarExcecoesConfirm(false)
+      setModalSenhaAberto(false)
     } catch (error) {
       toast.error("Erro ao salvar os parâmetros mestres.")
     } finally {
@@ -397,7 +403,7 @@ export default function ParametrosMestres() {
           </div>
         </div>
 
-        {/* Rodapé de Ações e Exceções */}
+        {/* Rodapé de Ações e exceções */}
         <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
           <div className="flex items-center space-x-6">
             <button
@@ -405,7 +411,7 @@ export default function ParametrosMestres() {
               onClick={() => setModalExcecoesAberto(true)}
               className="text-[#1a63b6] hover:text-blue-800 font-medium text-sm transition-colors"
             >
-              Ver Exceções
+              Ver exceções
             </button>
 
             {temPermissao('CONFIGURACOES.PARAMETROS') && (
@@ -463,7 +469,7 @@ export default function ParametrosMestres() {
         </div>
       </div>
 
-      {/* Modal de Exceções */}
+      {/* Modal de exceções */}
       <Modal isOpen={modalExcecoesAberto}>
         <div className="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl max-h-[95vh] flex flex-col">
 
@@ -499,7 +505,7 @@ export default function ParametrosMestres() {
             </button>
           </div>
 
-          {/* Área da Tabela */}
+          {/* Ãrea da Tabela */}
           <div className="flex-1 overflow-auto border border-gray-200 rounded">
             {carregandoExcecoes ? (
               <div className="h-64 flex items-center justify-center bg-gray-50">
@@ -521,6 +527,13 @@ export default function ParametrosMestres() {
         </div>
       </Modal>
 
+      <ConfirmacaoSenhaModal
+        isOpen={modalSenhaAberto}
+        onClose={() => setModalSenhaAberto(false)}
+        onConfirm={executarSalvar}
+      />
+
     </div>
+
   )
 }

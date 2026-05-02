@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.usuario import UsuarioSchema, UsuarioLogin
+from app.schemas.usuario import UsuarioSchema, UsuarioLogin, PasswordConfirm
 from app.services import usuario_service
 from app.core.auth_dep import get_current_user_active
 from app.models.usuario import Usuario
@@ -37,3 +37,13 @@ def verificar_token(
     Se for, retorna os dados do usuário e suas permissões atualizadas.
     """
     return preparar_usuario_schema(usuario_atual, db)
+
+@router.post("/verify-password")
+def verify_password(
+    confirm: PasswordConfirm,
+    usuario_atual: Usuario = Depends(get_current_user_active)
+):
+    from app.core.security import verificar_senha
+    if not verificar_senha(confirm.password, usuario_atual.senha_hash):
+        raise HTTPException(status_code=401, detail="Senha incorreta")
+    return {"message": "Senha confirmada"}

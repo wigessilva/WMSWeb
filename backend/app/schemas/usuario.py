@@ -56,3 +56,6 @@ class UsuarioAtualizar(BaseModel):
     perfil_id: Optional[int] = None
     usuario_logado_id: int
     senha_autorizacao: str
+
+class PasswordConfirm(BaseModel):
+    password: str

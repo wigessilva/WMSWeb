@@ -9,5 +9,8 @@ export const authService = {
   verificarSessao: async (): Promise<Usuario> => {
     const response = await apiClient.get('/auth/verify');
     return response.data;
+  },
+  confirmarSenha: async (senha: string): Promise<void> => {
+    await apiClient.post('/auth/verify-password', { password: senha });
   }
 };
