@@ -4,9 +4,12 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { ActionToolbar } from '../components/ActionToolbar';
+import { TableFilter } from '../components/TableFilter';
 import { filialService } from '../services/filialService';
 import type { Filial } from '../types/filial';
 import toast from 'react-hot-toast';
+import { useTableFilter } from '../hooks/useTableFilter';
+import type { FilterConfig } from '../hooks/useTableFilter';
 
 export default function Filiais() {
   const { temPermissao } = usePermissao();
@@ -27,14 +30,23 @@ export default function Filiais() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filialSelecionada, setFilialSelecionada] = useState<Filial | null>(null);
 
+  // --- Configuração de Filtros ---
+  const filialFilterConfigs: FilterConfig[] = useMemo(() => [
+    { key: 'is_matriz', label: 'Tipo', type: 'boolean', booleanLabels: { true: 'Matriz', false: 'Filial' } },
+    { key: 'ativo', label: 'Status', type: 'boolean', booleanLabels: { true: 'Ativo', false: 'Inativo' } },
+  ], []);
+
+  const tableFilter = useTableFilter(filiais, filialFilterConfigs);
+
   const filiaisFiltradas = useMemo(() => {
-    if (!termoBusca) return filiais;
+    const base = tableFilter.filteredData;
+    if (!termoBusca) return base;
     const termo = termoBusca.toLowerCase();
-    return filiais.filter(f =>
+    return base.filter(f =>
       f.nome.toLowerCase().includes(termo) ||
       (f.cnpj && f.cnpj.includes(termo))
     );
-  }, [filiais, termoBusca]);
+  }, [tableFilter.filteredData, termoBusca]);
 
   const carregarFiliais = async () => {
     try {
@@ -143,7 +155,9 @@ export default function Filiais() {
               }
             ] : [])
           ]}
-        />
+        >
+          <TableFilter filter={tableFilter} />
+        </ActionToolbar>
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -160,7 +174,7 @@ export default function Filiais() {
               {filiaisFiltradas.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                    Nenhuma filial encontrada.
+                    {tableFilter.hasActiveFilters ? 'Nenhuma filial corresponde aos filtros aplicados.' : 'Nenhuma filial encontrada.'}
                   </td>
                 </tr>
               ) : (

@@ -4,11 +4,14 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { ActionToolbar } from '../components/ActionToolbar';
+import { TableFilter } from '../components/TableFilter';
 import { usuarioService } from '../services/usuarioService';
 import { perfilService } from '../services/perfilService';
 import type { Usuario } from '../types/usuario';
 import type { Perfil } from '../types/perfil';
 import toast from 'react-hot-toast';
+import { useTableFilter } from '../hooks/useTableFilter';
+import type { FilterConfig } from '../hooks/useTableFilter';
 
 export default function Usuarios() {
   const { temPermissao } = usePermissao();
@@ -44,16 +47,28 @@ export default function Usuarios() {
     return perfil ? perfil.nome : "Desconhecido";
   };
 
-  // Filtragem em memória (Alta Performance O(N))
+  // --- Configuração de Filtros ---
+  const perfilOptions = useMemo(() => {
+    return perfis.map(p => ({ value: String(p.id), label: p.nome }));
+  }, [perfis]);
+
+  const usuarioFilterConfigs: FilterConfig[] = useMemo(() => [
+    { key: 'ativo', label: 'Status', type: 'boolean', booleanLabels: { true: 'Ativo', false: 'Inativo' } },
+    { key: 'perfil_id', label: 'Perfil', type: 'select', options: perfilOptions },
+  ], [perfilOptions]);
+
+  const tableFilter = useTableFilter(usuarios, usuarioFilterConfigs);
+
   const usuariosFiltrados = useMemo(() => {
-    if (!termoBusca) return usuarios;
+    const base = tableFilter.filteredData;
+    if (!termoBusca) return base;
     const termo = termoBusca.toLowerCase();
-    return usuarios.filter(u =>
+    return base.filter(u =>
       u.nome.toLowerCase().includes(termo) ||
       u.login.toLowerCase().includes(termo) ||
       getNomePerfil(u.perfil_id).toLowerCase().includes(termo)
     );
-  }, [usuarios, termoBusca, perfis]);
+  }, [tableFilter.filteredData, termoBusca, perfis]);
 
   const abrirModalCriar = () => {
     setModoEdicao(false);
@@ -191,7 +206,9 @@ export default function Usuarios() {
               }
             ] : [])
           ]}
-        />
+        >
+          <TableFilter filter={tableFilter} />
+        </ActionToolbar>
 
         <div className="overflow-x-auto border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -208,7 +225,7 @@ export default function Usuarios() {
               {usuariosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                    Nenhum usuário encontrado.
+                    {tableFilter.hasActiveFilters ? 'Nenhum usuário corresponde aos filtros aplicados.' : 'Nenhum usuário encontrado.'}
                   </td>
                 </tr>
               ) : (

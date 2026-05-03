@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { usePermissao } from '../hooks/usePermissao'
 import { toast } from 'react-hot-toast'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
+import { TableFilter } from '../components/TableFilter'
 import { ToggleSwitch } from '../components/ToggleSwitch'
 import { Tooltip } from '../components/Tooltip'
 import { produtoService } from '../services/produtoService'
@@ -14,6 +15,8 @@ import { unidadeMedidaService } from '../services/unidadeMedidaService'
 import type { Produto } from '../types/produto'
 import type { Familia } from '../types/familia'
 import type { UnidadeMedida } from '../types/unidadeMedida'
+import { useTableFilter } from '../hooks/useTableFilter'
+import type { FilterConfig } from '../hooks/useTableFilter'
 
 const validarEAN = (ean: string) => {
   if (!ean) return true; // Se estiver vazio, passa (pois é opcional)
@@ -40,6 +43,17 @@ export default function Produtos() {
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [termoBusca, setTermoBusca] = useState("")
+
+  // --- Configuração de Filtros ---
+  const produtoFilterConfigs: FilterConfig[] = useMemo(() => [
+    { key: 'status', label: 'Status', type: 'select', options: [
+      { value: 'ativo', label: 'Ativo' },
+      { value: 'inativo', label: 'Inativo' },
+    ]},
+    { key: 'bloqueado', label: 'Bloqueado', type: 'boolean', booleanLabels: { true: 'Bloqueado', false: 'Livre' } },
+  ], []);
+
+  const tableFilter = useTableFilter(produtos, produtoFilterConfigs);
 
   // Estados do Modal e Dependências
   const [modalEditarAberto, setModalEditarAberto] = useState(false)
@@ -464,7 +478,9 @@ export default function Produtos() {
               onClick: sincronizarEAtualizar
             }
           ]}
-        />
+        >
+          <TableFilter filter={tableFilter} />
+        </ActionToolbar>
 
         <div className="overflow-y-auto max-h-[600px] border border-gray-200 rounded">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -477,14 +493,14 @@ export default function Produtos() {
               </tr>
             </thead>
             <tbody className="text-gray-600 text-sm">
-              {produtos.length === 0 && !carregando ? (
+              {tableFilter.filteredData.length === 0 && !carregando ? (
                 <tr>
                   <td colSpan={4} className="px-3 py-4 text-center text-gray-500">
-                    Nenhum produto encontrado.
+                    {tableFilter.hasActiveFilters ? 'Nenhum produto corresponde aos filtros aplicados.' : 'Nenhum produto encontrado.'}
                   </td>
                 </tr>
               ) : (
-                produtos.map((prod) => (
+                tableFilter.filteredData.map((prod) => (
                   <tr
                     key={prod.id}
                     onClick={() => setProdutoSelecionado(prod)}

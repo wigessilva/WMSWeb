@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { uaService } from '../services/uaService'
 import { ActionToolbar } from '../components/ActionToolbar'
+import { TableFilter } from '../components/TableFilter'
 import { Modal } from '../components/Modal'
 import type { UA } from '../types/ua'
 import { toast } from 'react-hot-toast'
+import { useTableFilter } from '../hooks/useTableFilter'
+import type { FilterConfig } from '../hooks/useTableFilter'
 
 export default function UAs() {
   const [uas, setUas] = useState<UA[]>([])
@@ -18,6 +21,24 @@ export default function UAs() {
   // Pega a filial do utilizador logado
   const usuario = JSON.parse(localStorage.getItem('wms_sessao_usuario') || '{}')
   const filialId = usuario.filiais?.[0]?.id || 1
+
+  // --- Configuração de Filtros ---
+  const statusOptions = useMemo(() => {
+    const unique = [...new Set(uas.map(u => u.status))];
+    return unique.sort().map(s => ({ value: s, label: s }));
+  }, [uas]);
+
+  const estadoOptions = useMemo(() => {
+    const unique = [...new Set(uas.map(u => u.estado))];
+    return unique.sort().map(s => ({ value: s, label: s }));
+  }, [uas]);
+
+  const uaFilterConfigs: FilterConfig[] = useMemo(() => [
+    { key: 'status', label: 'Status', type: 'select', options: statusOptions },
+    { key: 'estado', label: 'Estado', type: 'select', options: estadoOptions },
+  ], [statusOptions, estadoOptions]);
+
+  const tableFilter = useTableFilter(uas, uaFilterConfigs);
 
   const carregarUAs = async () => {
     setCarregando(true)
@@ -58,7 +79,7 @@ export default function UAs() {
   }, [])
 
   // Filtragem local básica
-  const uasFiltradas = uas.filter(ua =>
+  const uasFiltradas = tableFilter.filteredData.filter(ua =>
     ua.ua.toLowerCase().includes(termoBusca.toLowerCase()) ||
     (ua.sku?.toLowerCase() || "").includes(termoBusca.toLowerCase()) ||
     (ua.descricao?.toLowerCase() || "").includes(termoBusca.toLowerCase()) ||
@@ -83,7 +104,9 @@ export default function UAs() {
               onClick: () => setIsModalGerarOpen(true),
             },
           ]}
-        />
+        >
+          <TableFilter filter={tableFilter} />
+        </ActionToolbar>
 
         <div className="overflow-x-auto border border-gray-200 rounded mt-4">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -115,7 +138,7 @@ export default function UAs() {
               ) : uasFiltradas.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="px-3 py-4 text-center text-gray-500">
-                    Nenhuma UA encontrada.
+                    {tableFilter.hasActiveFilters ? 'Nenhuma UA corresponde aos filtros aplicados.' : 'Nenhuma UA encontrada.'}
                   </td>
                 </tr>
               ) : (

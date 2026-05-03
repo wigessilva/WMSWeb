@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { usePermissao } from '../hooks/usePermissao'
 import { recebimentoService } from '../services/recebimentoService'
 import { configuracaoService } from '../services/configuracaoService'
@@ -8,11 +8,14 @@ import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ActionToolbar } from '../components/ActionToolbar'
+import { TableFilter } from '../components/TableFilter'
 import { ConclusaoRecebimentoModal } from '../components/ConclusaoRecebimentoModal'
 import type { Recebimento } from '../types/recebimento'
 import type { UnidadeMedida } from '../types/unidadeMedida'
 import { toast } from 'react-hot-toast'
 import apiClient from '../services/api'
+import { useTableFilter } from '../hooks/useTableFilter'
+import type { FilterConfig } from '../hooks/useTableFilter'
 
 export default function Recebimentos() {
   const { temPermissao } = usePermissao()
@@ -61,6 +64,18 @@ export default function Recebimentos() {
   const [itemIdParaReconferencia, setItemIdParaReconferencia] = useState<number | null>(null);
   const [motivoReconferencia, setMotivoReconferencia] = useState("");
 
+  // --- Configuração de Filtros ---
+  const statusOptions = useMemo(() => {
+    const uniqueStatuses = [...new Set(recebimentos.map(r => r.status))];
+    return uniqueStatuses.sort().map(s => ({ value: s, label: s }));
+  }, [recebimentos]);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { key: 'status', label: 'Status', type: 'select', options: statusOptions },
+    { key: 'inicio', label: 'Data Início', type: 'date-range' },
+  ], [statusOptions]);
+
+  const tableFilter = useTableFilter(recebimentos, filterConfigs);
 
 
   const carregarRecebimentos = async (termo?: string) => {
@@ -505,6 +520,7 @@ export default function Recebimentos() {
               Painel
             </button>
           )}
+          <TableFilter filter={tableFilter} />
         </ActionToolbar>
 
         <div className="overflow-y-auto max-h-72 border border-gray-200 rounded">
@@ -522,14 +538,14 @@ export default function Recebimentos() {
               </tr>
             </thead>
             <tbody className="text-gray-600 text-sm">
-              {recebimentos.length === 0 ? (
+              {tableFilter.filteredData.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-3 py-4 text-center text-gray-500">
-                    Nenhuma nota encontrada.
+                    {tableFilter.hasActiveFilters ? 'Nenhum romaneio corresponde aos filtros aplicados.' : 'Nenhuma nota encontrada.'}
                   </td>
                 </tr>
               ) : (
-                recebimentos.map((rec) => (
+                tableFilter.filteredData.map((rec) => (
                   <tr
                     key={rec.id}
                     onClick={() => {
