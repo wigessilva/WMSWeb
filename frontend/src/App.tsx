@@ -16,6 +16,7 @@ import Familias from './pages/Familias'
 import UAs from './pages/UAs'
 import VinculosFornecedores from './pages/VinculosFornecedores'
 import ParametrosMestres from './pages/ParametrosMestres'
+import Enderecos from './pages/Enderecos'
 import type { Usuario } from './types/usuario'
 import { Toaster } from 'react-hot-toast'
 import { Modal } from './components/Modal'
@@ -269,6 +270,7 @@ export default function App() {
             <Route path="/conferencia/:id" element={<Conferencia />} />
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/estoque/uas" element={<UAs />} />
+            <Route path="/estoque/enderecos" element={<Enderecos />} />
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/familias" element={<Familias />} />
             <Route path="/vinculos-fornecedores" element={<VinculosFornecedores />} />

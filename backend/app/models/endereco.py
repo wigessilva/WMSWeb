@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -27,6 +27,11 @@ class Endereco(Base):
     produto_id = Column("ProdutoId", Integer, ForeignKey("Produtos.Id"), nullable=True)
     capacidade_maxima_und = Column("CapacidadeMaximaUnd", Integer, nullable=True)
 
+    # Ciclo de Vida e Controle
+    ativo = Column("Ativo", Boolean, default=True, nullable=False)
+    bloqueado = Column("Bloqueado", Boolean, default=False, nullable=False)
+    motivo_bloqueio = Column("MotivoBloqueio", String(255), nullable=True)
+
     # AUDITORIA E CONCORRÊNCIA (Padrão ACID)
     criado_em = Column("CriadoEm", DateTime, default=datetime.now)
     atualizado_em = Column("AtualizadoEm", DateTime, default=datetime.now, onupdate=datetime.now)
@@ -35,7 +40,7 @@ class Endereco(Base):
     rowversion = Column("Rowversion", Integer, default=1, nullable=False)
 
     # Relacionamentos para facilitar as consultas no SQLAlchemy
-    area = relationship("Area")
+    area = relationship("Area", back_populates="enderecos")
     estrutura = relationship("EstruturaFisica")
     finalidade = relationship("FinalidadeEndereco")
     produto = relationship("Produto")
