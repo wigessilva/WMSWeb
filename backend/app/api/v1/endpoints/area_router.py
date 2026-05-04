@@ -13,3 +13,8 @@ def criar_area(area: AreaCriar, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[AreaSchema])
 def listar_areas(db: Session = Depends(get_db)):
     return AreaService.listar_todas(db)
+
+@router.delete("/{area_id}")
+def excluir_area(area_id: int, db: Session = Depends(get_db)):
+    AreaService.excluir(db=db, area_id=area_id)
+    return {"mensagem": "Área excluída com sucesso."}

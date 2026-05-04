@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from ..models.area import Area
 from ..schemas.area import AreaCriar
 
@@ -18,3 +19,13 @@ class AreaService:
     @staticmethod
     def listar_todas(db: Session):
         return db.query(Area).all()
+
+    @staticmethod
+    def excluir(db: Session, area_id: int):
+        area = db.query(Area).filter(Area.id == area_id).first()
+        if not area:
+            raise HTTPException(status_code=404, detail="Área não encontrada.")
+        if area.enderecos:
+            raise HTTPException(status_code=409, detail="Não é possível excluir. Existem endereços vinculados a esta área.")
+        db.delete(area)
+        db.commit()

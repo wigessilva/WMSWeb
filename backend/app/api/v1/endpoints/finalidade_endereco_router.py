@@ -13,3 +13,8 @@ def criar_finalidade_endereco(finalidade: FinalidadeEnderecoCriar, db: Session =
 @router.get("/", response_model=list[FinalidadeEnderecoSchema])
 def listar_finalidades_endereco(db: Session = Depends(get_db)):
     return FinalidadeEnderecoService.listar_todas(db)
+
+@router.delete("/{finalidade_id}")
+def excluir_finalidade_endereco(finalidade_id: int, db: Session = Depends(get_db)):
+    FinalidadeEnderecoService.excluir(db=db, finalidade_id=finalidade_id)
+    return {"mensagem": "Finalidade excluída com sucesso."}
