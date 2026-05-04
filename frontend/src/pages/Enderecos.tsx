@@ -10,9 +10,11 @@ import { enderecoService } from '../services/enderecoService';
 import type { Endereco, Area, EstruturaFisica, FinalidadeEndereco, ProdutoSimples } from '../types/endereco';
 import toast from 'react-hot-toast';
 import { useTableFilter, type FilterConfig } from '../hooks/useTableFilter';
+import { AbaAreas, AbaEstruturas, AbaFinalidades } from './EnderecosApoio';
 
 export default function Enderecos() {
   const { temPermissao } = usePermissao();
+  const [abaAtiva, setAbaAtiva] = useState<'enderecos' | 'areas' | 'estruturas' | 'finalidades'>('enderecos');
   const [enderecos, setEnderecos] = useState<Endereco[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [estruturas, setEstruturas] = useState<EstruturaFisica[]>([]);
@@ -227,12 +229,33 @@ export default function Enderecos() {
     );
   };
 
+  const abas = [
+    { key: 'enderecos' as const, label: 'Endereços' },
+    { key: 'areas' as const, label: 'Áreas' },
+    { key: 'estruturas' as const, label: 'Estruturas Físicas' },
+    { key: 'finalidades' as const, label: 'Finalidades' },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+      {/* ABAS */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="flex border-b border-gray-200">
+          {abas.map(aba => (
+            <button key={aba.key} onClick={() => setAbaAtiva(aba.key)}
+              className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 ${
+                abaAtiva === aba.key ? 'border-[#1a63b6] text-[#1a63b6] bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}>{aba.label}</button>
+          ))}
+        </div>
+        <div className="p-3">
+          {abaAtiva === 'areas' && <AbaAreas />}
+          {abaAtiva === 'estruturas' && <AbaEstruturas />}
+          {abaAtiva === 'finalidades' && <AbaFinalidades />}
+          {abaAtiva === 'enderecos' && (<>
         <ActionToolbar termoBusca={termoBusca} onBuscaChange={setTermoBusca} placeholderBusca="Buscar código ou produto"
           acoes={[...(temPermissao('CADASTROS.ENDERECOS') ? [
-            { label: "Gerar", onClick: abrirGerar, className: "text-green-700 hover:bg-green-50 font-medium" },
+            { label: "Gerar", onClick: abrirGerar },
             { label: "Editar", onClick: abrirEditar },
             { label: "Excluir", isDanger: true, onClick: excluir },
           ] : [])]}>
@@ -243,12 +266,7 @@ export default function Enderecos() {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="bg-gray-50 text-gray-700 text-sm sticky top-0 z-[1]">
               <tr>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200">Código</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Área</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Rua</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Prédio</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Nível</th>
-                <th className="px-4 py-3 font-semibold border-b border-gray-200 text-center">Posição</th>
+                <th className="px-4 py-3 font-semibold border-b border-gray-200">Endereço</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200">Estrutura</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200">Finalidade</th>
                 <th className="px-4 py-3 font-semibold border-b border-gray-200 text-right">Peso Máx.</th>
@@ -258,16 +276,11 @@ export default function Enderecos() {
             </thead>
             <tbody className="text-gray-600 text-sm">
               {filtrados.length === 0 ? (
-                <tr><td colSpan={11} className="px-4 py-6 text-center text-gray-500">Nenhum endereço encontrado.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500">Nenhum endereço encontrado.</td></tr>
               ) : filtrados.map(e => (
                 <tr key={e.id} onClick={() => setSelecionado(e)}
                   className={`border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${selecionado?.id === e.id ? "bg-blue-100" : ""}`}>
                   <td className="px-4 py-2 font-semibold text-blue-900 font-mono">{e.codigo_formatado}</td>
-                  <td className="px-4 py-2 text-center"><span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-xs font-semibold">{e.area_letra}</span></td>
-                  <td className="px-4 py-2 text-center">{String(e.rua).padStart(2, '0')}</td>
-                  <td className="px-4 py-2 text-center">{String(e.predio).padStart(2, '0')}</td>
-                  <td className="px-4 py-2 text-center">{String(e.nivel).padStart(2, '0')}</td>
-                  <td className="px-4 py-2 text-center">{String(e.posicao).padStart(2, '0')}</td>
                   <td className="px-4 py-2"><span className="px-2 py-0.5 rounded bg-sky-100 text-sky-800 text-xs font-semibold">{e.estrutura_nome}</span></td>
                   <td className="px-4 py-2"><span className={`px-2 py-0.5 rounded text-xs font-semibold ${e.finalidade_nome?.toLowerCase().includes('picking') ? 'bg-amber-100 text-amber-800' :
                     e.finalidade_nome?.toLowerCase().includes('quarentena') ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
@@ -283,7 +296,6 @@ export default function Enderecos() {
             </tbody>
           </table>
         </div>
-      </div>
 
       {/* MODAL GERAR */}
       <Modal isOpen={modalGerar} fundoTransparente={modalMotivo && modoModalMotivo === 'lote'}>
@@ -296,14 +308,11 @@ export default function Enderecos() {
                 <span className="text-sm font-medium text-gray-700 mr-3">Status</span>
                 <ToggleSwitch checked={loteAtivo} onChange={setLoteAtivo} />
               </div>
-              <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
-              <div className="flex-1 w-full">
-                <button type="button" onClick={() => {
-                  if (loteBloqueado) { setLoteBloqueado(false); setLoteMotivo(''); }
-                  else { setModoModalMotivo('lote'); setModalMotivo(true); }
-                }} className={`w-full px-4 py-2 text-sm font-medium rounded transition-colors border ${loteBloqueado ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                  {loteBloqueado ? "Bloqueado por Padrão" : "Bloquear"}
-                </button>
+              <div className="flex items-center justify-between flex-1 w-full border-t sm:border-t-0 sm:border-l border-gray-200 pt-3 sm:pt-0 sm:pl-6">
+                <span className="text-sm font-medium text-gray-700 mr-3">Bloqueado</span>
+                <ToggleSwitch checked={loteBloqueado} onChange={(v) => {
+                  if (v) { setModoModalMotivo('lote'); setModalMotivo(true); } else setLoteBloqueado(false);
+                }} />
               </div>
             </div>
 
@@ -357,16 +366,13 @@ export default function Enderecos() {
               <div className="flex flex-col sm:flex-row items-center gap-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center justify-between flex-1 w-full">
                   <span className="text-sm font-medium text-gray-700 mr-3">Status</span>
-                  <ToggleSwitch checked={editAtivo} onChange={setEditAtivo} />
+                  <ToggleSwitch checked={editAtivo} onChange={setEditAtivo} labelOn="" labelOff="" />
                 </div>
-                <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
-                <div className="flex-1 w-full">
-                  <button type="button" onClick={() => {
-                    if (editBloqueado) { setEditBloqueado(false); setEditMotivo(''); }
-                    else { setModoModalMotivo('edicao'); setModalMotivo(true); }
-                  }} className={`w-full px-4 py-2 text-sm font-medium rounded transition-colors border ${editBloqueado ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                    {editBloqueado ? "Desbloquear Endereço" : "Bloquear Endereço"}
-                  </button>
+                <div className="flex items-center justify-between flex-1 w-full border-t sm:border-t-0 sm:border-l border-gray-200 pt-3 sm:pt-0 sm:pl-6">
+                  <span className="text-sm font-medium text-gray-700 mr-3">Bloqueado</span>
+                  <ToggleSwitch checked={editBloqueado} onChange={(v) => {
+                    if (v) { setModoModalMotivo('edicao'); setModalMotivo(true); } else setEditBloqueado(false);
+                  }} labelOn="" labelOff="" />
                 </div>
               </div>
 
@@ -409,6 +415,9 @@ export default function Enderecos() {
           </div>
         </div>
       </Modal>
+          </>)}
+        </div>
+      </div>
     </div>
   );
 }

@@ -17,7 +17,6 @@ import UAs from './pages/UAs'
 import VinculosFornecedores from './pages/VinculosFornecedores'
 import ParametrosMestres from './pages/ParametrosMestres'
 import Enderecos from './pages/Enderecos'
-import ConfigEnderecamento from './pages/ConfigEnderecamento'
 import type { Usuario } from './types/usuario'
 import { Toaster } from 'react-hot-toast'
 import { Modal } from './components/Modal'
@@ -195,7 +194,6 @@ export default function App() {
               <div className="pl-4 mt-1 space-y-1 ml-2">
                 {temPermissao('ESTOQUE.GERENCIAR_UAS') && <Link to="/estoque/uas" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">UAs</Link>}
                 {temPermissao('CADASTROS.ENDERECOS') && <Link to="/estoque/enderecos" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Endereços</Link>}
-                {temPermissao('CADASTROS.ENDERECOS') && <Link to="/estoque/config-enderecamento" className="block p-2 rounded hover:bg-[#1d6197] transition-colors text-sm text-gray-300 hover:text-white">Config. Endereçamento</Link>}
               </div>
             )}
           </div>
@@ -273,7 +271,6 @@ export default function App() {
             <Route path="/estoque" element={<h2>Estoque</h2>} />
             <Route path="/estoque/uas" element={<UAs />} />
             <Route path="/estoque/enderecos" element={<Enderecos />} />
-            <Route path="/estoque/config-enderecamento" element={<ConfigEnderecamento />} />
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/familias" element={<Familias />} />
             <Route path="/vinculos-fornecedores" element={<VinculosFornecedores />} />
