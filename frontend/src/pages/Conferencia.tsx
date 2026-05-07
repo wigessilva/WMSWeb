@@ -54,15 +54,29 @@ export default function Conferencia() {
         const dados = await recebimentoService.listarAtividades();
         const atual = dados.find(r => r.id === Number(id));
         if (atual) {
+          // Verifica se é um caso de reconferência (se há algum item pendente com tentativas > 1)
+          const statsPendente = ['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'];
+          const ehReconferencia = atual.itens.some(it => statsPendente.includes(it.status) && (it.tentativas || 1) > 1);
+
+          if (ehReconferencia) {
+            // Em caso de reconferência, mostra apenas os itens pendentes
+            atual.itens = atual.itens.filter(it => statsPendente.includes(it.status));
+          }
+
+          if (atual.itens.length === 0) {
+            toast.error("Nenhum item para conferência neste romaneio.");
+            navigate('/atividades');
+            return;
+          }
+
           setRecebimento(atual);
+
           // Inicializa tentativas para itens que ainda não foram conferidos
           const tents: Record<number, number> = {};
           const uasMap: Record<number, any[]> = {};
 
           atual.itens.forEach(it => {
-            // Se o item já foi finalizado, não precisa de tentativas. 
             // Se está pendente ou em conferência, ganha 3 tentativas para esta sessão.
-            const statsPendente = ['AGUARDANDO_CONFERENCIA', 'EM_CONFERENCIA'];
             tents[it.id] = statsPendente.includes(it.status) ? 3 : 0;
 
             // Retoma UAs bipadas anteriormente (apenas da sessão atual)
